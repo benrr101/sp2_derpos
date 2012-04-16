@@ -19,3 +19,5 @@
 #define DISP_CONT	0x03
 
 void _pci_probe_devices( void );
+unsigned short _pci_config_read( unsigned short bus, unsigned short slot, 
+		unsigned short func, unsigned short offset);
