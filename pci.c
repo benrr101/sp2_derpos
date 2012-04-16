@@ -20,9 +20,9 @@ void _pci_probe_devices(){
 	// report that the PCI probe is starting
 	c_puts("Probing for PCI Devices...\n");
 
-
-	// STUB
-
+	// just test out the _pci_config_read() function
+	c_printf("Probing Bus 0, device 0, function 0: '%u'.\n", 
+			_pci_config_read(0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF));
 
 	// report that the PCI probe completed with no issues
 	c_puts("Done.\n");
@@ -51,22 +51,22 @@ void _pci_probe_devices(){
  *
  * @source			http://wiki.osdev.org/PCI#Configuration_Mechanism_.231
  */
-unsigned short _pci_config_read( unsigned short bus, unsigned short slot, 
-		unsigned short func, unsigned short offset){
+Uint16 _pci_config_read( Uint16 bus, Uint16 slot, 
+		Uint16 func, Uint16 offset){
 
 	// convert the provided values to longs for easier assembly later
-	unsigned long addr = 0;
-	unsigned long lbus = (unsigned long) bus;
-	unsigned long lslot = (unsigned long) slot;
-	unsigned long lfunc = (unsigned long) func;
+	Uint32 addr = 0;
+	Uint32 lbus = (Uint32) bus;
+	Uint32 lslot = (Uint32) slot;
+	Uint32 lfunc = (Uint32) func;
 
 	// we need to compute the address of the device
-	addr = (unsigned long) ((lbus << 16) | (lslot << 11) | (lfunc << 8) |
+	addr = (Uint32) ((lbus << 16) | (lslot << 11) | (lfunc << 8) | 
 			(offset & 0xfc) | ((Uint32)0x80000000));
 
 	// select the device
 	__outl(CONF_ACC, addr);
 
 	// read the data, we want the first word of the 32-bit register
-	return (unsigned short) ((__inl(CONF_DAT) >> ((offset & 2) * 8)) & 0xffff);
+	return (Uint16) ((__inl(CONF_DAT) >> ((offset & 2) * 8)) & 0xffff);
 }
