@@ -37,6 +37,12 @@
 
 void _vga_init( void );
 
+void vga256( void );
+
+void draw( void );
+void draw2( void );
+
+void back2text( void );
 
 #endif // ACM
 
