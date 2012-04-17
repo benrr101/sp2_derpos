@@ -61,7 +61,7 @@ void user_m( void ); void user_n( void ); void user_o( void );
 void user_p( void ); void user_q( void ); void user_r( void );
 void user_s( void ); void user_t( void ); void user_u( void );
 void user_v( void ); void user_w( void ); void user_x( void );
-void user_y( void ); void user_z( void );
+void user_y( void ); void user_z( void ); void user_pci( void );
 
 /*
 ** Users A, B, and C are identical, except for the character they
@@ -730,6 +730,14 @@ void user_z( void ) {
 
 }
 
+void user_pci( void ){
+
+	c_puts( "User PCI running\n" );
+	_pci_probe_devices();
+	c_puts( "User PCI exiting\n" );
+	exit();
+}
+
 
 /*
 ** SYSTEM PROCESSES
@@ -890,6 +898,13 @@ void init( void ) {
 	status = spawn( &pid, user_t );
 	if( status != SUCCESS ) {
 		prt_status( "init: can't spawn() user T, status %s\n", status );
+	}
+#endif
+
+#ifdef SPAWN_PCI
+	status = spawn ( &pid, user_pci );
+	if( status != SUCCESS ){
+		prt_status( "init: can't spawn() user PCI, statuc %s\n", status );
 	}
 #endif
 
