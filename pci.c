@@ -67,11 +67,13 @@ Uint8 _pci_config_readb( Uint16 bus, Uint16 device, Uint16 func,
 	// give the user back upper bytes only.
 	Uint8 byte;
 	if(offset % 2 == 0) {
+		c_printf("TEST: OFFSET: 0x%x, % 2 = 0x%x\n", offset, offset % 2);
 		// Lower bytes
 		byte = word & 0xFFFF;
 	} else {
 		// Upper bytes
-		byte = word >> 16;
+		c_printf("TEST: 0x%x >> 16 = 0x%x\n", word, (Uint8)(word >> 8));
+		byte = word >> 8;
 	}
 	return byte;
 }
