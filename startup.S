@@ -84,8 +84,9 @@ clearbss:
 /*
 ** Initialize devices
 */
-	call	_init		// initialize the OS
 
+	call	_init		// initialize the OS
+	call	_vga_init
 /*
 ** Restore the first user process context
 **
