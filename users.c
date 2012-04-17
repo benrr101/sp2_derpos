@@ -63,6 +63,20 @@ void user_s( void ); void user_t( void ); void user_u( void );
 void user_v( void ); void user_w( void ); void user_x( void );
 void user_y( void ); void user_z( void ); void user_pci( void );
 
+void sata_hello(void) {
+	write('H');
+	write('e');
+	write('l');
+	write('l');
+	write('o');
+	write(' ');
+	write('W');
+	write('o');
+	write('r');
+	write('l');
+	write('d');
+}
+
 /*
 ** Users A, B, and C are identical, except for the character they
 ** print out via write().  Each prints its ID, then loops 30
@@ -760,6 +774,11 @@ void init( void ) {
 
 	// we'll start the first three "manually"
 	// by doing fork() and exec() ourselves
+
+	status = spawn(&pid, sata_hello);
+	if(status != SUCCESS) {
+		__panic("SUCK DICKS");
+	}
 
 #ifdef SPAWN_A
 	status = fork( &pid );
