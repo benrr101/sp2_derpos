@@ -23,7 +23,6 @@
 #include "c_io.h"
 #include "support.h"
 
-
 #ifdef __KERNEL__20113__
 
 // OS needs the kernel library headers and the system headers
