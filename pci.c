@@ -78,7 +78,7 @@ Uint32 _pci_config_readl( Uint16 bus, Uint16 device, Uint16 func,
 
 	// OR them together
 	Uint32 word3 = word2 << 16;
-	Uint32 dword = word1 | word2;
+	Uint32 dword = word1 | word3;
 
 	return dword;
 }
