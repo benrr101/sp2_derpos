@@ -194,9 +194,9 @@ bootstrap.o: bootstrap.h
 startup.o: bootstrap.h
 isr_stubs.o: bootstrap.h
 ulibs.o: syscalls.h headers.h queues.h /home/fac/wrc/include/x86arch.h
-c_io.o: c_io.h startup.h support.h /home/fac/wrc/include/x86arch.h
-support.o: startup.h support.h c_io.h /home/fac/wrc/include/x86arch.h
-support.o: bootstrap.h
+c_io.o: c_io.h startup.h headers.h support.h /home/fac/wrc/include/x86arch.h
+support.o: startup.h headers.h support.h c_io.h
+support.o: /home/fac/wrc/include/x86arch.h bootstrap.h
 clock.o: headers.h /home/fac/wrc/include/x86arch.h startup.h clock.h pcbs.h
 clock.o: stacks.h queues.h scheduler.h sio.h syscalls.h
 klibc.o: headers.h
@@ -208,8 +208,8 @@ sio.o: startup.h /home/fac/wrc/include/uart.h /home/fac/wrc/include/x86arch.h
 stacks.o: headers.h queues.h stacks.h
 syscalls.o: headers.h pcbs.h clock.h stacks.h scheduler.h queues.h sio.h
 syscalls.o: syscalls.h /home/fac/wrc/include/x86arch.h system.h startup.h
-system.o: headers.h system.h pcbs.h clock.h stacks.h bootstrap.h syscalls.h
-system.o: queues.h /home/fac/wrc/include/x86arch.h sio.h scheduler.h users.h
-system.o: ulib.h types.h
+system.o: headers.h system.h pcbs.h clock.h stacks.h bootstrap.h startup.h
+system.o: syscalls.h queues.h /home/fac/wrc/include/x86arch.h sio.h
+system.o: scheduler.h users.h ulib.h types.h
 ulibc.o: headers.h
 users.o: headers.h users.h

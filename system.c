@@ -18,6 +18,7 @@
 #include "clock.h"
 #include "pcbs.h"
 #include "bootstrap.h"
+#include "startup.h"
 #include "syscalls.h"
 #include "sio.h"
 #include "scheduler.h"
@@ -298,5 +299,6 @@ void _init( void ) {
 	*/
 
 	c_puts( "System initialization complete.\n" );
+	c_printf( "End is at position %x \n", __get_end() );
 
 }
