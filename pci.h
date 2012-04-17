@@ -20,7 +20,10 @@
 #define DISP_CONT	0x03
 
 void _pci_probe_devices( void );
+Uint32 _pci_config_readl( Uint16 bus, Uint16 slot, Uint16 func, Uint16 offset);
 Uint16 _pci_config_read( Uint16 bus, Uint16 slot, Uint16 func, Uint16 offset);
+Uint8  _pci_config_readb( Uint16 bus, Uint16 slot, Uint16 func, Uint16 offset);
+
 Uint32 _pci_config_get_address( Uint16 bus, Uint16 device, Uint16 func, Uint16 offset );
 
 #endif

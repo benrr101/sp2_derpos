@@ -54,10 +54,40 @@ Uint16 _pci_config_read( Uint16 bus, Uint16 slot,
 	return (Uint16) ((__inl(CONF_DAT) >> ((offset & 2) * 8)) & 0xffff);
 }
 
+/**
+ * Read a byte from the PCI bus. IE read a word from the bus but AND off the
+ * upper byte such that a single byte is returned.
+ */
+Uint8 _pci_config_readb( Uint16 bus, Uint16 device, Uint16 func, 
+		Uint16 offset ) {
+	Uint16 word = _pci_config_read(bus, device, func, offset);
+	Uint8 byte = word & 0xFFFF;	
+	return byte;
+}
+
+
+/**
+ * Read a long from the PCI bus. IE read a short from the bus, read another
+ * short, shift the second's bits and OR it together.
+ */
+Uint32 _pci_config_readl( Uint16 bus, Uint16 device, Uint16 func, 
+		Uint16 offset ) {
+	// Read the two shorts
+	Uint16 word1 = _pci_config_read(bus, device, func, offset);
+	Uint16 word2 = _pci_config_read(bus, device, func, offset + 2);
+
+	// OR them together
+	Uint32 word3 = word2 << 16;
+	Uint32 dword = word1 | word2;
+
+	return dword;
+}
+
 void _pci_config_writeb( Uint16 bus, Uint16 device, Uint16 func, Uint16 offset,
 		Uint8 payload ){
 		
 	// Get the address we're writing to
+	Uint32 addr = _pci_config_get_address(bus, device, func, offset);
 }
 
 
