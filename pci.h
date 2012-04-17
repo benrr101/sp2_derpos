@@ -1,4 +1,5 @@
-
+#ifndef PCI_H
+#define PCI_H
 
 /**
  * Port information for talking to the PCI bus
@@ -20,3 +21,6 @@
 
 void _pci_probe_devices( void );
 Uint16 _pci_config_read( Uint16 bus, Uint16 slot, Uint16 func, Uint16 offset);
+Uint32 _pci_config_get_address( Uint16 bus, Uint16 device, Uint16 func, Uint16 offset );
+
+#endif
