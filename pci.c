@@ -30,16 +30,6 @@ void _pci_probe_devices(){
 
 /**
  * Reads a single word (2-bytes) of data from the specified device's config.
- *
- * For reading config data from a device, the following specification details
- * how the address is computed:
- * 	Bit  31:		Enable Bit (always on)
- *	Bits 30 - 24:	Reserved (always off)
- *	Bits 23 - 16:	Bus Number
- *	Bits 15 - 11:	Device Number
- *	Bits 10 - 08:	Function Number
- *	Bits 07 - 02:	Register Number
- *	Bits 01 - 00:	Empty (always off)
  * 
  * @param	bus		The bus the device is on.
  * @param	slot	Which slot on the bus the device is on.
@@ -54,19 +44,49 @@ void _pci_probe_devices(){
 Uint16 _pci_config_read( Uint16 bus, Uint16 slot, 
 		Uint16 func, Uint16 offset){
 
-	// convert the provided values to longs for easier assembly later
-	Uint32 addr = 0;
-	Uint32 lbus = (Uint32) bus;
-	Uint32 lslot = (Uint32) slot;
-	Uint32 lfunc = (Uint32) func;
-
 	// we need to compute the address of the device
-	addr = (Uint32) ((lbus << 16) | (lslot << 11) | (lfunc << 8) | 
-			(offset & 0xfc) | ((Uint32)0x80000000));
+	Uint32 addr = _pci_config_get_address(bus, slot, func, offset);
 
 	// select the device
 	__outl(CONF_ACC, addr);
 
 	// read the data, we want the first word of the 32-bit register
 	return (Uint16) ((__inl(CONF_DAT) >> ((offset & 2) * 8)) & 0xffff);
+}
+
+void _pci_config_writeb( Uint16 bus, Uint16 device, Uint16 func, Uint16 offset,
+		Uint8 payload ){
+		
+	// Get the address we're writing to
+}
+
+
+/**
+ * Calculates the address for the PCI config space register.
+ * How the address is computed:
+ * 	Bit  31:		Enable Bit (always on)
+ *	Bits 30 - 24:	Reserved (always off)
+ *	Bits 23 - 16:	Bus Number
+ *	Bits 15 - 11:	Device Number
+ *	Bits 10 - 08:	Function Number
+ *	Bits 07 - 02:	Register Number
+ *	Bits 01 - 00:	Empty (always off)
+ * 
+ * @param	bus		The bus the device is on.
+ * @param	slot	Which slot on the bus the device is on.
+ * @param	func	Which function of the device to use.  Note, not all devices
+ *					are multifunction.
+ * @param	offset	The amount to shift the final address by.
+ */
+Uint32 _pci_config_get_address( Uint16 bus, Uint16 device, Uint16 func, 
+		Uint16 offset ){
+
+		// Turn the 16-bit values into 32-bit values
+		Uint32 lbus    = (Uint32) bus;
+		Uint32 ldevice = (Uint32) device;
+		Uint32 lfunc   = (Uint32) func;
+
+		// Calculate and return the address
+		return (Uint32) ((lbus << 16) | (ldevice << 11) | (lfunc << 8) |
+			(offset & 0xFC) | ((Uint32) 0x80000000));
 }
