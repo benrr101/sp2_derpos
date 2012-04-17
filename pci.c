@@ -61,7 +61,18 @@ Uint16 _pci_config_read( Uint16 bus, Uint16 slot,
 Uint8 _pci_config_readb( Uint16 bus, Uint16 device, Uint16 func, 
 		Uint16 offset ) {
 	Uint16 word = _pci_config_read(bus, device, func, offset);
-	Uint8 byte = word & 0xFFFF;	
+
+	// The controller appears to only give back aligned by 2 words. So IF we
+	// wanted the upper bytes (%2 = 1) then we'll outsmart the controller and
+	// give the user back upper bytes only.
+	Uint8 byte;
+	if(offset % 2 == 0) {
+		// Lower bytes
+		byte = word & 0xFFFF;
+	} else {
+		// Upper bytes
+		byte = word >> 16;
+	}
 	return byte;
 }
 
@@ -78,7 +89,7 @@ Uint32 _pci_config_readl( Uint16 bus, Uint16 device, Uint16 func,
 
 	// OR them together
 	Uint32 word3 = word2 << 16;
-	Uint32 dword = word1 | word2;
+	Uint32 dword = word1 | word3;
 
 	return dword;
 }
