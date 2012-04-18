@@ -730,6 +730,17 @@ void user_z( void ) {
 
 }
 
+/*
+** User MOUSE launches the mouse module.
+*/
+
+void user_mouse( void ) {
+	c_puts( "User MOUSE running\n" );
+	_ps2_mouse_init();	
+	c_puts( "User MOUSE exiting\n" );
+	exit();
+}
+
 
 /*
 ** SYSTEM PROCESSES
@@ -891,6 +902,14 @@ void init( void ) {
 	if( status != SUCCESS ) {
 		prt_status( "init: can't spawn() user T, status %s\n", status );
 	}
+#endif
+
+#ifdef SPAWN_MOUSE
+	status = spawn( &pid, user_mouse );
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user MOUSE, status %s\n", status );
+	}
+
 #endif
 
 	write( '!' );
