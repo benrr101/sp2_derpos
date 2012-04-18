@@ -41,7 +41,9 @@ void _ps2_mouse_init( void );
 void _ps2_mouse_isr( int vec, int code ); 
 
 // Read/Write functions
-char _ps2_read();
-void _ps2_write(char b);
+Uint _ps2_read_mouse( void );
+void _ps2_write_mouse(char b);
+void _ps2_mouse_ready( void );
+void _ps2_mouse_clear( void );
 
 #endif
