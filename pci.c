@@ -17,12 +17,32 @@
  */
 void _pci_probe_devices(){
 	
+	// vars
+	Uint16 val;
+
 	// report that the PCI probe is starting
 	c_puts("Probing for PCI Devices...\n");
 
-	// just test out the _pci_config_read() function
-	c_printf("Probing Bus 0, device 0, function 0: '%u'.\n", 
-			_pci_config_read(0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF));
+	// Print out all found devices
+	Uint16 bus;
+	Uint16 device;
+	Uint16 func;
+	/*for(bus = 0; bus < 0xFF; bus++){
+		for(device = 0;  device < 0xFF; device++){
+			for(func = 0; func < 0xFF; func++){
+				val = _pci_config_read(bus, device, func, 0);
+				if(val != 0xFFFF && val != 0x0){
+					c_printf("Probing Bus 0x%x, device 0x%x, function 0x%x...\n", 
+							bus, device, func);
+					c_printf("   Vendor ID: 0x%x.\n", val);
+				}
+			}
+		}
+	}*/
+
+	c_puts("Printing information on the IDE Controller...\n");
+	Uint8 valb = _pci_config_readb(0x00, 0x1F, 0x1, 11);
+	c_printf("Class Code of Device 0x1F, Function 0x1: 0x%x.\n", valb);
 
 	// report that the PCI probe completed with no issues
 	c_puts("Done.\n");
