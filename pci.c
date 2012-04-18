@@ -67,12 +67,10 @@ Uint8 _pci_config_readb( Uint16 bus, Uint16 device, Uint16 func,
 	// give the user back upper bytes only.
 	Uint8 byte;
 	if(offset % 2 == 0) {
-		c_printf("TEST: OFFSET: 0x%x, % 2 = 0x%x\n", offset, offset % 2);
 		// Lower bytes
 		byte = word & 0xFFFF;
 	} else {
 		// Upper bytes
-		c_printf("TEST: 0x%x >> 16 = 0x%x\n", word, (Uint8)(word >> 8));
 		byte = word >> 8;
 	}
 	return byte;
@@ -96,11 +94,54 @@ Uint32 _pci_config_readl( Uint16 bus, Uint16 device, Uint16 func,
 	return dword;
 }
 
-void _pci_config_writeb( Uint16 bus, Uint16 device, Uint16 func, Uint16 offset,
-		Uint8 payload ){
-		
-	// Get the address we're writing to
+/**
+ * Writes a short to the PCI bus.
+ * @param	Uint16	bus		The bus of the PCI device to write to
+ * @param	Uint16	device	The device # of the device to write to
+ * @param	Uint16	func	The function of the device to write to
+ * @param	Uint16	offset	Offset of the register to write to. Must be aligned
+ *							to 16-bits
+ * @param	Uint16	payload	The short to write to the device
+ */
+void _pci_config_write( Uint16 bus, Uint16 device, Uint16 func, Uint16 offset,
+		Uint16 payload ){
+	
+	// If we're writing to a non-2byte aligned address, I don't think it will
+	// work right
+	if(offset % 2 != 0) {
+		__panic("Attempting to write to a non-2byte aligned PCI config reg");
+	}
+
+	// Get the address we're writing to and tell the controller we're writing
+	// to it.
 	Uint32 addr = _pci_config_get_address(bus, device, func, offset);
+	__outl(CONFIG_ACCESS, addr);
+	
+	// Write to the data port
+	__outw(CONFIG_DATA, payload);
+}
+
+/**
+ * Writes a long to the PCI bus.
+ * @param	Uint16	bus		The bus of the PCI device to write to
+ * @param	Uint16	device	The device # of the device to write to
+ * @param	Uint16	func	The function of the device to write to
+ * @param	Uint16	offset	Offset of the register to write to. Must be aligned
+ *							to 32-bits
+ * @param	Uint32	payload	The long to write to the device
+ */
+void _pci_config_writel( Uint16 bus, Uint16 device, Uint16 func, Uint16 offset,
+		Uint32 payload ) {
+	
+	// If we're writing to a non-4byte aligned address, I don't think it'll
+	// work right
+	if(offset % 4 != 0) {
+		__panic("Attempting to write to a non-4byte aligned PCI config reg");
+	}
+
+	Uint32 addr = _pci_config_get_address(bus, device, func, offset);
+	__outl(CONFIG_ACCESS, addr);
+	__outl(CONFIG_DATA, payload);
 }
 
 
