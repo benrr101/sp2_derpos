@@ -48,6 +48,7 @@ static Uint32 _pindex;
 // the system time
 
 Time _system_time;
+char * dance[3];
 
 /*
 ** PRIVATE FUNCTIONS
@@ -69,6 +70,11 @@ void _clock_init( void ) {
 	// start the pinwheel
 
 	_pinwheel = _pindex = 0;
+
+	// Setup the dance-wheel
+	dance[0] = "<<(o.0)";
+	dance[1] = "(0.o)>>";
+	dance[2] = "^(o.o)^";
 
 	// return to the epoch
 
@@ -105,10 +111,11 @@ void _isr_clock( int vector, int code ) {
 	// spin the pinwheel
 
 	++_pinwheel;
-	if( _pinwheel == (CLOCK_FREQUENCY / 10) ) {
+	if( _pinwheel == (CLOCK_FREQUENCY / 2) ) {
 		_pinwheel = 0;
 		++_pindex;
-		c_putchar_at( 79, 0, "|/-\\"[ _pindex & 3 ] );
+		_pindex = _pindex % 3;
+		c_puts_at( 72, 0, dance[_pindex] );
 	}
 
 	// increment the system time
