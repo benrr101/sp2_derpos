@@ -18,10 +18,10 @@
 #include "clock.h"
 #include "pcbs.h"
 #include "bootstrap.h"
-#include "startup.h"
 #include "syscalls.h"
 #include "sio.h"
 #include "scheduler.h"
+#include "vmem.h"
 
 // need init() address
 #include "users.h"
@@ -217,6 +217,7 @@ void _init( void ) {
 	c_puts( "Module init: " );
 
 	_q_init();		// must be first
+	_vmem_init();
 	_pcb_init();
 	_stack_init();
 	_sio_init();
@@ -299,6 +300,5 @@ void _init( void ) {
 	*/
 
 	c_puts( "System initialization complete.\n" );
-	c_printf( "End is at position %x \n", __get_end() );
 
 }
