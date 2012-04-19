@@ -38,3 +38,31 @@ void _testGetPCIInfo() {
 	__panic("HOLY FUCK.");
 }
 
+Uint16 _sata_get_bar(Uint16 bus, Uint16 device, Uint16 func, Uint16 offset) {
+	// Read the register at the offset
+	Uint32 reg = _pci_config_readl(bus, device, func, offset);
+	// Return the address after bitmasking
+	// The format of the register looks like:
+	//	31:16	- Reserved
+	//	15:3	- Base Address <- The stuff we want
+	//	 2:1	- Reserved
+	//	   0	- Hardwired to 1
+	return (reg & 0xFFF8) >> 3;
+}
+
+void _sata_probe() {
+	// Get the addresses that we'll be reading from
+	Uint16 priCmdAddr = _sata_get_bar(SATA_PCI_BUS, SATA_PCI_DEVICE,
+		SATA_PCI_FUNCTION, SATA_PCI_REG_PCMD);
+	Uint16 priCtlAddr = _sata_get_bar(SATA_PCI_BUS, SATA_PCI_DEVICE,
+		SATA_PCI_FUNCTION, SATA_PCI_REG_PCTRL);
+	Uint16 secCmdAddr = _sata_get_bar(SATA_PCI_BUS, SATA_PCI_DEVICE,
+		SATA_PCI_FUNCTION, SATA_PCI_REG_SCMD);
+	Uint16 secCtlAddr = _sata_get_bar(SATA_PCI_BUS, SATA_PCI_DEVICE,
+		SATA_PCI_FUNCTION, SATA_PCI_REG_SCTRL);
+	c_printf("Primary SATA Command Port: 0x%x\n", priCmdAddr);
+	c_printf("Primary SATA Control Port: 0x%x\n", priCtlAddr);
+	c_printf("Secondary SATA Command Port: 0x%x\n", secCmdAddr);
+	c_printf("Secondary SATA Control Port: 0x%x\n", secCtlAddr);
+	__panic("HOT DAMN!");
+}
