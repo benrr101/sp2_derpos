@@ -24,6 +24,9 @@
 ** PUBLIC GLOBAL VARIABLES
 */
 
+VESA_INFO vga_vesa_info;
+MODE_INFO vga_mode_info;
+
 /*
 ** PRIVATE FUNCTIONS
  */
@@ -50,6 +53,8 @@ void _vga_init( void ) {
     //draw();
     //draw2();
     //back2text() ;
+    vga_vesa_info.TotalMemory = 0;
+    vga_mode_info.WinSize = 0;
 }
 
 void draw2( void ) {

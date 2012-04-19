@@ -21,6 +21,10 @@
 #define	TARGET_STACK	0x00010000	/* and downward */
 
 /*
+** Random memory addresses
+*/
+
+/*
 ** The Global Descriptor Table (0000:0500 - 0000:2500)
 */
 #define	GDT_SEGMENT	0x00000050
