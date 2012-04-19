@@ -38,11 +38,18 @@
  ** initialize the vga module
  */
 
+//
+//	if you change the 0 in the mode to a 4 you get the ($0x0103)->($0x4103)
+//	linear buffer and from there you can draw tot he screen
+// 	in the vga info struct there is  aPhysBaseAddr to draw too
+//	
+//
+
 void _vga_init( void ) {
-    vga256();
-    draw();
-    draw2();
-    back2text() ;
+    //vga256();
+    //draw();
+    //draw2();
+    //back2text() ;
 }
 
 void draw2( void ) {
@@ -52,19 +59,23 @@ void draw2( void ) {
     regs.x.dx = y;       y location, from 0..199  
     int86(0x10,&regs,&regs);
     */
-    asm("xorl %eax, %eax");
-    asm("movb $0x0C, %ah");
-    asm("movb $0x04, %al");
-    asm("movw $0x14, %cx");
-    asm("movw $0x14, %dx");
-    asm("int $0x10");
+    asm(
+    "xorl %eax, %eax;"
+    "movb $0x0C, %ah;"
+    "movb $0x04, %al;"
+    "movw $0x14, %cx;"
+    "movw $0x14, %dx;"
+    "int $0x10;"
+    );
     return;
 }
 void back2text( void ) { 
 
-    asm xorl   %eax, %eax
-    asm("movw   $0x03, %ax");
-    asm("int    $0x10");
+    asm(
+    "xorl   %eax, %eax;"
+    "movw   $0x03, %ax;"
+    "int    $0x10;"
+    );
     return;
     /*  __dpmi_regs regs;
         regs.x.ax = 0x13; 
@@ -75,9 +86,6 @@ void back2text( void ) {
 }
 void vga256( void ) {
 
-    asm("xorl   %eax, %eax");
-    asm("movw   $0x13, %ax");
-    asm("int    $0x10");
     return;
     /*  __dpmi_regs regs;
         regs.x.ax = 0x13; 
