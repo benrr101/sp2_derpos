@@ -396,6 +396,20 @@ boot_sig:
 */
 
 switch:
+
+	//get VESA_vgaInfo
+	//http://www.delorie.com/djgpp/doc/ug/graphics/vesa.html
+
+	//get VESA_INFO
+
+	//get mode info
+
+	//select mode
+	xorl   	%eax, %eax
+    movw   	$0x0103, %bx
+    movw 	$0x4F02, %ax
+    int		$0x10
+    
 	cli
 	movb	$0x80, %al	/* disable NMIs */
 	outb	%al, $0x70

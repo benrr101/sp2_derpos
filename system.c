@@ -220,7 +220,7 @@ void _init( void ) {
 	_pcb_init();
 	_stack_init();
 	_sio_init();
-	//_vga_init();
+	_vga_init();
 	_syscall_init();
 	_sched_init();
 	_clock_init();
