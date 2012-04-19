@@ -21,6 +21,10 @@
 #define SATA_PCI_REG_DEVICE 0x02
 #define SATA_PCI_REG_HEADER 0x0E	// 16 bit
 #define SATA_PCI_REG_BAR	0x20
+#define SATA_PCI_REG_PCMD	0x10
+#define SATA_PCI_REG_PCTRL	0x14
+#define SATA_PCI_REG_SCMD	0x18
+#define SATA_PCI_REG_SCTRL	0x1C
 #define SATA_PCI_REG_ABAR   0x24
 #define SATA_PCI_REG_MAP	0x90	// 8 bit
 
@@ -41,6 +45,8 @@ typedef struct {
 
 // FUNCTIONS ///////////////////////////////////////////////////////////////
 void _testGetPCIInfo(void);
+void _sata_probe(void);
+Uint16 _sata_get_bar(Uint16 bus, Uint16 device, Uint16 func, Uint16 offset);
 
 
 #endif
