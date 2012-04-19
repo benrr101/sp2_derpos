@@ -9,10 +9,10 @@
 #
 # User supplied files
 #
-U_C_SRC = clock.c klibc.c pcbs.c queues.c scheduler.c sio.c stacks.c syscalls.c system.c ulibc.c users.c 
-U_C_OBJ = clock.o klibc.o pcbs.o queues.o scheduler.o sio.o stacks.o syscalls.o system.o ulibc.o users.o
-U_S_SRC = klibs.S ulibs.S
-U_S_OBJ = klibs.o ulibs.o
+U_C_SRC = clock.c klibc.c pcbs.c queues.c scheduler.c sio.c stacks.c syscalls.c system.c ulibc.c users.c vmem.c
+U_C_OBJ = clock.o klibc.o pcbs.o queues.o scheduler.o sio.o stacks.o syscalls.o system.o ulibc.o users.o vmem.o
+U_S_SRC = klibs.S ulibs.S vmemA.S
+U_S_OBJ = klibs.o ulibs.o vmemA.o
 U_LIBS	=
 
 #
@@ -208,8 +208,9 @@ sio.o: startup.h /home/fac/wrc/include/uart.h /home/fac/wrc/include/x86arch.h
 stacks.o: headers.h queues.h stacks.h
 syscalls.o: headers.h pcbs.h clock.h stacks.h scheduler.h queues.h sio.h
 syscalls.o: syscalls.h /home/fac/wrc/include/x86arch.h system.h startup.h
-system.o: headers.h system.h pcbs.h clock.h stacks.h bootstrap.h startup.h
-system.o: syscalls.h queues.h /home/fac/wrc/include/x86arch.h sio.h
-system.o: scheduler.h users.h ulib.h types.h
+system.o: headers.h system.h pcbs.h clock.h stacks.h bootstrap.h syscalls.h
+system.o: queues.h /home/fac/wrc/include/x86arch.h sio.h scheduler.h vmem.h
+system.o: users.h ulib.h types.h
 ulibc.o: headers.h
 users.o: headers.h users.h
+vmem.o: startup.h headers.h vmem.h
