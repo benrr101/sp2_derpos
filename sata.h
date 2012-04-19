@@ -45,16 +45,19 @@ typedef struct {
 	Uint32	control;		// The control register (should be BAR + 8)
 } IDEChannel;
 
-typedef struct {
-	Uint8	data;			// The data register
-	Uint8	errorFeatures;	// On read, error register. On write, features reg
-	Uint8	sectorCount;	// Number of sectors
-	Uint8	lbaLow;			// LBA Low register
-	Uint8	lbaMid;			// LBA Middle register
-	Uint8	lbaHigh;		// LBA High register
-	Uint8	driveHead;		// Drive/Head register
-	Uint8	statusCommand;	// On read, status register. On write, command reg
-} IDECommandReg;
+typedef enum {
+	IDE_REG_DATA		= 0x0,	// The data register
+	IDE_REG_ERROR 		= 0x1,	// On read, error register.
+	IDE_REG_FEATURES 	= 0x1,  // On write, features reg
+	IDE_REG_SECCOUNT1	= 0x2,	// Number of sectors
+	IDE_REG_LBALOW		= 0x3,	// LBA Low register
+	IDE_REG_LBAMID		= 0x4,	// LBA Middle register
+	IDE_REG_LBAHIGH		= 0x5,	// LBA High register
+	IDE_REG_DRIVESEL	= 0x6,	// Drive selector register
+	IDE_REG_STATUS		= 0x7,	// On read, status register.
+	IDE_REG_COMMAND		= 0x7	// On write, command reg
+	// THERE's MORE HERE
+} IDERegs;
 
 typedef struct {
 	// Generic Host Controller Register Address Map
@@ -76,7 +79,9 @@ IDEDevice 	ideDevices[4];
 // FUNCTIONS ///////////////////////////////////////////////////////////////
 void _testGetPCIInfo(void);
 void _sata_probe(void);
+void _sata_initialize(void);
+Uint8 _sata_read_reg(IDEChannel channel, IDERegs reg);
+void _sata_write_reg(IDEChannel channel, IDERegs reg, Uint8 payload);
 Uint16 _sata_get_bar(Uint16 bus, Uint16 device, Uint16 func, Uint16 offset);
-
 
 #endif
