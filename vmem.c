@@ -20,7 +20,8 @@ void _vmem_init( void )
 {
 	c_printf( "\n\nEnd is at position %x \n", __get_end() );
 	//strip the last 12 bytes then increment by page to get next valid page
-	_vmem_page_dir = (Uint32*)( ( __get_end() >> PAGE_BITS ) << PAGE_BITS ) + PAGE_SIZE;
+	_vmem_page_dir = (Uint32*)(( ( __get_end() >> ( PAGE_BITS -1) ) << ( PAGE_BITS - 1) ) + PAGE_SIZE);
+
 	c_printf( "Aligned address is %x \n", _vmem_page_dir);
 
 	int i;
@@ -29,7 +30,7 @@ void _vmem_init( void )
 		_vmem_page_dir[i] = PAGE_DIR_READ;
 	}
 
-	Uint32* pageTableStart = (Uint32*) _vmem_page_dir + PAGE_SIZE;
+	Uint32* pageTableStart = (Uint32*) ( (Uint32)_vmem_page_dir + PAGE_SIZE);
 	c_printf( "First page table address is %x \n", pageTableStart);
 
 	//should check how much to idenity map
