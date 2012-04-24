@@ -24,6 +24,9 @@
 #define PS2_M_SCA2	0xE7
 #define PS2_M_SCA1	0xE6
 #define PS2_M_SCOM	0xD4
+#define PS2_M_SBYT	0x60
+#define PS2_M_ENAB	0xA8
+#define PS2_M_CMPQ	0x20
 
 // Response Set
 #define PS2_M_ERR	0xFC
@@ -42,8 +45,12 @@ void _ps2_mouse_isr( int vec, int code );
 
 // Read/Write functions
 Uint _ps2_read_mouse( void );
-void _ps2_write_mouse(char b);
-void _ps2_mouse_ready( void );
+void _ps2_write_mouse(char b );
+Uint _ps2_mouse_ready( void );
 void _ps2_mouse_clear( void );
+
+// Error messages
+void _ps2_nonack( Uint b );
+void _ps2_debug( const char * comp, Uint resp );
 
 #endif
