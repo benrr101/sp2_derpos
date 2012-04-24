@@ -101,7 +101,7 @@ void _sata_initialize() {
 
 void _sata_wait() {
 	volatile int i;
-	for(i = 0; i < 100000000; i++);
+	for(i = 0; i < 1000000; i++);
 }
 
 void _sata_probe() {
