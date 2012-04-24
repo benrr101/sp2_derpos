@@ -19,47 +19,47 @@ void _ps2_mouse_init( void ){
 	// vars
 	Uint resp = 0;
 
-	
+	/*
+	_ps2_write_mouse(PS2_M_RST);
+	resp = _ps2_read_mouse() | 2;
+	_ps2_debug( "RESET", resp );
+	resp = _ps2_read_mouse() | 2;
+	_ps2_debug( "RESET 2", resp );
+	*/
+
 	// Make sure the aux port is enabled
-	_ps2_write_mouse(PS2_M_ENAB);
+	/*_ps2_write_mouse(PS2_M_ENAB);
 	resp = _ps2_read_mouse();
-	_ps2_debug("ENAB", resp);
+	_ps2_debug("ENAB", resp);*/
 	/*resp = _ps2_read_mouse();
 	if( resp != PS2_M_ACK){
 		_ps2_nonack(resp);
 		return;
 	}
 	*/
-	
-	// Let the mouse know we will be using interrupts, so we have to send the
-	// 'Compaq Status Byte' and get back the status (to enable IRQ12).
-	_ps2_write_mouse(PS2_M_CMPQ);
-	resp = _ps2_read_mouse() | 2;
-	_ps2_write_mouse(PS2_M_SBYT);
-	resp = _ps2_read_mouse();
+
 	_ps2_mouse_clear();
-	__outb(PS2_PORT, resp);
-	resp = _ps2_read_mouse();
+	__outb(0x64, 0xA8);
 
-	// Alright, now we need to tell the mouse to use default settings
-	_ps2_write_mouse(PS2_M_SDEF);
+	//Enable the interrupts
+	_ps2_mouse_clear();
+	__outb(0x64, 0x20);
+	_ps2_mouse_ready();
+	resp = (__inb(0x60) | 2);
+	_ps2_mouse_clear();
+	__outb(0x64, 0x60);
+	_ps2_mouse_clear();
+	__outb(0x60, resp);
 
-	resp = _ps2_read_mouse();
-	if( resp != PS2_M_ACK ){
-		_ps2_nonack(resp);
-		return;
-	}
+	//Tell the mouse to use default settings
+	_ps2_write_mouse(0xF6);
+	_ps2_read_mouse();  //Acknowledge
 
-	// make sure everything is a-OK
-	resp = _ps2_read_mouse();
-	if(resp != PS2_M_BATC){
-		c_printf( "Mouse did not pass BAT! Response: 0x%x\n", resp );
-		__panic( "SHUTDOWN EVERYTHING!" );
-		return;
-	}
+	//Enable the mouse
+	_ps2_write_mouse(0xF4);
+	_ps2_read_mouse();  //Acknowledge
 
-	c_puts( "BAT sucessfully passed and Mouse now contains default "
-			"settings!\n" );
+	return;
 }
 
 void _ps2_mouse_isr( int vec, int code ){
@@ -81,7 +81,7 @@ Uint _ps2_read_mouse(){
 void _ps2_write_mouse(char b){
 
 	// vars
-	Uint resp;
+	//Uint resp;
 
 	_ps2_mouse_clear();
 
@@ -103,9 +103,9 @@ void _ps2_mouse_clear( void ){
 	c_printf("Waiting on Mouse to be clear...\n");
 	// wait for the mouse to be clear for commands
 	while( 1 ){
-		b = __inb(PS2_STAT) & 0xFF;
+		b = __inb(PS2_STAT);
 		//c_printf("CLEAR: Read a byte from Port 0x64, 0x%x...\n", b);
-		if( b == 0x1C )
+		if( (b & 2) == 0 )
 			return;
 	}
 }
@@ -120,7 +120,7 @@ Uint _ps2_mouse_ready( void ){
 	while( 1 ){
 		b = __inb(PS2_STAT);
 		//c_printf("READY: Read a byte from Port 0x64, 0x%x...\n", b);
-		if( b & (0x20 | 0x1) )
+		if( (b & 1) == 1 )
 			return b;
 	}
 }
