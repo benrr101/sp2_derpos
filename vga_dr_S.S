@@ -1,9 +1,8 @@
 /*
 ** http://www.delorie.com/djgpp/doc/ug/graphics/vesa.html
 */
+#include "vga_define.h"
 
-	.comm 	vga_vesa_info 512,32
-	.comm 	vga_mode_info 256,32
 	.text
 .globl _get_vesa_info
 _get_vesa_info:
@@ -11,10 +10,12 @@ _get_vesa_info:
 	pushl 	%eax
 	pushl	%ebx
 
-	leal	vga_vesa_info, %eax
-	movwl	%eax, %es:(%di)
+	movw	$VESA_INFO_ADDR, %ax
+	movw	%ax, %es
+	movw	$0x0, %di
 	xorl 	%eax, %eax
-	movw	$0x4F00, %ax
+	movw	$GET_VESA_INFO, %ax
+	int 	$0x10
 	
 	popl	%ebx
     popl	%eax
@@ -27,11 +28,13 @@ _get_mode_info:
 	pushl	%ebx
 	pushl	%ecx
 
-	leal	vga_mode_info, %eax
-	movwl	%eax, %es:(%di)
+	movw	$VGA__INFO_ADDR, %ax
+	movw 	%ax, %es
+	movw	$0x0, %di
 	xorl 	%eax, %eax
-	movw   	$0x0103, %cx
-	movw	$0x4F01, %ax
+	movw   	$V_MODE_800_600, %cx
+	movw	$GET_MODE_INFO, %ax
+	int		$0x10
 	
 	popl	%ecx
 	popl	%ebx
@@ -41,6 +44,7 @@ _get_mode_info:
 	/* 
 	** get mode info????
 	** --->he had one more step I though it read as above
+	** maybe setting the memory model from banks to linear buffer????????
 	*/
 .globl _select_vga_mode
 _select_vga_mode:
@@ -49,8 +53,8 @@ _select_vga_mode:
 	
 	//select mode
 	xorl   	%eax, %eax
-    movw   	$0x0103, %bx
-    movw 	$0x4F02, %ax
+    movw   	$V_MODE_800_600, %bx
+    movw 	$SET_MODE, %ax
     int		$0x10
     
     popl	%ebx
@@ -64,10 +68,9 @@ _select_text_mode:
 	
 	//select mode
 	xorl   	%eax, %eax
-    movw 	$0x03, %ax
+    movw 	$V_MODE_TEXT, %ax
     int		$0x10
     
     popl	%ebx
     popl	%eax
     ret
-	

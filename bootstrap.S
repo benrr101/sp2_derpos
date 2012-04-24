@@ -42,7 +42,7 @@ OFFSET_LIMIT	= 65536 - SECTOR_SIZE
 */
 	.globl begtext
 	
-	.text
+	.text	
 begtext:
 
 /*
@@ -395,11 +395,13 @@ boot_sig:
 ** transfers to the OS entry point.
 */
 
+
+
 switch:
 
+	call	_select_vga_mode
 	call 	_get_vesa_info
 	call 	_get_mode_info
-	call	_select_vga_mode
 	call	_select_text_mode
     
 	cli
@@ -445,83 +447,17 @@ switch:
 	ljmp	$GDT_CODE, $TARGET_ADDRESS
 	.code16
 
-/*
-** http://www.delorie.com/djgpp/doc/ug/graphics/vesa.html
-*/
 
-	.comm 	vga_vesa_info 512,32
-	.comm 	vga_mode_info 256,32
-	.text
-.globl _get_vesa_info
-_get_vesa_info:
-	//get VESA_INFO
-	pushl 	%eax
-	pushl	%ebx
 
-	leal	vga_vesa_info, %eax
-	movl	%eax, %es:(%di)
-	xorl 	%eax, %eax
-	movw	$0x4F00, %ax
-	
-	popl	%ebx
-    popl	%eax
-    ret
-
-.globl _get_mode_info
-_get_mode_info:
-	//get VESA_MODEINFO
-	pushl 	%eax
-	pushl	%ebx
-	pushl	%ecx
-
-	leal	vga_mode_info, %eax
-	movl	%eax, %es:(%di)
-	xorl 	%eax, %eax
-	movw   	$0x0103, %cx
-	movw	$0x4F01, %ax
-	
-	popl	%ecx
-	popl	%ebx
-    popl	%eax
-    ret
-	
-	/* 
-	** get mode info????
-	** --->he had one more step I though it read as above
-	*/
-.globl _select_vga_mode
-_select_vga_mode:
-	pushl 	%eax
-	pushl	%ebx
-	
-	//select mode
-	xorl   	%eax, %eax
-    movw   	$0x0103, %bx
-    movw 	$0x4F02, %ax
-    int		$0x10
-    
-    popl	%ebx
-    popl	%eax
-    ret
-    
-.globl _select_text_mode
-_select_text_mode:
-	pushl 	%eax
-	pushl	%ebx
-	
-	//select mode
-	xorl   	%eax, %eax
-    movw 	$0x03, %ax
-    int		$0x10
-    
-    popl	%ebx
-    popl	%eax
-    ret
-	
 
 /*
 ** Supporting code.
 **
+*/
+#include "vga_dr_S.S"
+
+
+/*
 ** Turn off the motor on the floppy disk drive.
 */
 floppy_off:
@@ -624,6 +560,14 @@ stack_seg:	/* limit FFFFF, base 0, R/W data seg, 32-bit 4K */
 	.byte	0x92
 	.byte	0xCF
 	.byte	0x00
+	
+//mode_seg:	/* limit FFFFF, base 0, R/W data seg, 32-bit 4K */
+//	.word	0xFFFF		/* limit[15:0] */
+//	.word	0x0000		/* base[15:0] */
+//	.byte	0x80		/* base[23:16] */
+//	.byte	0x92		/* access byte *//* 1 00 1 0010: present, prio 0, C/D, R/W data */
+//	.byte	0xCF		/* granularity */
+//	.byte	0x00		/* base[31:24] */
 
 end_gdt:
 gdt_len = end_gdt - start_gdt

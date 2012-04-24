@@ -5,8 +5,8 @@
 #define	__KERNEL__20113__
 
 #include "headers.h"
-
 #include "vga_dr.h"
+#include "vga_define.h"
 
 /*
 ** PRIVATE DEFINITIONS
@@ -23,9 +23,8 @@
 /*
 ** PUBLIC GLOBAL VARIABLES
 */
-
-VESA_INFO vga_vesa_info;
-MODE_INFO vga_mode_info;
+static VESA_INFO *vga_vesa_info;
+static MODE_INFO *vga_mode_info;
 
 /*
 ** PRIVATE FUNCTIONS
@@ -49,12 +48,25 @@ MODE_INFO vga_mode_info;
 //
 
 void _vga_init( void ) {
-    //vga256();
-    //draw();
-    //draw2();
-    //back2text() ;
-    vga_vesa_info.TotalMemory = 0;
-    vga_mode_info.WinSize = 0;
+	//Check the contents of the information extracted from REAL MODE 
+	//0x334E0
+	vga_vesa_info = (VESA_INFO *)(VESA_INFO_ADDR << 1);
+	//0x333E0
+	vga_mode_info = (MODE_INFO *)(VGA__INFO_ADDR << 1);
+	
+	c_printf("\nVESA_INFO(%x):\n", vga_vesa_info);
+	c_printf("-version: %d\n", vga_vesa_info->VESAVersion);
+	c_printf("-VideoModePtr: %x\n", vga_vesa_info->VideoModePtr);
+	c_printf("-TtlMem: %d\n", vga_vesa_info->TotalMemory);
+	c_printf("\nMODE_INFO(%x):\n", vga_mode_info);
+	c_printf("-ModeAttr: %d\n", vga_mode_info->ModeAttributes);
+	c_printf("-WinSize: %d\n", vga_mode_info->WinSize);
+	c_printf("-WinSize X: %d\n", vga_mode_info->XResolution);
+	c_printf("-WinSize Y: %d\n", vga_mode_info->YResolution);
+	c_printf("-CharSize X: %d\n", vga_mode_info->XCharSize);
+	c_printf("-CharSize Y: %d\n", vga_mode_info->YCharSize);
+	c_printf("-WinFuncPrt: %x\n", vga_mode_info->WinFuncPtr);
+	c_printf("-PhysBasePrt: %x\n", vga_mode_info->PhysBasePtr);
 }
 
 void draw2( void ) {
