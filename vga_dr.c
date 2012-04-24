@@ -49,9 +49,7 @@ static MODE_INFO *vga_mode_info;
 
 void _vga_init( void ) {
 	//Check the contents of the information extracted from REAL MODE 
-	//0x334E0
 	vga_vesa_info = (VESA_INFO *)(VESA_INFO_ADDR << 1);
-	//0x333E0
 	vga_mode_info = (MODE_INFO *)(VGA__INFO_ADDR << 1);
 	
 	c_printf("\nVESA_INFO(%x):\n", vga_vesa_info);
@@ -59,7 +57,8 @@ void _vga_init( void ) {
 	c_printf("-VideoModePtr: %x\n", vga_vesa_info->VideoModePtr);
 	c_printf("-TtlMem: %d\n", vga_vesa_info->TotalMemory);
 	c_printf("\nMODE_INFO(%x):\n", vga_mode_info);
-	c_printf("-ModeAttr: %d\n", vga_mode_info->ModeAttributes);
+	c_printf("-ModeAttr: %x\n", vga_mode_info->ModeAttributes);
+	c_printf("-MemModel: %x\n", vga_mode_info->MemoryModel);
 	c_printf("-WinSize: %d\n", vga_mode_info->WinSize);
 	c_printf("-WinSize X: %d\n", vga_mode_info->XResolution);
 	c_printf("-WinSize Y: %d\n", vga_mode_info->YResolution);
@@ -67,6 +66,7 @@ void _vga_init( void ) {
 	c_printf("-CharSize Y: %d\n", vga_mode_info->YCharSize);
 	c_printf("-WinFuncPrt: %x\n", vga_mode_info->WinFuncPtr);
 	c_printf("-PhysBasePrt: %x\n", vga_mode_info->PhysBasePtr);
+	draw();
 }
 
 void draw2( void ) {
@@ -113,17 +113,14 @@ void vga256( void ) {
 }
 
 void draw( void ) {
-    typedef unsigned char byte;
-    byte *VGA = (byte*)0xA0000000L;     
-    unsigned short offset;
+	Uint32 *ptr = (Uint32*)vga_mode_info->PhysBasePtr;
     int i = 0;
     int j = 0;
 
 
     for(i = 10; i < 40; i++){
         for( j = 0; j < 20; j++){
-            offset = 320*i + j;
-            VGA[offset] = ((i+j)%15)+1;
+			ptr[i+(20*j)] = i+j;
         }
     }
 }

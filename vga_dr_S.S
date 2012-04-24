@@ -17,6 +17,11 @@ _get_vesa_info:
 	movw	$GET_VESA_INFO, %ax
 	int 	$0x10
 	
+	cmpb	$0x0, %ah
+	jne		_vga_die
+	cmpb	$0x4F, %al
+	jne		_vga_die
+	
 	popl	%ebx
     popl	%eax
     ret
@@ -35,6 +40,11 @@ _get_mode_info:
 	movw   	$V_MODE_800_600, %cx
 	movw	$GET_MODE_INFO, %ax
 	int		$0x10
+	
+	cmpb	$0x0, %ah
+	jne		_vga_die
+	cmpb	$0x4F, %al
+	jne		_vga_die
 	
 	popl	%ecx
 	popl	%ebx
@@ -74,3 +84,6 @@ _select_text_mode:
     popl	%ebx
     popl	%eax
     ret
+
+_vga_die:
+	hlt
