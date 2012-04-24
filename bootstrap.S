@@ -402,7 +402,9 @@ switch:
 	call	_select_vga_mode
 	call 	_get_vesa_info
 	call 	_get_mode_info
+	#ifdef VIDEO_TEXT
 	call	_select_text_mode
+	#endif
     
 	cli
 	movb	$0x80, %al	/* disable NMIs */
