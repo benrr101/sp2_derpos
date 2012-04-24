@@ -20,11 +20,11 @@
 #define SATA_PCI_REG_VENDOR 0x00
 #define SATA_PCI_REG_DEVICE 0x02
 #define SATA_PCI_REG_HEADER 0x0E	// 16 bit
-#define SATA_PCI_REG_BAR	0x20
 #define SATA_PCI_REG_PCMD	0x10
 #define SATA_PCI_REG_PCTRL	0x14
 #define SATA_PCI_REG_SCMD	0x18
 #define SATA_PCI_REG_SCTRL	0x1C
+#define SATA_PCI_REG_BMAST	0x20
 #define SATA_PCI_REG_ABAR   0x24
 #define SATA_PCI_REG_MAP	0x90	// 8 bit
 
@@ -43,9 +43,11 @@
 typedef struct {
 	Uint32	command;		// The command register (BAR)
 	Uint32	control;		// The control register (should be BAR + 8)
+	Uint32	busmast;		// The bus master register (PRI = BAR4, SEC = BAR4 + 8);
 } IDEChannel;
 
 typedef enum {
+	// Registers on the command
 	IDE_REG_DATA		= 0x0,	// The data register
 	IDE_REG_ERROR 		= 0x1,	// On read, error register.
 	IDE_REG_FEATURES 	= 0x1,  // On write, features reg
@@ -55,9 +57,23 @@ typedef enum {
 	IDE_REG_LBAHIGH		= 0x5,	// LBA High register
 	IDE_REG_DRIVESEL	= 0x6,	// Drive selector register
 	IDE_REG_STATUS		= 0x7,	// On read, status register.
-	IDE_REG_COMMAND		= 0x7	// On write, command reg
-	// THERE's MORE HERE
+	IDE_REG_COMMAND		= 0x7,	// On write, command reg
+	
+	// Registers on the control
+	IDE_REG_SECCOUNT2	= 0x08,	// High byte of number of sectors
+	IDE_REG_LBA3		= 0x09, // IDK.
+	IDE_REG_LBA4		= 0x0A, // IDK.
+	IDE_REG_LBA5		= 0x0B, // IDK.
+
+	// Registers on the Bus Master
+	IDE_REG_ALTSTATUS	= 0x0C, // On read, alternate status register
+	IDE_REG_CONTROL		= 0x0C, // On write, control reg
+	IDE_REG_DEVADDR		= 0x0D	// Device address?
 } IDERegs;
+
+typedef enum {
+	IDE_CMD_IDENTIFY	= 0xEC	// Tell the device to identify itself
+} IDECommands;
 
 typedef struct {
 	// Generic Host Controller Register Address Map
