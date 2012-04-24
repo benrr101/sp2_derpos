@@ -41,7 +41,7 @@
 **
 ** To spawn a specific user process from the initial process,
 ** uncomment its entry in this list.
-*/
+
 
 #define	SPAWN_A   // write, exit
 #define	SPAWN_B   // write, exit
@@ -65,7 +65,7 @@
 #define	SPAWN_T   // write, get_prio, set_priority, exit
 // no user U
 // no user V
-
+*/
 /*
 ** Users W-Z are spawned from other processes; they
 ** should never be spawned directly.

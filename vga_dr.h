@@ -77,7 +77,7 @@ typedef struct MODE_INFO
       unsigned long  PhysBasePtr          __attribute__ ((packed));
       unsigned long  OffScreenMemOffset   __attribute__ ((packed));
       unsigned short OffScreenMemSize     __attribute__ ((packed));
-      unsigned char  Reserved[206]        __attribute__ ((packed));
+      unsigned char  Reserved[206]        __attribute__ ((__packed__));
    } MODE_INFO;
 /*
 ** Prototypes

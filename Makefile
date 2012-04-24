@@ -11,8 +11,8 @@
 #
 U_C_SRC = clock.c klibc.c pcbs.c queues.c scheduler.c sio.c stacks.c syscalls.c system.c ulibc.c users.c vga_dr.c
 U_C_OBJ = clock.o klibc.o pcbs.o queues.o scheduler.o sio.o stacks.o syscalls.o system.o ulibc.o users.o vga_dr.o
-U_S_SRC = klibs.S ulibs.S vga_dr_S.s
-U_S_OBJ = klibs.o ulibs.o
+U_S_SRC = klibs.S ulibs.S vga_dr_S.S
+U_S_OBJ = klibs.o ulibs.o vga_dr_S.o
 U_LIBS	=
 
 #
@@ -87,7 +87,7 @@ LD = ld
 # Binary/source file for system bootstrap code
 
 BOOT_OBJ = bootstrap.b
-BOOT_SRC = bootstrap.S
+BOOT_SRC = bootstrap.S vga_dr_S.S
 
 # Assembly language object/source files
 
@@ -190,7 +190,7 @@ depend:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-bootstrap.o: bootstrap.h
+bootstrap.o: bootstrap.h vga_dr_S.S
 startup.o: bootstrap.h
 isr_stubs.o: bootstrap.h
 ulibs.o: syscalls.h headers.h queues.h /home/fac/wrc/include/x86arch.h
