@@ -34,7 +34,7 @@
 #define PS2_M_BATC	0xAA
 
 // IRQs
-#define PS2_M_VEC	12
+#define PS2_M_VEC	0x2C
 
 // Init Functions
 void _ps2_init( void );
