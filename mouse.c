@@ -39,32 +39,46 @@ void _ps2_mouse_init( void ){
 	*/
 
 	_ps2_mouse_clear();
-	__outb(0x64, 0xA8);
+	__outb( 0x64, 0xA8 );
 
 	//Enable the interrupts
 	_ps2_mouse_clear();
-	__outb(0x64, 0x20);
+	__outb( 0x64, 0x20 );
 	_ps2_mouse_ready();
-	resp = (__inb(0x60) | 2);
+	resp = ( __inb(0x60) | 2 );
 	_ps2_mouse_clear();
-	__outb(0x64, 0x60);
+	__outb( 0x64, 0x60 );
 	_ps2_mouse_clear();
-	__outb(0x60, resp);
+	__outb( 0x60, resp );
 
 	//Tell the mouse to use default settings
-	_ps2_write_mouse(0xF6);
+	_ps2_write_mouse( 0xF6 );
 	_ps2_read_mouse();  //Acknowledge
 
 	//Enable the mouse
-	_ps2_write_mouse(0xF4);
+	_ps2_write_mouse( 0xF4 );
 	_ps2_read_mouse();  //Acknowledge
 
-	return;
+	// Finally, hook in our interrupt vector
+	__install_isr( PS2_M_VEC, _ps2_mouse_isr );
+
+	c_puts( "Mouse driver successfully attached!\n" );
 }
 
 void _ps2_mouse_isr( int vec, int code ){
-	c_printf("Got an interrupt! Code: 0x%x", code);
+	//c_printf("Got an interrupt! Code: 0x%x\n", code);
+	static int byte_c = 0;
+	static char m_bytes[3];
+	m_bytes[byte_c++] = __inb(PS2_PORT);
+	//c_printf( "Byte 0x%x\n", byte_c );
 
+	// Only dump information once we have everything the mouse sent
+	if(byte_c == 3){
+		c_printf( "Overflow Byte: 0x%x\n", m_bytes[0] );
+		c_printf( "X Offset Byte: 0x%x\n", m_bytes[1] );
+		c_printf( "Y Offset Byte: 0x%x\n", m_bytes[2] );
+		byte_c = 0;
+	}
 }
 
 Uint _ps2_read_mouse(){	
