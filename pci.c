@@ -20,12 +20,102 @@ void _pci_probe_devices(){
 	// report that the PCI probe is starting
 	c_puts("Probing for PCI Devices...\n");
 
-	// just test out the _pci_config_read() function
-	c_printf("Probing Bus 0, device 0, function 0: '%u'.\n", 
-			_pci_config_read(0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF));
+	// Iterate over the entire PCI bus
+	Uint16 bus;
+	Uint16 device;
+	Uint8 func;
+	Uint16 vend;
+	Uint8 class;
+	Uint8 subclass; 
+	for(bus = 0; bus < 255; bus++) {
+		for(device = 0; device < 255; device++) {
+			for(func = 0; func < 7; func++) {
+				// If the vendor ID is not FFFF, then there is a device there
+				vend = _pci_config_read(bus, device, func, 0x0);
+				if(vend != 0xFFFF) {
+					c_printf("%02x:%02x.%02x ", bus, device, func);
 
-	// report that the PCI probe completed with no issues
-	c_puts("Done.\n");
+					// Print the vendor information
+					switch(vend) {
+						case 0x8086:
+							c_puts("Intel");
+							break;
+						case 0x14E4:
+							c_puts("Broadcom");
+							break;
+						default:
+							c_printf("Unknown Vendor 0x%04x", vend);
+							break;
+					}
+
+					// Get some info about it
+					class = _pci_config_readb(bus, device, func, 0xB);
+					subclass = _pci_config_read(bus, device, func, 0xA);
+	
+					// Print the class information
+					c_puts(" ");
+					switch(class) {
+						case 0x01:
+							c_puts("Mass Storage Device");
+							break;
+						case 0x02:
+							c_puts("Network Controller");
+							break;
+						case 0x03:
+							c_puts("Display Controller");
+							break;
+						case 0x04:
+							c_puts("Multimedia Controller");
+							break;
+						case 0x05:
+							c_puts("Memory Controller");
+							break;
+						case 0x06:
+							c_puts("Bridge Device");
+							break;
+						case 0x07:
+							c_puts("Multimedia Controller");
+							break;
+						case 0x08:
+							c_puts("Base System Peripherals");
+							break;
+						case 0x09:
+							c_puts("Input device");
+							break;
+						case 0x0A:
+							c_puts("Docking Station");
+							break;
+						case 0x0B:
+							c_puts("Processor");
+							break;
+						case 0x0C:
+							c_puts("Serial Bus Controller");
+							break;
+						case 0x0D:
+							c_puts("Wireless Controller");
+							break;
+						case 0x0E:
+							c_puts("Intelligent IO Controller");
+							break;
+						case 0x0F:
+							c_puts("Satellite Communications Controller");
+							break;
+						case 0x10:
+							c_puts("Encryption/Decryption Controller");
+							break;
+						case 0x11:
+							c_puts("Data Aquisition/Signal Processor");
+							break;
+						default:
+							c_puts("Unsupported Device");
+							break;
+					}
+					c_puts("\n");
+				}
+			}
+		}
+	}
+	__panic("HOLY FUCK.");
 }
 
 /**
