@@ -13,6 +13,8 @@
 #ifndef	_BOOTSTRAP_H
 #define	_BOOTSTRAP_H
 
+#define VIDEO_TEXT
+
 /*
 ** The target program itself
 */

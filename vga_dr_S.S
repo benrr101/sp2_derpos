@@ -86,4 +86,5 @@ _select_text_mode:
     ret
 
 _vga_die:
+	call 	_select_text_mode
 	hlt

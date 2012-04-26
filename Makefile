@@ -125,12 +125,6 @@ prog.o:	$(OBJECTS)
 
 prog.b:	prog.o
 	$(LD) -o prog.b -s --oformat binary -Ttext 0x10000 prog.o
-#
-# Build with text off
-#
-text: all
-	USER_OPTIONS = $(USER_OPTIONS) -DVIDEO_TEXT
-
 
 #
 # Targets for copying bootable image onto boot devices
