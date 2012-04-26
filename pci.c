@@ -10,6 +10,7 @@
 #include "headers.h"
 #include "startup.h"
 #include "pci.h"
+#include "sata.h"
 
 /**
  * Scans for all PCI devices, and printing information about discovered devices
@@ -33,21 +34,6 @@ void _pci_probe_devices(){
 				// If the vendor ID is not FFFF, then there is a device there
 				vend = _pci_config_read(bus, device, func, 0x0);
 				if(vend != 0xFFFF) {
-					c_printf("%02x:%02x.%02x ", bus, device, func);
-
-					// Print the vendor information
-					switch(vend) {
-						case 0x8086:
-							c_puts("Intel");
-							break;
-						case 0x14E4:
-							c_puts("Broadcom");
-							break;
-						default:
-							c_printf("Unknown Vendor 0x%04x", vend);
-							break;
-					}
-
 					// Get some info about it
 					class = _pci_config_readb(bus, device, func, 0xB);
 					subclass = _pci_config_read(bus, device, func, 0xA);
@@ -56,61 +42,15 @@ void _pci_probe_devices(){
 					c_puts(" ");
 					switch(class) {
 						case 0x01:
-							c_puts("Mass Storage Device");
-							break;
-						case 0x02:
-							c_puts("Network Controller");
-							break;
-						case 0x03:
-							c_puts("Display Controller");
-							break;
-						case 0x04:
-							c_puts("Multimedia Controller");
-							break;
-						case 0x05:
-							c_puts("Memory Controller");
-							break;
-						case 0x06:
-							c_puts("Bridge Device");
-							break;
-						case 0x07:
-							c_puts("Multimedia Controller");
-							break;
-						case 0x08:
-							c_puts("Base System Peripherals");
-							break;
-						case 0x09:
-							c_puts("Input device");
-							break;
-						case 0x0A:
-							c_puts("Docking Station");
-							break;
-						case 0x0B:
-							c_puts("Processor");
-							break;
-						case 0x0C:
-							c_puts("Serial Bus Controller");
-							break;
-						case 0x0D:
-							c_puts("Wireless Controller");
-							break;
-						case 0x0E:
-							c_puts("Intelligent IO Controller");
-							break;
-						case 0x0F:
-							c_puts("Satellite Communications Controller");
-							break;
-						case 0x10:
-							c_puts("Encryption/Decryption Controller");
-							break;
-						case 0x11:
-							c_puts("Data Aquisition/Signal Processor");
+							// Odds are this is our SATA/IDE controller. Let's
+							// probe it and find out.
+							_sata_probe(bus, device, func);
 							break;
 						default:
-							c_puts("Unsupported Device");
+							// All other devices are unsupported in this kernel
+							//c_puts("Unsupported Device");
 							break;
 					}
-					c_puts("\n");
 				}
 			}
 		}

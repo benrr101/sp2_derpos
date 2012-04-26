@@ -86,16 +86,16 @@ void _sata_write_reg(IDEChannel channel, IDERegs reg, Uint8 payload) {
 	}
 }
 
-void _sata_initialize() {
+void _sata_initialize(Uint16 bus, Uint16 device, Uint16 func) {
 	// Initialize the controller into IDE mode
-	_pci_config_write(SATA_PCI_BUS, SATA_PCI_DEVICE, SATA_PCI_FUNCTION, SATA_PCI_REG_MAP, 0x00);
+	_pci_config_write(bus, device, func, SATA_PCI_REG_MAP, 0x00);
 
 	// Store the info about the channels
-	ideChannels[ATA_PORT_CHANPRI].command = _sata_get_bar(SATA_PCI_BUS, SATA_PCI_DEVICE, SATA_PCI_FUNCTION, SATA_PCI_REG_PCMD);
-	ideChannels[ATA_PORT_CHANPRI].control = _sata_get_bar(SATA_PCI_BUS, SATA_PCI_DEVICE, SATA_PCI_FUNCTION, SATA_PCI_REG_PCTRL);
-	ideChannels[ATA_PORT_CHANSEC].command = _sata_get_bar(SATA_PCI_BUS, SATA_PCI_DEVICE, SATA_PCI_FUNCTION, SATA_PCI_REG_SCMD);
-	ideChannels[ATA_PORT_CHANSEC].control = _sata_get_bar(SATA_PCI_BUS, SATA_PCI_DEVICE, SATA_PCI_FUNCTION, SATA_PCI_REG_SCTRL);
-	ideChannels[ATA_PORT_CHANPRI].busmast = _sata_get_bar(SATA_PCI_BUS, SATA_PCI_DEVICE, SATA_PCI_FUNCTION, SATA_PCI_REG_BMAST);
+	ideChannels[ATA_PORT_CHANPRI].command = _sata_get_bar(bus, device, func, SATA_PCI_REG_PCMD);
+	ideChannels[ATA_PORT_CHANPRI].control = _sata_get_bar(bus, device, func, SATA_PCI_REG_PCTRL);
+	ideChannels[ATA_PORT_CHANSEC].command = _sata_get_bar(bus, device, func, SATA_PCI_REG_SCMD);
+	ideChannels[ATA_PORT_CHANSEC].control = _sata_get_bar(bus, device, func, SATA_PCI_REG_SCTRL);
+	ideChannels[ATA_PORT_CHANPRI].busmast = _sata_get_bar(bus, device, func, SATA_PCI_REG_BMAST);
 	ideChannels[ATA_PORT_CHANSEC].busmast = ideChannels[ATA_PORT_CHANPRI].busmast + 0x8;
 }
 
@@ -104,10 +104,10 @@ void _sata_wait() {
 	for(i = 0; i < 1000000; i++);
 }
 
-void _sata_probe() {
+void _sata_probe(Uint16 bus, Uint16 device, Uint16 func) {
 
 	// Initialize the sata and the channel info
-	_sata_initialize();
+	_sata_initialize(bus, device, func);
 
 	// Let's probe the devices on the channels
 	Uint8 dev;
@@ -134,6 +134,4 @@ void _sata_probe() {
 				_sata_read_reg(ideChannels[chan], IDE_REG_SECCOUNT1));
 		}	
 	}
-	
-	__panic("HOT DAMN!");
 }
