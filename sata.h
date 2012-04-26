@@ -94,8 +94,8 @@ IDEDevice 	ideDevices[4];
 
 // FUNCTIONS ///////////////////////////////////////////////////////////////
 void _testGetPCIInfo(void);
-void _sata_probe(void);
-void _sata_initialize(void);
+void _sata_probe(Uint16 bus, Uint16 device, Uint16 func);
+void _sata_initialize(Uint16 bus, Uint16 device, Uint16 func);
 Uint8 _sata_read_reg(IDEChannel channel, IDERegs reg);
 void _sata_write_reg(IDEChannel channel, IDERegs reg, Uint8 payload);
 Uint16 _sata_get_bar(Uint16 bus, Uint16 device, Uint16 func, Uint16 offset);
