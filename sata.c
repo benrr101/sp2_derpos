@@ -59,6 +59,10 @@ Uint8 _sata_read_reg(ATAChannel channel, IDERegs reg) {
 	return result;
 }
 
+Uint16 _sata_read_data(ATAChannel channel) {
+	return __inw(channel.command);
+}
+
 /**
  * Writes a byte to the specified ide channel reg. THAR BE MAGIC HERE.
  * @param	IDEChannel channel	The channel to write to
@@ -110,14 +114,20 @@ void _sata_probe(Uint16 bus, Uint16 device, Uint16 func) {
 
 	// Initialize the sata and the channel info
 	_sata_initialize(&cont, bus, device, func);
-
-	// Let's probe the devices on the channels
-	Uint8 dev;
-	Uint8 chan;
+	
+	// IF the command port is 00, then we need to ignore this invalid device
+	if(cont[ATA_PORT_CHANPRI].command == 0) {
+		return;
+	}
 
 	// Turn off IRQ's for the channels
 	_sata_write_reg(cont[ATA_PORT_CHANPRI], IDE_REG_CONTROL, 2);
 	_sata_write_reg(cont[ATA_PORT_CHANSEC], IDE_REG_CONTROL, 2);
+	
+	// Initialize vars for iterating and storing device info
+	Uint8 dev;
+	Uint8 chan;
+	Uint8 identSpace[2048];
 
 	// Iterate over the channels to probe
 	for(chan = ATA_PORT_CHANPRI; chan <= ATA_PORT_CHANSEC; chan++) {
@@ -130,10 +140,27 @@ void _sata_probe(Uint16 bus, Uint16 device, Uint16 func) {
 			_sata_write_reg(cont[chan], IDE_REG_COMMAND, IDE_CMD_IDENTIFY);
 			_sata_wait();
 			
-			// Read in the status register
-			c_printf("SATA Channel: %x, Device: %x, Status: 0x%x, Sectors: %d\n",
-				chan, dev, _sata_read_reg(cont[chan], IDE_REG_STATUS),
-				_sata_read_reg(cont[chan], IDE_REG_SECCOUNT1));
+			// If the device exists, then identify it and store it
+			Uint8 status = _sata_read_reg(cont[chan], IDE_REG_STATUS);
+			if(status & 0x40) {
+				c_printf("Device found!\n");
+				Uint8 deviceId = chan * ATA_PORT_CHANSEC + dev;
+				ata_devices[deviceId].command = cont[chan].command;
+				ata_devices[deviceId].control = cont[chan].control;
+				ata_devices[deviceId].busmast = cont[chan].busmast;
+				ata_devices[deviceId].channel = chan;
+				ata_devices[deviceId].device  = device;
+			}
+
+			Uint8 words;
+			Uint16 word;
+			for(words = 0; words < 20; words++) {
+				word = _sata_read_data(cont[chan]);
+				c_printf("0x%04x -> %c%c\n", 
+					word, (Uint8)(word >> 8), (Uint8)word);
+			}
+
+			__panic("DICKSAPOPPIN!");
 		}	
 	}
 }
