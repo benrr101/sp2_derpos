@@ -9,12 +9,21 @@
 
 // Globals
 short _init;
+int _x_move;
+int _y_move;
+unsigned char _left_button;
+unsigned char _right_button;
+unsigned char _middle_button;
 
 
 void _ps2_init( void ){
 	
-	// Check if the mouse is there
 	_init = 0;
+	_x_move = 0;
+	_y_move = 0;
+	_left_button = 0;
+	_right_button = 0;
+	_middle_button = 0;
 	_ps2_mouse_init();
 }
 
@@ -53,6 +62,29 @@ void _ps2_mouse_init( void ){
 	_ps2_write_mouse( 0xF6 );
 	_ps2_read_mouse();  //Acknowledge
 
+	/*
+	// Override the Sample Rate to 200/s
+	_ps2_write_mouse( PS2_M_SAMP );
+	_ps2_read_mouse();
+	c_puts( "ACK! Awaiting VALUE!\n" );
+	_ps2_mouse_clear();
+	__outb( 0x64, 0xD4 );
+	while( (__inb(PS2_STAT) & 2) != 0 )
+		;
+	__outb( PS2_PORT, 200 );
+	//_ps2_read_mouse();
+	
+	// next, override the resolution to 8count/mm
+	_ps2_write_mouse( PS2_M_SRES );
+	_ps2_read_mouse();
+	c_puts( "ACK! Awaiting VALUE!\n" );
+	_ps2_mouse_clear();
+	__outb( 0x64, 0xD4 );
+	while( (__inb(PS2_STAT) & 2) != 0 )
+		;
+	__outb( PS2_PORT, 0x03 );
+	*/
+
 	// Enable the mouse
 	_ps2_write_mouse( 0xF4 );
 	_ps2_read_mouse();  //Acknowledge
@@ -75,9 +107,56 @@ void _ps2_mouse_isr( int vec, int code ){
 
 	// Only dump information once we have everything the mouse sent
 	if(byte_c == 3){
-		c_printf( "Overflow Byte: 0x%x\n", m_bytes[0] );
-		c_printf( "X Offset Byte: 0x%x\n", m_bytes[1] );
-		c_printf( "Y Offset Byte: 0x%x\n", m_bytes[2] );
+		if( (m_bytes[0] & 0x80) || (m_bytes[0] & 0x40) ){
+			// overflow! throw away packet
+			c_puts( "Mouse overflow!\n" );
+		}
+		else{
+
+			// Check left-button status
+			if( m_bytes[0] & 0x1 ){
+				if( _left_button != 1)
+					c_puts( "Left Button Pressed!\n" );
+				_left_button = 1;
+			}
+			else if( _left_button ){
+				c_puts( "Left Button Released!\n" );
+				_left_button = 0;
+			}
+				
+			// check right-button status
+			if( m_bytes[0] & 0x2 ){
+				if(_right_button != 1)
+					c_puts( "Right Button Pressed!\n" );
+				_right_button = 1;
+			}
+			else if( _right_button ){
+				c_puts( "Right Button Released!\n" );
+				_right_button = 0;
+			}
+
+			// check middle-button status
+			if( m_bytes[0] & 0x4 ){
+				if(_middle_button != 1)
+					c_puts( "Middle Button Pressed!\n" );
+				_middle_button = 1;
+			}
+			else if( _middle_button ){
+				c_puts( "Middle Button Released!\n" );
+				_middle_button = 0;
+			}
+			
+			_x_move = m_bytes[1];
+			if( (m_bytes[0] & 0x8) == 0 ){
+				_x_move *= -1;
+			}
+			if( (m_bytes[0] & 0x20) ){
+				_y_move *= -1;
+			}
+			_y_move = m_bytes[2];
+			c_printf( "X: %dmm\n", _x_move );
+			c_printf( "Y: %dmm\n", _y_move );
+		}
 		byte_c = 0;
 	}
 
