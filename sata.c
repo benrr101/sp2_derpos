@@ -36,7 +36,7 @@ Uint16 _sata_get_bar(Uint16 bus, Uint16 device, Uint16 func, Uint16 offset) {
  * @param	IDEReg reg			The register on the channel to read from
  * @source	http://wiki.osdev.org/IDE
  */
-Uint8 _sata_read_reg(IDEChannel channel, IDERegs reg) {
+Uint8 _sata_read_reg(ATAChannel channel, IDERegs reg) {
 	Uint8 result;
 	if(reg > 0x07 && reg < 0x0C) {
 		_sata_write_reg(channel, IDE_REG_CONTROL, 0x80);
@@ -66,7 +66,7 @@ Uint8 _sata_read_reg(IDEChannel channel, IDERegs reg) {
  * @param	Uint8 payload		The byte to write the the register
  * @source	http://wiki.osdev.org/IDE
  */
-void _sata_write_reg(IDEChannel channel, IDERegs reg, Uint8 payload) {
+void _sata_write_reg(ATAChannel channel, IDERegs reg, Uint8 payload) {
 	if(reg > 0x07 && reg < 0x0C) {
 		_sata_write_reg(channel, IDE_REG_CONTROL, 0x80);
 	} 
@@ -86,17 +86,17 @@ void _sata_write_reg(IDEChannel channel, IDERegs reg, Uint8 payload) {
 	}
 }
 
-void _sata_initialize(Uint16 bus, Uint16 device, Uint16 func) {
+void _sata_initialize(ATAController *cont, Uint16 bus, Uint16 device, Uint16 func) {
 	// Initialize the controller into IDE mode
 	_pci_config_write(bus, device, func, SATA_PCI_REG_MAP, 0x00);
 
 	// Store the info about the channels
-	ideChannels[ATA_PORT_CHANPRI].command = _sata_get_bar(bus, device, func, SATA_PCI_REG_PCMD);
-	ideChannels[ATA_PORT_CHANPRI].control = _sata_get_bar(bus, device, func, SATA_PCI_REG_PCTRL);
-	ideChannels[ATA_PORT_CHANSEC].command = _sata_get_bar(bus, device, func, SATA_PCI_REG_SCMD);
-	ideChannels[ATA_PORT_CHANSEC].control = _sata_get_bar(bus, device, func, SATA_PCI_REG_SCTRL);
-	ideChannels[ATA_PORT_CHANPRI].busmast = _sata_get_bar(bus, device, func, SATA_PCI_REG_BMAST);
-	ideChannels[ATA_PORT_CHANSEC].busmast = ideChannels[ATA_PORT_CHANPRI].busmast + 0x8;
+	(*cont)[ATA_PORT_CHANPRI].command = _sata_get_bar(bus, device, func, SATA_PCI_REG_PCMD);
+	(*cont)[ATA_PORT_CHANPRI].control = _sata_get_bar(bus, device, func, SATA_PCI_REG_PCTRL);
+	(*cont)[ATA_PORT_CHANSEC].command = _sata_get_bar(bus, device, func, SATA_PCI_REG_SCMD);
+	(*cont)[ATA_PORT_CHANSEC].control = _sata_get_bar(bus, device, func, SATA_PCI_REG_SCTRL);
+	(*cont)[ATA_PORT_CHANPRI].busmast = _sata_get_bar(bus, device, func, SATA_PCI_REG_BMAST);
+	(*cont)[ATA_PORT_CHANSEC].busmast = (*cont)[ATA_PORT_CHANPRI].busmast + 0x8;
 }
 
 void _sata_wait() {
@@ -105,33 +105,35 @@ void _sata_wait() {
 }
 
 void _sata_probe(Uint16 bus, Uint16 device, Uint16 func) {
+	// Create a controller struct to assist in constructing the drives
+	ATAController cont;
 
 	// Initialize the sata and the channel info
-	_sata_initialize(bus, device, func);
+	_sata_initialize(&cont, bus, device, func);
 
 	// Let's probe the devices on the channels
 	Uint8 dev;
 	Uint8 chan;
 
 	// Turn off IRQ's for the channels
-	_sata_write_reg(ideChannels[ATA_PORT_CHANPRI], IDE_REG_CONTROL, 2);
-	_sata_write_reg(ideChannels[ATA_PORT_CHANSEC], IDE_REG_CONTROL, 2);
+	_sata_write_reg(cont[ATA_PORT_CHANPRI], IDE_REG_CONTROL, 2);
+	_sata_write_reg(cont[ATA_PORT_CHANSEC], IDE_REG_CONTROL, 2);
 
 	// Iterate over the channels to probe
 	for(chan = ATA_PORT_CHANPRI; chan <= ATA_PORT_CHANSEC; chan++) {
 		// Iterate over each device on the channel
 		for(dev = ATA_PORT_CHANMAST; dev <= ATA_PORT_CHANSLAV; dev++) {
 			// Tell the controller which drive we want
-			_sata_write_reg(ideChannels[chan], IDE_REG_DRIVESEL, 0xA0 | (dev << 4));
+			_sata_write_reg(cont[chan], IDE_REG_DRIVESEL, 0xA0 | (dev << 4));
 			_sata_wait();
 
-			_sata_write_reg(ideChannels[chan], IDE_REG_COMMAND, IDE_CMD_IDENTIFY);
+			_sata_write_reg(cont[chan], IDE_REG_COMMAND, IDE_CMD_IDENTIFY);
 			_sata_wait();
 			
 			// Read in the status register
 			c_printf("SATA Channel: %x, Device: %x, Status: 0x%x, Sectors: %d\n",
-				chan, dev, _sata_read_reg(ideChannels[chan], IDE_REG_STATUS),
-				_sata_read_reg(ideChannels[chan], IDE_REG_SECCOUNT1));
+				chan, dev, _sata_read_reg(cont[chan], IDE_REG_STATUS),
+				_sata_read_reg(cont[chan], IDE_REG_SECCOUNT1));
 		}	
 	}
 }
