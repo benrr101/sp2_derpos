@@ -11,6 +11,10 @@
 short _init;
 int _x_move;
 int _y_move;
+int _x_t_move;
+int _y_t_move;
+int _x_pos;
+int _y_pos;
 unsigned char _left_button;
 unsigned char _right_button;
 unsigned char _middle_button;
@@ -95,12 +99,18 @@ void _ps2_mouse_init( void ){
 	
 	// Done!
 	c_puts( "Mouse driver successfully attached!\n" );
+	c_clearscreen();
 	_init = 1;
+
+	// Draw mouse at center
+	_x_pos = 0;
+	_y_pos = 0;
 }
 
 void _ps2_mouse_isr( int vec, int code ){
 
 	static int byte_c = 0;
+	static char mouse_p = '+';
 	static char m_bytes[3];
 	if(_init)
 		m_bytes[byte_c++] = __inb(PS2_PORT);
@@ -116,33 +126,33 @@ void _ps2_mouse_isr( int vec, int code ){
 			// Check left-button status
 			if( m_bytes[0] & 0x1 ){
 				if( _left_button != 1)
-					c_puts( "Left Button Pressed!\n" );
+					//c_puts( "Left Button Pressed!\n" );
 				_left_button = 1;
 			}
 			else if( _left_button ){
-				c_puts( "Left Button Released!\n" );
+				//c_puts( "Left Button Released!\n" );
 				_left_button = 0;
 			}
 				
 			// check right-button status
 			if( m_bytes[0] & 0x2 ){
 				if(_right_button != 1)
-					c_puts( "Right Button Pressed!\n" );
+					//c_puts( "Right Button Pressed!\n" );
 				_right_button = 1;
 			}
 			else if( _right_button ){
-				c_puts( "Right Button Released!\n" );
+				//c_puts( "Right Button Released!\n" );
 				_right_button = 0;
 			}
 
 			// check middle-button status
 			if( m_bytes[0] & 0x4 ){
 				if(_middle_button != 1)
-					c_puts( "Middle Button Pressed!\n" );
+					//c_puts( "Middle Button Pressed!\n" );
 				_middle_button = 1;
 			}
 			else if( _middle_button ){
-				c_puts( "Middle Button Released!\n" );
+				//c_puts( "Middle Button Released!\n" );
 				_middle_button = 0;
 			}
 			
@@ -150,15 +160,78 @@ void _ps2_mouse_isr( int vec, int code ){
 			if( (m_bytes[0] & 0x8) == 0 ){
 				_x_move *= -1;
 			}
-			if( (m_bytes[0] & 0x20) ){
+			if( (m_bytes[0] & 0x20) != 0 ){
 				_y_move *= -1;
 			}
 			_y_move = m_bytes[2];
-			c_printf( "X: %dmm\n", _x_move );
-			c_printf( "Y: %dmm\n", _y_move );
+			//c_printf( "X: %dmm\n", _x_move );
+			//c_printf( "Y: %dmm\n", _y_move );
 		}
 		byte_c = 0;
 	}
+
+	// remove the mouse cursor at the previous location
+	c_putchar_at(_x_pos, _y_pos, ' ');
+
+	// limit total possible movement
+	_x_move = _x_move > 80 ? 80 : _x_move;
+	_x_move = _x_move < -80 ? -80 : _x_move;
+	_y_move = _y_move > 64 ? 64 : _y_move;
+	_y_move = _y_move < -64 ? -64 : _y_move;
+
+	// move mouse cursor
+	_x_t_move += ( _x_move / 2 );
+	_y_t_move += ( _y_move / 6 );
+
+	/*
+	// apply a minimum bound of movement
+	if( _x_move < 0 && _x_move > -16 )
+		_x_t_move -= 1;
+	else if( _x_move > 0 && _x_move < 16 )
+		_x_t_move += 1;
+	if( _y_move < 0 && _y_move > -16 )
+		_y_t_move += 1;
+	else if( _y_move > 0 && _y_move < 16 )
+		_y_t_move -= 1;
+	*/
+
+	if(_x_t_move > 6){
+		_x_pos++;
+		_x_t_move = 0;
+	}
+	else if(_x_t_move < -6){
+		_x_pos--;
+		_x_t_move = 0;
+	}
+	if(_y_t_move > 8){
+		_y_pos--;
+		_y_t_move = 0;
+	}
+	else if(_y_t_move < -8){
+		_y_pos++;
+		_y_t_move = 0;
+	}
+
+	// enforce boundaries
+	if( _x_pos > 79 )
+		_x_pos = 79;
+	if( _x_pos < 0 )
+		_x_pos = 0;
+	if( _y_pos > 24)
+		_y_pos = 24;
+	if( _y_pos < 0)
+		_y_pos = 0;
+
+	if(_left_button)
+		mouse_p = 'x';
+	else if(_right_button)
+		mouse_p = '#';
+	else if(_middle_button)
+		mouse_p = '|';
+	else
+		mouse_p = '+';
+
+	c_putchar_at( _x_pos, _y_pos, mouse_p );
 
 	// indicate that we have read the interrupt
 	__outb( 0x20, 0x20 );
