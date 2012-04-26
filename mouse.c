@@ -7,10 +7,14 @@
 #include "startup.h"
 #include "mouse.h"
 
+// Globals
+short _init;
+
 
 void _ps2_init( void ){
 	
 	// Check if the mouse is there
+	_init = 0;
 	_ps2_mouse_init();
 }
 
@@ -18,30 +22,24 @@ void _ps2_mouse_init( void ){
 	
 	// vars
 	Uint resp = 0;
+	
+	// Hook in our interrupt vector, we do this first because there are some
+	// weird interrupt timing issues.
+	__install_isr( PS2_M_VEC, _ps2_mouse_isr );
 
-	/*
-	_ps2_write_mouse(PS2_M_RST);
-	resp = _ps2_read_mouse() | 2;
-	_ps2_debug( "RESET", resp );
-	resp = _ps2_read_mouse() | 2;
-	_ps2_debug( "RESET 2", resp );
-	*/
+	// First, disable the mouse to avoid having it mess up initialization
+	_ps2_mouse_clear();
+	__outb( 0x64, 0xAD );
+	_ps2_mouse_clear();
+	__outb( 0x64, 0xA7 );
 
-	// Make sure the aux port is enabled
-	/*_ps2_write_mouse(PS2_M_ENAB);
-	resp = _ps2_read_mouse();
-	_ps2_debug("ENAB", resp);*/
-	/*resp = _ps2_read_mouse();
-	if( resp != PS2_M_ACK){
-		_ps2_nonack(resp);
-		return;
-	}
-	*/
+	// Clear the mouse's buffer
+	__inb( 0x60 );
 
 	_ps2_mouse_clear();
 	__outb( 0x64, 0xA8 );
 
-	//Enable the interrupts
+	// Enable the interrupts
 	_ps2_mouse_clear();
 	__outb( 0x64, 0x20 );
 	_ps2_mouse_ready();
@@ -51,26 +49,29 @@ void _ps2_mouse_init( void ){
 	_ps2_mouse_clear();
 	__outb( 0x60, resp );
 
-	//Tell the mouse to use default settings
+	// Tell the mouse to use default settings
 	_ps2_write_mouse( 0xF6 );
 	_ps2_read_mouse();  //Acknowledge
 
-	//Enable the mouse
+	// Enable the mouse
 	_ps2_write_mouse( 0xF4 );
 	_ps2_read_mouse();  //Acknowledge
 
-	// Finally, hook in our interrupt vector
-	__install_isr( PS2_M_VEC, _ps2_mouse_isr );
-
+	// Reset everything
+	_ps2_mouse_clear();
+	__outb( 0x64, PS2_M_RST );
+	
+	// Done!
 	c_puts( "Mouse driver successfully attached!\n" );
+	_init = 1;
 }
 
 void _ps2_mouse_isr( int vec, int code ){
-	//c_printf("Got an interrupt! Code: 0x%x\n", code);
+
 	static int byte_c = 0;
 	static char m_bytes[3];
-	m_bytes[byte_c++] = __inb(PS2_PORT);
-	//c_printf( "Byte 0x%x\n", byte_c );
+	if(_init)
+		m_bytes[byte_c++] = __inb(PS2_PORT);
 
 	// Only dump information once we have everything the mouse sent
 	if(byte_c == 3){
@@ -79,6 +80,10 @@ void _ps2_mouse_isr( int vec, int code ){
 		c_printf( "Y Offset Byte: 0x%x\n", m_bytes[2] );
 		byte_c = 0;
 	}
+
+	// indicate that we have read the interrupt
+	__outb( 0x20, 0x20 );
+	__outb( 0xA0, 0x20 );
 }
 
 Uint _ps2_read_mouse(){	
@@ -100,12 +105,12 @@ void _ps2_write_mouse(char b){
 	_ps2_mouse_clear();
 
 	// let the PS2 controller know we want to send a command to the mouse
-	c_printf("Letting Mouse know we are sending a command...\n");
+	//c_printf("Letting Mouse know we are sending a command...\n");
 	__outb(PS2_STAT, PS2_M_SCOM);
 	_ps2_mouse_clear();
 
 	// Now, send the mouse our command
-	c_printf("Sending Command: 0x%x...\n", ( b & 0xFF) );
+	//c_printf("Sending Command: 0x%x...\n", ( b & 0xFF) );
 	__outb(PS2_PORT, b);
 }
 
@@ -114,7 +119,7 @@ void _ps2_mouse_clear( void ){
 	// vars
 	char b;
 
-	c_printf("Waiting on Mouse to be clear...\n");
+	//c_printf("Waiting on Mouse to be clear...\n");
 	// wait for the mouse to be clear for commands
 	while( 1 ){
 		b = __inb(PS2_STAT);
@@ -129,7 +134,7 @@ Uint _ps2_mouse_ready( void ){
 	// vars
 	Uint b;
 
-	c_printf("Waiting on Mouse to be ready...\n");
+	//c_printf("Waiting on Mouse to be ready...\n");
 	// wait for the mouse to be ready for commands
 	while( 1 ){
 		b = __inb(PS2_STAT);
