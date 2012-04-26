@@ -55,15 +55,13 @@ void _vga_init( void ) {
 	c_printf("\nVESA_INFO(%x):\n", vga_vesa_info);
 	c_printf("-version: %d\n", vga_vesa_info->VESAVersion);
 	c_printf("-VideoModePtr: %x\n", vga_vesa_info->VideoModePtr);
-	c_printf("-TtlMem: %d\n", vga_vesa_info->TotalMemory);
+	c_printf("-TtlMem: %d, %d\n", vga_vesa_info->TotalMemory, (vga_vesa_info->TotalMemory * 64)/1024);
 	c_printf("\nMODE_INFO(%x):\n", vga_mode_info);
 	c_printf("-ModeAttr: %x\n", vga_mode_info->ModeAttributes);
 	c_printf("-MemModel: %x\n", vga_mode_info->MemoryModel);
 	c_printf("-WinSize: %d\n", vga_mode_info->WinSize);
-	c_printf("-WinSize X: %d\n", vga_mode_info->XResolution);
-	c_printf("-WinSize Y: %d\n", vga_mode_info->YResolution);
-	c_printf("-CharSize X: %d\n", vga_mode_info->XCharSize);
-	c_printf("-CharSize Y: %d\n", vga_mode_info->YCharSize);
+	c_printf("-WinSize (X, Y): (%d, %d)\n", vga_mode_info->XResolution, vga_mode_info->YResolution);
+	c_printf("-CharSize (X, Y): (%d, %d)\n", vga_mode_info->XCharSize, vga_mode_info->YCharSize);
 	c_printf("-WinFuncPrt: %x\n", vga_mode_info->WinFuncPtr);
 	c_printf("-PhysBasePrt: %x\n", vga_mode_info->PhysBasePtr);
 	draw();
@@ -113,10 +111,9 @@ void vga256( void ) {
 }
 
 void draw( void ) {
-	Uint32 *ptr = (Uint32*)vga_mode_info->PhysBasePtr;
+	Uint32 *ptr = (Uint32*)(vga_mode_info->PhysBasePtr << 1);
     int i = 0;
     int j = 0;
-
 
     for(i = 10; i < 40; i++){
         for( j = 0; j < 20; j++){

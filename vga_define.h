@@ -2,7 +2,7 @@
 ** Defines for the VGA Driver
 */
 
-#define V_MODE_800_600	0x4103
+#define V_MODE_800_600	0x4115
 #define V_MODE_TEXT		0x03
 
 #define VESA_INFO_ADDR 	0x9000
