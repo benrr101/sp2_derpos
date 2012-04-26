@@ -89,8 +89,17 @@ typedef struct {
 	char	model[41];		// Model string
 } IDEDevice;
 
+typedef struct {
+	// VERY simple ATA device
+	Uint32	command;
+	Uint32	control;
+	Uint32	busmast;
+	Uint8	channel;
+	Uint8	device;
+} ATADevice;
+
 // GLOBALS /////////////////////////////////////////////////////////////////
-IDEDevice 	ideDevices[4];
+ATADevice ata_devices[10];
 
 // FUNCTIONS ///////////////////////////////////////////////////////////////
 void _testGetPCIInfo(void);
