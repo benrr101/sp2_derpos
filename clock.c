@@ -108,7 +108,7 @@ void _isr_clock( int vector, int code ) {
 	if( _pinwheel == (CLOCK_FREQUENCY / 10) ) {
 		_pinwheel = 0;
 		++_pindex;
-		c_putchar_at( 79, 0, "|/-\\"[ _pindex & 3 ] );
+		//c_putchar_at( 79, 0, "|/-\\"[ _pindex & 3 ] );
 	}
 
 	// increment the system time
