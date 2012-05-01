@@ -64,6 +64,7 @@ _select_vga_mode:
 	//select mode
 	xorl   	%eax, %eax
     movw   	$V_MODE_800_600, %bx
+    orl		$LIN_BUF, %bx
     movw 	$SET_MODE, %ax
     int		$0x10
     
@@ -87,4 +88,3 @@ _select_text_mode:
 
 _vga_die:
 	call 	_select_text_mode
-	hlt
