@@ -127,7 +127,7 @@ void _sata_probe(Uint16 bus, Uint16 device, Uint16 func) {
 	// Initialize vars for iterating and storing device info
 	Uint8 dev;
 	Uint8 chan;
-	Uint8 identSpace[2048];
+	Uint16 identSpace[256];
 
 	// Iterate over the channels to probe
 	for(chan = ATA_PORT_CHANPRI; chan <= ATA_PORT_CHANSEC; chan++) {
@@ -141,26 +141,65 @@ void _sata_probe(Uint16 bus, Uint16 device, Uint16 func) {
 			_sata_wait();
 			
 			// If the device exists, then identify it and store it
+			Uint8 deviceId = ata_device_count;
+
 			Uint8 status = _sata_read_reg(cont[chan], IDE_REG_STATUS);
 			if(status & 0x40) {
-				c_printf("Device found!\n");
-				Uint8 deviceId = chan * ATA_PORT_CHANSEC + dev;
 				ata_devices[deviceId].command = cont[chan].command;
 				ata_devices[deviceId].control = cont[chan].control;
 				ata_devices[deviceId].busmast = cont[chan].busmast;
 				ata_devices[deviceId].channel = chan;
 				ata_devices[deviceId].device  = device;
+				
+				// Increment the number of devices
+				ata_device_count++;
+			} else {
+				// There probably isn't a device (although I'm not too sure about that)
+				continue;
 			}
 
-			Uint8 words;
+			// Determine if the device is ATAPI
+			Uint8 lba1 = _sata_read_reg(cont[chan], IDE_REG_LBALOW);
+			Uint8 lba2 = _sata_read_reg(cont[chan], IDE_REG_LBAMID);
+			if(
+				(lba1 == ATAPI_LBA1 && lba2 == ATAPI_LBA2) || 
+				(lba1 == ATAPI_ALT_LBA1 && lba2 == ATAPI_ALT_LBA2)
+			) {
+				// The device is ATAPI
+				ata_devices[deviceId].type = ATA_TYPE_ATAPI;
+			} else {
+				// The device is ATA
+				ata_devices[deviceId].type = ATA_TYPE_ATA;
+			}
+
+			// Read the identification data into the identSpace var
+			Uint16 words;
 			Uint16 word;
-			for(words = 0; words < 20; words++) {
+			for(words = 0; words < 256; words++) {
+				// Read from the register
 				word = _sata_read_data(cont[chan]);
-				c_printf("0x%04x -> %c%c\n", 
-					word, (Uint8)(word >> 8), (Uint8)word);
+				
+				// Copy into the identspace
+				identSpace[words] = word;
 			}
 
-			__panic("DICKSAPOPPIN!");
+			// Grab relevant data from the identify command
+			// Serial String - copy byte by byte
+			Uint8 m;
+			for(m = 0; m < 10; m++) {
+				// Copy high byte then low byte
+				ata_devices[deviceId].serial[m * 2]     = (char)(identSpace[10 + m] >> 8);
+				ata_devices[deviceId].serial[m * 2 + 1] = (char)identSpace[10 + m];
+			}
+			ata_devices[deviceId].serial[21] = 0x0;		// Null terminate
+
+			// Model String - copy byte by byte
+			for(m = 0; m < 20; m++) {
+				// Copy high byten then low byte
+				ata_devices[deviceId].model[m*2]   = (char)(identSpace[27+m]>>8);
+				ata_devices[deviceId].model[m*2+1] = (char)identSpace[27+m];
+			}
+			ata_devices[deviceId].serial[41] = 0x0;		// Null terminate
 		}	
 	}
 }

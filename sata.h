@@ -35,8 +35,18 @@
 #define ATA_PORT_CHANSEC	0x1
 #define ATA_PORT_CHANMAST	0x0
 #define ATA_PORT_CHANSLAV	0x1
-#define ATA_PORT_ATA		0x0
-#define ATA_PORT_ATAPI		0x1
+
+#define ATA_TYPE_ATA		0x0
+#define ATA_TYPE_ATAPI		0x1
+
+// Important offsets into the identify space
+#define ATA_IDENT_MODEL		0x54
+
+// Determine if the device is ATAPI
+#define ATAPI_LBA1			0x14
+#define ATAPI_LBA2			0xEB
+#define ATAPI_ALT_LBA1		0x69
+#define ATAPI_ALT_LBA2		0x96
 
 
 // TYPEDEFS ////////////////////////////////////////////////////////////////
@@ -86,6 +96,7 @@ typedef struct {
 	Uint16	capabilities;
 	Uint32	commandSets;
 	Uint32	size;			// Size in sectors
+	char	serial[21];		// Model string
 	char	model[41];		// Model string
 } IDEDevice;
 
@@ -96,11 +107,15 @@ typedef struct {
 	Uint32	busmast;
 	Uint8	channel;
 	Uint8	device;
+	Uint8	type;
+	char	serial[21];
+	char	model[40];
 } ATADevice;
 
 // GLOBALS /////////////////////////////////////////////////////////////////
 ATADevice ata_devices[10];
-
+Uint8 ata_device_count; 
+	
 // FUNCTIONS ///////////////////////////////////////////////////////////////
 void _testGetPCIInfo(void);
 void _sata_probe(Uint16 bus, Uint16 device, Uint16 func);

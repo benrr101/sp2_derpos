@@ -21,6 +21,9 @@ void _pci_probe_devices(){
 	// report that the PCI probe is starting
 	c_puts("Probing for PCI Devices...\n");
 
+	// Initialize the number of ATA devices to 0
+	ata_device_count = 0;
+
 	// Iterate over the entire PCI bus
 	Uint16 bus;
 	Uint16 device;
@@ -39,7 +42,6 @@ void _pci_probe_devices(){
 					subclass = _pci_config_read(bus, device, func, 0xA);
 	
 					// Print the class information
-					c_puts(" ");
 					switch(class) {
 						case 0x01:
 							// Odds are this is our SATA/IDE controller. Let's
@@ -55,6 +57,18 @@ void _pci_probe_devices(){
 			}
 		}
 	}
+
+	// Print out all the ATA devices found
+	c_printf("%d ATA devices found:\n", ata_device_count);
+	Uint8 i;
+	for(i = 0; i < ata_device_count; i++) {
+		c_printf("   %s Model: %s\n       Serial: %s\n", 
+			(ata_devices[i].type == ATA_TYPE_ATAPI) ? "ATAPI" : "ATA",
+			ata_devices[i].model,
+			ata_devices[i].serial
+			);
+	}
+
 	__panic("HOLY FUCK.");
 }
 
