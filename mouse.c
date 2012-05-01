@@ -5,6 +5,7 @@
 
 #include "headers.h"
 #include "startup.h"
+#include "ps2.h"
 #include "mouse.h"
 
 // Globals
@@ -19,19 +20,19 @@ unsigned char _left_button;
 unsigned char _right_button;
 unsigned char _middle_button;
 
+/**
+ * Source for init steps taken from the following forum.  
+ * http://forum.osdev.org/viewtopic.php?t=10247
+ */
+void _ps2_mouse_init( void ){
 
-void _ps2_init( void ){
-	
+	// Setup initial values
 	_init = 0;
 	_x_move = 0;
 	_y_move = 0;
 	_left_button = 0;
 	_right_button = 0;
 	_middle_button = 0;
-	_ps2_mouse_init();
-}
-
-void _ps2_mouse_init( void ){
 	
 	// vars
 	Uint resp = 0;
@@ -42,23 +43,24 @@ void _ps2_mouse_init( void ){
 
 	// First, disable the mouse to avoid having it mess up initialization
 	_ps2_mouse_clear();
-	__outb( 0x64, 0xAD );
+	__outb( PS2_STAT, 0xAD );
 	_ps2_mouse_clear();
-	__outb( 0x64, 0xA7 );
+	__outb( PS2_STAT, 0xA7 );
 
 	// Clear the mouse's buffer
 	__inb( 0x60 );
 
+	// enable the PS/2 auxillary device
 	_ps2_mouse_clear();
-	__outb( 0x64, 0xA8 );
+	__outb( PS2_STAT, 0xA8 );
 
 	// Enable the interrupts
 	_ps2_mouse_clear();
-	__outb( 0x64, 0x20 );
+	__outb( PS2_STAT, 0x20 );
 	_ps2_mouse_ready();
 	resp = ( __inb(0x60) | 2 );
 	_ps2_mouse_clear();
-	__outb( 0x64, 0x60 );
+	__outb( PS2_STAT, 0x60 );
 	_ps2_mouse_clear();
 	__outb( 0x60, resp );
 
@@ -72,7 +74,7 @@ void _ps2_mouse_init( void ){
 	_ps2_read_mouse();
 	c_puts( "ACK! Awaiting VALUE!\n" );
 	_ps2_mouse_clear();
-	__outb( 0x64, 0xD4 );
+	__outb( PS2_STAT, 0xD4 );
 	while( (__inb(PS2_STAT) & 2) != 0 )
 		;
 	__outb( PS2_PORT, 200 );
@@ -83,19 +85,19 @@ void _ps2_mouse_init( void ){
 	_ps2_read_mouse();
 	c_puts( "ACK! Awaiting VALUE!\n" );
 	_ps2_mouse_clear();
-	__outb( 0x64, 0xD4 );
+	__outb( PS2_STAT, 0xD4 );
 	while( (__inb(PS2_STAT) & 2) != 0 )
 		;
 	__outb( PS2_PORT, 0x03 );
 	*/
 
-	// Enable the mouse
+	// Enable the mouse to begin data packet transfers
 	_ps2_write_mouse( 0xF4 );
 	_ps2_read_mouse();  //Acknowledge
 
-	// Reset everything
+	// Reset everything (settings)
 	_ps2_mouse_clear();
-	__outb( 0x64, PS2_M_RST );
+	__outb( PS2_STAT, PS2_M_RST );
 	
 	// Done!
 	c_puts( "Mouse driver successfully attached!\n" );
@@ -275,7 +277,7 @@ void _ps2_mouse_clear( void ){
 	// wait for the mouse to be clear for commands
 	while( 1 ){
 		b = __inb(PS2_STAT);
-		//c_printf("CLEAR: Read a byte from Port 0x64, 0x%x...\n", b);
+		//c_printf("CLEAR: Read a byte from Port PS2_STAT, 0x%x...\n", b);
 		if( (b & 2) == 0 )
 			return;
 	}
@@ -290,7 +292,7 @@ Uint _ps2_mouse_ready( void ){
 	// wait for the mouse to be ready for commands
 	while( 1 ){
 		b = __inb(PS2_STAT);
-		//c_printf("READY: Read a byte from Port 0x64, 0x%x...\n", b);
+		//c_printf("READY: Read a byte from Port PS2_STAT, 0x%x...\n", b);
 		if( (b & 1) == 1 )
 			return b;
 	}
