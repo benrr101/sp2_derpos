@@ -82,13 +82,14 @@ typedef struct MODE_INFO
 	unsigned char 	LinNumberOfImagePages;
 	unsigned char 	LinRedMaskSize;
 	unsigned char 	LinRedFieldPosition;
-	unsigned char 	LingreenMaskSize;
+	unsigned char 	LinGreenMaskSize;
 	unsigned char 	LinGreenFieldPosition;
 	unsigned char 	LinBlueMaskSize;
 	unsigned char 	LinBlueFieldPosition;
 	unsigned char 	LinRsvdMaskSize;
 	unsigned char 	LinRsvdFieldPosition;
-	unsigned char 	Reserved[194];
+	unsigned long	MaxPixelClock;
+	unsigned char 	Reserved[189];
    } MODE_INFO;
 /*
 ** Prototypes
