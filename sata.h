@@ -105,6 +105,7 @@ typedef struct {
 	Uint32	command;
 	Uint32	control;
 	Uint32	busmast;
+	Uint32	size;
 	Uint8	channel;
 	Uint8	device;
 	Uint8	type;

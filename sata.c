@@ -191,7 +191,7 @@ void _sata_probe(Uint16 bus, Uint16 device, Uint16 func) {
 				ata_devices[deviceId].serial[m * 2]     = (char)(identSpace[10 + m] >> 8);
 				ata_devices[deviceId].serial[m * 2 + 1] = (char)identSpace[10 + m];
 			}
-			ata_devices[deviceId].serial[21] = 0x0;		// Null terminate
+			ata_devices[deviceId].serial[20] = 0x0;		// Null terminate
 
 			// Model String - copy byte by byte
 			for(m = 0; m < 20; m++) {
@@ -199,7 +199,11 @@ void _sata_probe(Uint16 bus, Uint16 device, Uint16 func) {
 				ata_devices[deviceId].model[m*2]   = (char)(identSpace[27+m]>>8);
 				ata_devices[deviceId].model[m*2+1] = (char)identSpace[27+m];
 			}
-			ata_devices[deviceId].serial[41] = 0x0;		// Null terminate
+			ata_devices[deviceId].model[40] = 0x0;		// Null terminate
+
+			// Size in Sectors - OR together the sector count
+			Uint32 size = identSpace[101] << 16 | identSpace[100];
+			ata_devices[deviceId].size = size;
 		}	
 	}
 }

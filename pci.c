@@ -62,10 +62,11 @@ void _pci_probe_devices(){
 	c_printf("%d ATA devices found:\n", ata_device_count);
 	Uint8 i;
 	for(i = 0; i < ata_device_count; i++) {
-		c_printf("   %s Model: %s\n       Serial: %s\n", 
+		c_printf("   %s Model: %s\n       Serial: %s\n       Sectors: %x\n", 
 			(ata_devices[i].type == ATA_TYPE_ATAPI) ? "ATAPI" : "ATA",
 			ata_devices[i].model,
-			ata_devices[i].serial
+			ata_devices[i].serial,
+			ata_devices[i].size
 			);
 	}
 
