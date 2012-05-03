@@ -9,8 +9,8 @@
 #
 # User supplied files
 #
-U_C_SRC = clock.c klibc.c pcbs.c queues.c scheduler.c sio.c stacks.c syscalls.c system.c ulibc.c users.c mouse.c
-U_C_OBJ = clock.o klibc.o pcbs.o queues.o scheduler.o sio.o stacks.o syscalls.o system.o ulibc.o users.o mouse.o
+U_C_SRC = clock.c klibc.c pcbs.c queues.c scheduler.c sio.c stacks.c syscalls.c system.c ulibc.c users.c mouse.c keyboard.c
+U_C_OBJ = clock.o klibc.o pcbs.o queues.o scheduler.o sio.o stacks.o syscalls.o system.o ulibc.o users.o mouse.o keyboard.o
 U_S_SRC = klibs.S ulibs.S
 U_S_OBJ = klibs.o ulibs.o
 U_LIBS	=
@@ -210,7 +210,8 @@ syscalls.o: headers.h pcbs.h clock.h stacks.h scheduler.h queues.h sio.h
 syscalls.o: syscalls.h /home/fac/wrc/include/x86arch.h system.h startup.h
 system.o: headers.h system.h pcbs.h clock.h stacks.h bootstrap.h syscalls.h
 system.o: queues.h /home/fac/wrc/include/x86arch.h sio.h scheduler.h users.h
-system.o: mouse.h ulib.h types.h
+system.o: keyboard.h ulib.h types.h
 ulibc.o: headers.h
-users.o: headers.h users.h mouse.h
-mouse.o: headers.h startup.h mouse.h
+users.o: headers.h users.h keyboard.h
+mouse.o: headers.h startup.h ps2.h mouse.h
+keyboard.o: ps2.h keyboard.h
