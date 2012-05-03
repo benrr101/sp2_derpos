@@ -10,11 +10,13 @@
 
 #ifndef _VMEM_H
 #define _VMEM_H
+#define _VMEM_DEBUG
 
 #include "headers.h"
 
 #define PAGE_BITS 12
 #define PAGE_SIZE (1 << PAGE_BITS )
+#define PAGE_TABLE_SIZE (PAGE_SIZE * 1024)
 
 #define PAGE_DIR_ADDRESS 0xffff800
 #define PAGE_DIR_RESERV 0x600
@@ -41,6 +43,7 @@
 #define PAGE_TABLE_PRESENT 0x1
 
 static Uint32* _vmem_page_dir = (Uint32*)0xFFFFFFFF;
+static Uint32* _vmem_bitmap_start = (Uint32*)(PAGE_TABLE_SIZE);
 
 /*
 ** _vmem_init()
@@ -48,7 +51,10 @@ static Uint32* _vmem_page_dir = (Uint32*)0xFFFFFFFF;
 */
 
 void _vmem_init( void );
+Uint32 _vmem_first_4mb( void );
+void _vmem_init_bitmap( Uint32 addr );
 
+//kernel function
 void _vmem_turnon(Uint32 page);
 
 int _vmem_getcr0(void);
