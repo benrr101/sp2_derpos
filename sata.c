@@ -39,7 +39,7 @@ Uint16 _sata_get_bar(Uint16 bus, Uint16 device, Uint16 func, Uint16 offset) {
 Uint8 _sata_read_reg(ATAChannel channel, IDERegs reg) {
 	Uint8 result;
 	if(reg > 0x07 && reg < 0x0C) {
-		_sata_write_reg(channel, IDE_REG_CONTROL, 0x80);
+		_sata_write_reg(channel, IDE_REG_CONTROL, 0x82);
 	}
 
 	if(reg < 0x08) {
@@ -53,7 +53,7 @@ Uint8 _sata_read_reg(ATAChannel channel, IDERegs reg) {
 	}
    
 	if(reg > 0x07 && reg < 0x0C) {
-		_sata_write_reg(channel, IDE_REG_CONTROL, 0x00);
+		_sata_write_reg(channel, IDE_REG_CONTROL, 0x02);
 	}
    
 	return result;
@@ -72,7 +72,7 @@ Uint16 _sata_read_data(ATAChannel channel) {
  */
 void _sata_write_reg(ATAChannel channel, IDERegs reg, Uint8 payload) {
 	if(reg > 0x07 && reg < 0x0C) {
-		_sata_write_reg(channel, IDE_REG_CONTROL, 0x80);
+		_sata_write_reg(channel, IDE_REG_CONTROL, 0x82);
 	} 
 
 	if(reg < 0x08) {
@@ -86,7 +86,7 @@ void _sata_write_reg(ATAChannel channel, IDERegs reg, Uint8 payload) {
 	}
 
 	if(reg > 0x07 && reg < 0x0C) {
-		_sata_write_reg(channel, IDE_REG_CONTROL, 0x0);
+		_sata_write_reg(channel, IDE_REG_CONTROL, 0x02);
 	}
 }
 
@@ -103,9 +103,13 @@ void _sata_initialize(ATAController *cont, Uint16 bus, Uint16 device, Uint16 fun
 	(*cont)[ATA_PORT_CHANSEC].busmast = (*cont)[ATA_PORT_CHANPRI].busmast + 0x8;
 }
 
-void _sata_wait() {
+void _sata_wait( void ) {
 	volatile int i;
 	for(i = 0; i < 1000000; i++);
+}
+
+void _sata_wait_bsy(ATAChannel channel) {
+	while(_sata_read_reg(channel, IDE_REG_STATUS) & ATA_STATUS_BUSY);
 }
 
 void _sata_probe(Uint16 bus, Uint16 device, Uint16 func) {
@@ -145,11 +149,8 @@ void _sata_probe(Uint16 bus, Uint16 device, Uint16 func) {
 
 			Uint8 status = _sata_read_reg(cont[chan], IDE_REG_STATUS);
 			if(status & 0x40) {
-				ata_devices[deviceId].command = cont[chan].command;
-				ata_devices[deviceId].control = cont[chan].control;
-				ata_devices[deviceId].busmast = cont[chan].busmast;
-				ata_devices[deviceId].channel = chan;
-				ata_devices[deviceId].device  = device;
+				ata_devices[deviceId].channel = cont[chan];
+				ata_devices[deviceId].device  = dev;
 				
 				// Increment the number of devices
 				ata_device_count++;
@@ -205,5 +206,40 @@ void _sata_probe(Uint16 bus, Uint16 device, Uint16 func) {
 			Uint32 size = identSpace[101] << 16 | identSpace[100];
 			ata_devices[deviceId].size = size;
 		}	
+	}
+}
+
+void _sata_read_sector(ATADevice dev, Uint64 lba) {
+	// Steb 1) Tell the controller which drive we'd like to read froms
+	// E0 tells the drive we're doing LBA (and some obsolete bits?)
+	_sata_write_reg(dev.channel, IDE_REG_DRIVESEL, 0xE0 | dev.device << 4);
+	_sata_wait();
+	_sata_write_reg(dev.channel, IDE_REG_CONTROL, 0x02);	// Turn off interrupts
+
+	// Step 1b) Tell the drive what sector we want to read
+	// NOTE: We only support 48-bit LBA addressing for now
+	_sata_write_reg(dev.channel, IDE_REG_LBALOW, 0x0);
+	_sata_write_reg(dev.channel, IDE_REG_LBAMID, 0x0);
+	_sata_write_reg(dev.channel, IDE_REG_LBAHIGH, 0x0);
+	_sata_write_reg(dev.channel, IDE_REG_LBA3, 0x0);
+	_sata_write_reg(dev.channel, IDE_REG_LBA4, 0x0);
+	_sata_write_reg(dev.channel, IDE_REG_LBA5, 0x0);
+	
+	// Step 1c) Tell the drive how many sectors we want to read
+	// HINT: 1.
+	_sata_write_reg(dev.channel, IDE_REG_SECCOUNT1, 0x1);
+	_sata_write_reg(dev.channel, IDE_REG_SECCOUNT2, 0x0);
+	
+	// Step 2) Tell the drive that we want to read sector
+	_sata_write_reg(dev.channel, IDE_REG_COMMAND, IDE_CMD_READSECE);
+	
+	// Step 3) Wait until the drive isn't busy
+	_sata_wait_bsy(dev.channel);
+	c_puts("Made it here!\n");
+
+	// Step 4) Read the data as words from the data reg
+	Uint16 i;
+	for(i = 0; i < 256; i++) {
+		c_printf("%04x ", _sata_read_data(dev.channel));
 	}
 }

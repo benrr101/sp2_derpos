@@ -70,6 +70,9 @@ void _pci_probe_devices(){
 			);
 	}
 
+	// Print out the first sector of drive 0
+	_sata_read_sector(ata_devices[0], 0x0);
+
 	__panic("HOLY FUCK.");
 }
 

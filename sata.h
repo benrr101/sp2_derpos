@@ -42,6 +42,9 @@
 // Important offsets into the identify space
 #define ATA_IDENT_MODEL		0x54
 
+// Useful bitmasks for the status register
+#define ATA_STATUS_BUSY		0x80
+
 // Determine if the device is ATAPI
 #define ATAPI_LBA1			0x14
 #define ATAPI_LBA2			0xEB
@@ -83,34 +86,18 @@ typedef enum {
 } IDERegs;
 
 typedef enum {
-	IDE_CMD_IDENTIFY	= 0xEC	// Tell the device to identify itself
+	IDE_CMD_IDENTIFY	= 0xEC,	// Tell the device to identify itself
+	IDE_CMD_READSECE	= 0x24	// Tell the drive we want to read sectors
 } IDECommands;
 
 typedef struct {
-	// Generic Host Controller Register Address Map
-	Uint8	used;			// Whether the port is used
-	Uint8	channel;		// Primary/Secondary
-	Uint8	mastslav;		// Master/Slave
-	Uint8	type;			// ATA/ATAPI
-	Uint16	signature;
-	Uint16	capabilities;
-	Uint32	commandSets;
-	Uint32	size;			// Size in sectors
-	char	serial[21];		// Model string
-	char	model[41];		// Model string
-} IDEDevice;
-
-typedef struct {
 	// VERY simple ATA device
-	Uint32	command;
-	Uint32	control;
-	Uint32	busmast;
-	Uint32	size;
-	Uint8	channel;
-	Uint8	device;
-	Uint8	type;
-	char	serial[21];
-	char	model[40];
+	ATAChannel	channel;		// The channel the device is connected to
+	Uint32		size;			// The size in sectors of the device
+	Uint8		device;			// 0 for primary, 1 for secondary
+	Uint8		type;			// 0 for ATA, 1 for ATAPI
+	char		serial[21];		// The serial number of the drive
+	char		model[41];		// The model number of the drive
 } ATADevice;
 
 // GLOBALS /////////////////////////////////////////////////////////////////
@@ -124,5 +111,6 @@ void _sata_initialize(ATAController *cont, Uint16 bus, Uint16 device, Uint16 fun
 Uint8 _sata_read_reg(ATAChannel channel, IDERegs reg);
 void _sata_write_reg(ATAChannel channel, IDERegs reg, Uint8 payload);
 Uint16 _sata_get_bar(Uint16 bus, Uint16 device, Uint16 func, Uint16 offset);
+void _sata_read_sector(ATADevice dev, Uint64 lba);
 
 #endif
