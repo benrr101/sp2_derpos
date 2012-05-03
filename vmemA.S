@@ -29,6 +29,6 @@ _vmem_turnon:
 
 	.globl	_vmem_getcr0
 _vmem_getcr0:
-	movl	%cr3, %eax
+	movl	%cr0, %eax
 	ret
 	
