@@ -43,14 +43,14 @@ Uint16 _ata_get_bar(Uint16 bus, Uint16 device, Uint16 func, Uint16 offset) {
 
 /**
  * Reads a byte from the specified ide channel register. THAR BE MAGIC IN HERE.
- * @param	IDEChannel	channel	The channel to read from
- * @param	IDEReg 		reg		The register on the channel to read from
+ * @param	ATAhannel	channel	The channel to read from
+ * @param	ATAReg 		reg		The register on the channel to read from
  * @source	http://wiki.osdev.org/IDE
  */
-Uint8 _ata_read_reg(ATAChannel channel, IDERegs reg) {
+Uint8 _ata_read_reg(ATAChannel channel, ATAReg reg) {
 	Uint8 result;
 	if(reg > 0x07 && reg < 0x0C) {
-		_ata_write_reg(channel, IDE_REG_CONTROL, 0x80 | ATA_NOINT);
+		_ata_write_reg(channel, ATA_REG_CONTROL, 0x80 | ATA_NOINT);
 	}
 
 	if(reg < 0x08) {
@@ -64,7 +64,7 @@ Uint8 _ata_read_reg(ATAChannel channel, IDERegs reg) {
 	}
    
 	if(reg > 0x07 && reg < 0x0C) {
-		_ata_write_reg(channel, IDE_REG_CONTROL, ATA_NOINT);
+		_ata_write_reg(channel, ATA_REG_CONTROL, ATA_NOINT);
 	}
    
 	return result;
@@ -81,14 +81,14 @@ Uint16 _ata_read_data(ATAChannel channel) {
 
 /**
  * Writes a byte to the specified ATA channel reg. THAR BE MAGIC HERE.
- * @param	IDEChannel 	channel	The channel to write to
- * @param	IDERegs 	reg		The register on the channel to write to
+ * @param	ATAChannel 	channel	The channel to write to
+ * @param	ATARegs 	reg		The register on the channel to write to
  * @param	Uint8 		payload	The byte to write the the register
  * @source	http://wiki.osdev.org/IDE
  */
-void _ata_write_reg(ATAChannel channel, IDERegs reg, Uint8 payload) {
+void _ata_write_reg(ATAChannel channel, ATAReg reg, Uint8 payload) {
 	if(reg > 0x07 && reg < 0x0C) {
-		_ata_write_reg(channel, IDE_REG_CONTROL, 0x80 | ATA_NOINT);
+		_ata_write_reg(channel, ATA_REG_CONTROL, 0x80 | ATA_NOINT);
 	} 
 
 	if(reg < 0x08) {
@@ -102,7 +102,7 @@ void _ata_write_reg(ATAChannel channel, IDERegs reg, Uint8 payload) {
 	}
 
 	if(reg > 0x07 && reg < 0x0C) {
-		_ata_write_reg(channel, IDE_REG_CONTROL, ATA_NOINT);
+		_ata_write_reg(channel, ATA_REG_CONTROL, ATA_NOINT);
 	}
 }
 
@@ -152,25 +152,25 @@ void _ata_probe(Uint16 bus, Uint16 device, Uint16 func) {
 	}
 
 	// Turn off IRQ's for the channels
-	_ata_write_reg(cont[ATA_PORT_CHANPRI], IDE_REG_CONTROL, 2);
-	_ata_write_reg(cont[ATA_PORT_CHANSEC], IDE_REG_CONTROL, 2);
+	_ata_write_reg(cont[ATA_PORT_CHANPRI], ATA_REG_CONTROL, 2);
+	_ata_write_reg(cont[ATA_PORT_CHANSEC], ATA_REG_CONTROL, 2);
 	
 	// Iterate over the channels to probe
 	for(chan = ATA_PORT_CHANPRI; chan <= ATA_PORT_CHANSEC; chan++) {
 		// Iterate over each device on the channel
 		for(dev = ATA_PORT_CHANMAST; dev <= ATA_PORT_CHANSLAV; dev++) {
 			// Tell the controller which drive we want
-			_ata_write_reg(cont[chan], IDE_REG_DRIVESEL, 0xA0 | (dev << 4));
+			_ata_write_reg(cont[chan], ATA_REG_DRIVESEL, 0xA0 | (dev << 4));
 			_ata_wait();
 
 			// Tell the device we want it's identity information
-			_ata_write_reg(cont[chan], IDE_REG_COMMAND, IDE_CMD_IDENTIFY);
+			_ata_write_reg(cont[chan], ATA_REG_COMMAND, ATA_CMD_IDENTIFY);
 			_ata_wait();
 			
 			// If the device exists, then identify it and store it
 			Uint8 deviceId = ata_device_count;
 
-			Uint8 status = _ata_read_reg(cont[chan], IDE_REG_STATUS);
+			Uint8 status = _ata_read_reg(cont[chan], ATA_REG_STATUS);
 			if(status & 0x40) {
 				ata_devices[deviceId].channel = cont[chan];
 				ata_devices[deviceId].device  = dev;
@@ -183,8 +183,8 @@ void _ata_probe(Uint16 bus, Uint16 device, Uint16 func) {
 			}
 
 			// Determine if the device is ATAPI
-			Uint8 lba1 = _ata_read_reg(cont[chan], IDE_REG_LBALOW);
-			Uint8 lba2 = _ata_read_reg(cont[chan], IDE_REG_LBAMID);
+			Uint8 lba1 = _ata_read_reg(cont[chan], ATA_REG_LBA0);
+			Uint8 lba2 = _ata_read_reg(cont[chan], ATA_REG_LBA1);
 			if(
 				(lba1 == ATAPI_LBA1 && lba2 == ATAPI_LBA2) || 
 				(lba1 == ATAPI_ALT_LBA1 && lba2 == ATAPI_ALT_LBA2)
@@ -246,7 +246,7 @@ void _ata_wait( void ) {
  * the device to not be set
  */
 void _ata_wait_bsy(ATAChannel channel) {
-	while(_ata_read_reg(channel, IDE_REG_STATUS) & ATA_STATUS_BUSY);
+	while(_ata_read_reg(channel, ATA_REG_STATUS) & ATA_STATUS_BUSY);
 }
 
 
@@ -254,26 +254,26 @@ void _ata_wait_bsy(ATAChannel channel) {
 void _ata_read_sector(ATADevice dev, Uint64 lba) {
 	// Steb 1) Tell the controller which drive we'd like to read froms
 	// E0 tells the drive we're doing LBA (and some obsolete bits?)
-	_ata_write_reg(dev.channel, IDE_REG_DRIVESEL, 0xE0 | dev.device << 4);
+	_ata_write_reg(dev.channel, ATA_REG_DRIVESEL, 0xE0 | dev.device << 4);
 	_ata_wait();
-	_ata_write_reg(dev.channel, IDE_REG_CONTROL, ATA_NOINT);	// Turn off interrupts
+	_ata_write_reg(dev.channel, ATA_REG_CONTROL, ATA_NOINT);	// Turn off interrupts
 
 	// Step 1b) Tell the drive what sector we want to read
 	// NOTE: We only support 48-bit LBA addressing for now
-	_ata_write_reg(dev.channel, IDE_REG_LBALOW, 0x0);
-	_ata_write_reg(dev.channel, IDE_REG_LBAMID, 0x0);
-	_ata_write_reg(dev.channel, IDE_REG_LBAHIGH, 0x0);
-	_ata_write_reg(dev.channel, IDE_REG_LBA3, 0x0);
-	_ata_write_reg(dev.channel, IDE_REG_LBA4, 0x0);
-	_ata_write_reg(dev.channel, IDE_REG_LBA5, 0x0);
+	_ata_write_reg(dev.channel, ATA_REG_LBA0, 0x0);
+	_ata_write_reg(dev.channel, ATA_REG_LBA1, 0x0);
+	_ata_write_reg(dev.channel, ATA_REG_LBA2, 0x0);
+	_ata_write_reg(dev.channel, ATA_REG_LBA3, 0x0);
+	_ata_write_reg(dev.channel, ATA_REG_LBA4, 0x0);
+	_ata_write_reg(dev.channel, ATA_REG_LBA5, 0x0);
 	
 	// Step 1c) Tell the drive how many sectors we want to read
 	// HINT: 1.
-	_ata_write_reg(dev.channel, IDE_REG_SECCOUNT1, 0x1);
-	_ata_write_reg(dev.channel, IDE_REG_SECCOUNT2, 0x0);
+	_ata_write_reg(dev.channel, ATA_REG_SECCOUNT1, 0x1);
+	_ata_write_reg(dev.channel, ATA_REG_SECCOUNT2, 0x0);
 	
 	// Step 2) Tell the drive that we want to read sector
-	_ata_write_reg(dev.channel, IDE_REG_COMMAND, IDE_CMD_READSECE);
+	_ata_write_reg(dev.channel, ATA_REG_COMMAND, ATA_CMD_READSECE);
 	
 	// Step 3) Wait until the drive isn't busy
 	_ata_wait_bsy(dev.channel);
