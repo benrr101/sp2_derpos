@@ -63,33 +63,33 @@ typedef ATAChannel ATAController[2];
 
 typedef enum {
 	// Registers on the command
-	IDE_REG_DATA		= 0x0,	// The data register
-	IDE_REG_ERROR 		= 0x1,	// On read, error register.
-	IDE_REG_FEATURES 	= 0x1,  // On write, features reg
-	IDE_REG_SECCOUNT1	= 0x2,	// Number of sectors
-	IDE_REG_LBALOW		= 0x3,	// LBA Low register
-	IDE_REG_LBAMID		= 0x4,	// LBA Middle register
-	IDE_REG_LBAHIGH		= 0x5,	// LBA High register
-	IDE_REG_DRIVESEL	= 0x6,	// Drive selector register
-	IDE_REG_STATUS		= 0x7,	// On read, status register.
-	IDE_REG_COMMAND		= 0x7,	// On write, command reg
+	ATA_REG_DATA		= 0x00,	// The data register
+	ATA_REG_ERROR 		= 0x01,	// On read, error register.
+	ATA_REG_FEATURES 	= 0x01,  // On write, features reg
+	ATA_REG_SECCOUNT1	= 0x02,	// Number of sectors
+	ATA_REG_LBA0		= 0x03,	// LBA 0:7
+	ATA_REG_LBA1		= 0x04,	// LBA 8:15
+	ATA_REG_LBA2		= 0x05,	// LBA 16:23
+	ATA_REG_DRIVESEL	= 0x06,	// Drive selector register
+	ATA_REG_STATUS		= 0x07,	// On read, status register.
+	ATA_REG_COMMAND		= 0x07,	// On write, command reg
 	
-	// Registers on the control
-	IDE_REG_SECCOUNT2	= 0x08,	// High byte of number of sectors
-	IDE_REG_LBA3		= 0x09, // IDK.
-	IDE_REG_LBA4		= 0x0A, // IDK.
-	IDE_REG_LBA5		= 0x0B, // IDK.
+	// Registers that are upper 8 bits of 
+	ATA_REG_SECCOUNT2	= 0x08,	// High byte of number of sectors
+	ATA_REG_LBA3		= 0x09, // LBA 24:31
+	ATA_REG_LBA4		= 0x0A, // LBA 32:39
+	ATA_REG_LBA5		= 0x0B, // LBA 40:47
 
 	// Registers on the Bus Master
-	IDE_REG_ALTSTATUS	= 0x0C, // On read, alternate status register
-	IDE_REG_CONTROL		= 0x0C, // On write, control reg
-	IDE_REG_DEVADDR		= 0x0D	// Device address?
-} IDERegs;
+	ATA_REG_ALTSTATUS	= 0x0C, // On read, alternate status register
+	ATA_REG_CONTROL		= 0x0C, // On write, control reg
+	ATA_REG_DEVADDR		= 0x0D	// Device address?
+} ATAReg;
 
 typedef enum {
-	IDE_CMD_IDENTIFY	= 0xEC,	// Tell the device to identify itself
-	IDE_CMD_READSECE	= 0x24	// Tell the drive we want to read sectors
-} IDECommands;
+	ATA_CMD_IDENTIFY	= 0xEC,	// Tell the device to identify itself
+	ATA_CMD_READSECE	= 0x24	// Tell the drive we want to read sectors
+} ATACommand;
 
 typedef struct {
 	// VERY simple ATA device
@@ -109,12 +109,12 @@ Uint8 ata_device_count;
 void _testGetPCIInfo(void);
 void _ata_probe(Uint16 bus, Uint16 device, Uint16 func);
 void _ata_initialize(ATAController *cont, Uint16 bus, Uint16 device, Uint16 func);
-Uint8 _ata_read_reg(ATAChannel channel, IDERegs reg);
-void _ata_write_reg(ATAChannel channel, IDERegs reg, Uint8 payload);
+Uint8 _ata_read_reg(ATAChannel channel, ATAReg reg);
+void _ata_write_reg(ATAChannel channel, ATAReg reg, Uint8 payload);
 Uint16 _ata_get_bar(Uint16 bus, Uint16 device, Uint16 func, Uint16 offset);
 void _ata_read_sector(ATADevice dev, Uint64 lba);
 
 void _ata_wait( void );
-void _ata_wait_bsy( void );
+void _ata_wait_bsy(ATAChannel channel);
 
 #endif
