@@ -10,7 +10,7 @@
 #include "headers.h"
 #include "startup.h"
 #include "pci.h"
-#include "sata.h"
+#include "ata.h"
 
 /**
  * Scans for all PCI devices, and printing information about discovered devices

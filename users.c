@@ -14,8 +14,6 @@
 
 #include "users.h"
 #include "pci.h"
-#include "sata.h"
-
 
 /*
 ** SYSTEM PROCESSES

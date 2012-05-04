@@ -11,7 +11,7 @@
 #include "headers.h"
 #include "pci.h"
 #include "startup.h"
-#include "sata.h"
+#include "ata.h"
 
 // DEFINES /////////////////////////////////////////////////////////////////
 
