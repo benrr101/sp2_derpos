@@ -46,7 +46,7 @@ void _pci_probe_devices(){
 						case 0x01:
 							// Odds are this is our SATA/IDE controller. Let's
 							// probe it and find out.
-							_sata_probe(bus, device, func);
+							_ata_probe(bus, device, func);
 							break;
 						default:
 							// All other devices are unsupported in this kernel
@@ -71,7 +71,7 @@ void _pci_probe_devices(){
 	}
 
 	// Print out the first sector of drive 0
-	_sata_read_sector(ata_devices[0], 0x0);
+	_ata_read_sector(ata_devices[0], 0x0);
 
 	__panic("HOLY FUCK.");
 }
