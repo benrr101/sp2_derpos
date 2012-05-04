@@ -44,6 +44,7 @@
 
 // Useful bitmasks for the status register
 #define ATA_STATUS_BUSY		0x80
+#define ATA_NOINT			0x02
 
 // Determine if the device is ATAPI
 #define ATAPI_LBA1			0x14
@@ -106,11 +107,14 @@ Uint8 ata_device_count;
 	
 // FUNCTIONS ///////////////////////////////////////////////////////////////
 void _testGetPCIInfo(void);
-void _sata_probe(Uint16 bus, Uint16 device, Uint16 func);
-void _sata_initialize(ATAController *cont, Uint16 bus, Uint16 device, Uint16 func);
-Uint8 _sata_read_reg(ATAChannel channel, IDERegs reg);
-void _sata_write_reg(ATAChannel channel, IDERegs reg, Uint8 payload);
-Uint16 _sata_get_bar(Uint16 bus, Uint16 device, Uint16 func, Uint16 offset);
-void _sata_read_sector(ATADevice dev, Uint64 lba);
+void _ata_probe(Uint16 bus, Uint16 device, Uint16 func);
+void _ata_initialize(ATAController *cont, Uint16 bus, Uint16 device, Uint16 func);
+Uint8 _ata_read_reg(ATAChannel channel, IDERegs reg);
+void _ata_write_reg(ATAChannel channel, IDERegs reg, Uint8 payload);
+Uint16 _ata_get_bar(Uint16 bus, Uint16 device, Uint16 func, Uint16 offset);
+void _ata_read_sector(ATADevice dev, Uint64 lba);
+
+void _ata_wait( void );
+void _ata_wait_bsy( void );
 
 #endif
