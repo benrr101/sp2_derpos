@@ -15,7 +15,7 @@
  * 
  * @return		1 if initialization was successful, otherwise 0;
  */
- int _ps2_init(){
+ int _ps2_init( void ){
 	
 	//_ps2_mouse_init();
 	_ps2_keyboard_init();

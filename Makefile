@@ -214,4 +214,4 @@ system.o: keyboard.h ulib.h types.h
 ulibc.o: headers.h
 users.o: headers.h users.h keyboard.h
 mouse.o: headers.h startup.h ps2.h mouse.h
-keyboard.o: ps2.h keyboard.h
+keyboard.o: headers.h ps2.h startup.h keyboard.h
