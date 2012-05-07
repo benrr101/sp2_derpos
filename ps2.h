@@ -12,4 +12,4 @@
 #define PS2_PORT	0x60
 #define PS2_STAT	0x64
 
-int _ps2_init();
+int _ps2_init( void );
