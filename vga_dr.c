@@ -23,8 +23,10 @@
 /*
 ** PUBLIC GLOBAL VARIABLES
 */
+//static Uint32 *vga_mem[1024*1024];
 static VESA_INFO *vga_vesa_info;
 static MODE_INFO *vga_mode_info;
+//static draw_info *video_info;
 
 /*
 ** PRIVATE FUNCTIONS
@@ -49,70 +51,57 @@ static MODE_INFO *vga_mode_info;
 
 void _vga_init( void ) {
 	//Check the contents of the information extracted from REAL MODE 
-	vga_vesa_info = (VESA_INFO *)(VESA_INFO_ADDR);
-	vga_mode_info = (MODE_INFO *)(VGA__INFO_ADDR);
+	vga_vesa_info = (VESA_INFO *)(VESA_INFO_ADDR << 4);
+	vga_mode_info = (MODE_INFO *)(VGA__INFO_ADDR << 4);
 	
-	c_printf("\n(2)VESA_INFO: %x", vga_vesa_info);
-	c_printf("\nVer.  ModePtr    ttlmem    Cap");
-	c_printf("\n%x | %x | %d - %d | %d %d %d %d",
-		vga_vesa_info->VESAVersion, 
-		vga_vesa_info->VideoModePtr,  
-		vga_vesa_info->TotalMemory, 
-		((vga_vesa_info->TotalMemory * 64)/1024),
-		vga_vesa_info->Capabilities[0],
-		vga_vesa_info->Capabilities[1],
-		vga_vesa_info->Capabilities[2],
-		vga_vesa_info->Capabilities[3]
-		);
-	c_printf("\nMODE_INFO(%x):", vga_mode_info);
-	c_printf("\nModeAttr memModel  WinSize  Xres YRes XChar YChar");
-	c_printf("\n%x | %x | %x | (%d, %d) | (%d, %d)", 
-		vga_mode_info->ModeAttributes, 
-		vga_mode_info->MemoryModel, 
-		vga_mode_info->WinSize, 
-		vga_mode_info->XResolution, 
-		vga_mode_info->YResolution,
-		vga_mode_info->XCharSize,
-		vga_mode_info->YCharSize
-		);
-	c_printf("\n-WinFuncPrt: %x\n", vga_mode_info->WinFuncPtr);
+	//setup my buffer space @ PhysBasePtr + TotalMemory
+	
+	
+	#ifdef VGA_DEBUG
+	c_printf("\nVESA_INFO(%x):\n", vga_vesa_info);
+	c_printf("-version: %d\n", vga_vesa_info->VESAVersion);
+	c_printf("-VideoModePtr: %x\n", vga_vesa_info->VideoModePtr);
+	c_printf("-TtlMem: %d, %d\n", vga_vesa_info->TotalMemory, (vga_vesa_info->TotalMemory * 64)/1024);
+	c_printf("\nMODE_INFO(%x):\n", vga_mode_info);
+	c_printf("-ModeAttr: %x\n", vga_mode_info->ModeAttributes);
+	c_printf("-MemModel: %x\n", vga_mode_info->MemoryModel);
+	c_printf("-WinSize: %d\n", vga_mode_info->WinSize);
+	c_printf("-WinSize (X, Y): (%d, %d)\n", vga_mode_info->XResolution, vga_mode_info->YResolution);
+	c_printf("-CharSize (X, Y): (%d, %d)\n", vga_mode_info->XCharSize, vga_mode_info->YCharSize);
+	c_printf("-WinFuncPrt: %x\n", vga_mode_info->WinFuncPtr);
 	c_printf("-PhysBasePrt: %x\n", vga_mode_info->PhysBasePtr);
-	c_printf("\nLin B/sl L #page  Rs  RFp Gs GFp Bs BFp Rsvds RsvdFp");
-	c_printf("\n%d | %d         | %x | %x | %x | %x | %x | %x | %x | %x ", 
-		vga_mode_info->LinbytesPerScanLine, 
-		vga_mode_info->LinNumberOfImagePages, 
-		vga_mode_info->LinRedMaskSize, 
-		vga_mode_info->LinRedFieldPosition,
-		vga_mode_info->LinGreenMaskSize,
-		vga_mode_info->LinGreenFieldPosition, 
-		vga_mode_info->LinBlueMaskSize, 
-		vga_mode_info->LinBlueFieldPosition,
-		vga_mode_info->LinRsvdMaskSize,
-		vga_mode_info->LinRsvdFieldPosition
-		);
-
-	draw();
+	c_printf("-LinbytesPerScanLine: %d\n", vga_mode_info->LinbytesPerScanLine);
+	#endif
+	
+	draw_display();
+	
 }
 
 void draw2( void ) {
     return;
 }
 void back2text( void ) { 
-    return;
 
+return;
 }
 void vga256( void ) {
-    return;
+return;
 }
 
-void draw( void ) {
+//Main draw program
+void draw_display( void ) {
 	Uint32 *ptr = (Uint32*)(vga_mode_info->PhysBasePtr);
+	static int o = 0;
+	
     int i = 0;
     int j = 0;
 
-    for(i = 10; i < 40; i++){
-        for( j = 0; j < 20; j++){
-			ptr[i+(20*j)] = i+j;
+    for(i = o; i < vga_mode_info->XResolution; i++){
+        for( j = 0; j < vga_mode_info->YResolution; j++){
+			ptr[(j*vga_mode_info->LinbytesPerScanLine) + i] = i+j;
         }
     }
+    if ( o > vga_mode_info->XResolution)
+    	o = 0;
+    o++;
 }
