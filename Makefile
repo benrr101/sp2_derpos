@@ -9,8 +9,8 @@
 #
 # User supplied files
 #
-U_C_SRC = clock.c klibc.c pcbs.c queues.c scheduler.c sio.c stacks.c syscalls.c system.c ulibc.c users.c vga_dr.c
-U_C_OBJ = clock.o klibc.o pcbs.o queues.o scheduler.o sio.o stacks.o syscalls.o system.o ulibc.o users.o vga_dr.o
+U_C_SRC = clock.c klibc.c pcbs.c queues.c scheduler.c sio.c stacks.c syscalls.c system.c ulibc.c users.c vga_dr.c win_man.c gl.c
+U_C_OBJ = clock.o klibc.o pcbs.o queues.o scheduler.o sio.o stacks.o syscalls.o system.o ulibc.o users.o vga_dr.o win_man.o gl.o
 U_S_SRC = klibs.S ulibs.S vga_dr_S.S
 U_S_OBJ = klibs.o ulibs.o vga_dr_S.o
 U_LIBS	=
@@ -190,10 +190,12 @@ depend:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-bootstrap.o: bootstrap.h vga_dr_S.S
+bootstrap.o: bootstrap.h vga_dr_S.S vga_define.h
+vga_dr_S.o: vga_define.h
 startup.o: bootstrap.h
 isr_stubs.o: bootstrap.h
 ulibs.o: syscalls.h headers.h queues.h /home/fac/wrc/include/x86arch.h
+vga_dr_S.o: vga_define.h
 c_io.o: c_io.h startup.h support.h /home/fac/wrc/include/x86arch.h
 support.o: startup.h support.h c_io.h /home/fac/wrc/include/x86arch.h
 support.o: bootstrap.h
@@ -210,7 +212,9 @@ syscalls.o: headers.h pcbs.h clock.h stacks.h scheduler.h queues.h sio.h
 syscalls.o: syscalls.h /home/fac/wrc/include/x86arch.h system.h startup.h
 system.o: headers.h system.h pcbs.h clock.h stacks.h bootstrap.h syscalls.h
 system.o: queues.h /home/fac/wrc/include/x86arch.h sio.h scheduler.h vga_dr.h
-system.o: users.h ulib.h types.h
+system.o: gl.h win_man.h users.h ulib.h types.h
 ulibc.o: headers.h
 users.o: headers.h users.h
-vga_dr.o: headers.h vga_dr.h
+vga_dr.o: headers.h vga_dr.h vga_define.h
+win_man.o: win_man.h vga_dr.h headers.h gl.h
+gl.o: gl.h vga_dr.h headers.h

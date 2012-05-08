@@ -23,10 +23,8 @@
 /*
 ** PUBLIC GLOBAL VARIABLES
 */
-//static Uint32 *vga_mem[1024*1024];
-static VESA_INFO *vga_vesa_info;
-static MODE_INFO *vga_mode_info;
-//static draw_info *video_info;
+VESA_INFO *vga_vesa_info;
+MODE_INFO *vga_mode_info;
 
 /*
 ** PRIVATE FUNCTIONS
@@ -41,22 +39,25 @@ static MODE_INFO *vga_mode_info;
  **
  ** initialize the vga module
  */
-
-//
-//	if you change the 0 in the mode to a 4 you get the ($0x0103)->($0x4103)
-//	linear buffer and from there you can draw tot he screen
-// 	in the vga info struct there is  aPhysBaseAddr to draw too
-//	
-//
-
 void _vga_init( void ) {
 	//Check the contents of the information extracted from REAL MODE 
 	vga_vesa_info = (VESA_INFO *)(VESA_INFO_ADDR << 4);
 	vga_mode_info = (MODE_INFO *)(VGA__INFO_ADDR << 4);
 	
+	#ifdef VGA_DEBUG
+	_vga_print_info();
+	#endif
+
+	draw_display();
+	
+}
+
+Uint32 _vga_get_end_mem( void ) {
 	//setup my buffer space @ PhysBasePtr + TotalMemory
+	return (vga_mode_info->PhysBasePtr + (vga_vesa_info->TotalMemory * 64 * 1024));
+}
 	
-	
+void _vga_print_info( void ) {
 	#ifdef VGA_DEBUG
 	c_printf("\nVESA_INFO(%x):\n", vga_vesa_info);
 	c_printf("-version: %d\n", vga_vesa_info->VESAVersion);
@@ -71,21 +72,7 @@ void _vga_init( void ) {
 	c_printf("-WinFuncPrt: %x\n", vga_mode_info->WinFuncPtr);
 	c_printf("-PhysBasePrt: %x\n", vga_mode_info->PhysBasePtr);
 	c_printf("-LinbytesPerScanLine: %d\n", vga_mode_info->LinbytesPerScanLine);
-	#endif
-	
-	draw_display();
-	
-}
-
-void draw2( void ) {
-    return;
-}
-void back2text( void ) { 
-
-return;
-}
-void vga256( void ) {
-return;
+	#endif	
 }
 
 //Main draw program

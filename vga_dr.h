@@ -90,15 +90,6 @@
 		unsigned char 	LinRsvdFieldPosition;
 		unsigned char 	Reserved[194];
 	}  __attribute__ ((packed)) MODE_INFO;
-   
-   
-	typedef struct screen_info
-	{
-		Uint32	screen_num;
-		Uint32 	w;
-		Uint32	h;
-		Uint32	bPtr;
-	}	screen_info;
 /*
 ** Prototypes
 */
@@ -113,6 +104,10 @@
 void _vga_init( void );
 
 void draw_display( void );
+
+void _vga_print_info( void );
+
+Uint32 _vga_get_end_mem( void );
 
 #endif // ACM
 
