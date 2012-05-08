@@ -44,6 +44,8 @@
 
 // Useful bitmasks for the status register
 #define ATA_STATUS_BUSY		0x80
+#define ATA_STATUS_DRQ		0x08
+#define ATA_STATUS_RDY		0x40
 #define ATA_NOINT			0x02
 
 // Determine if the device is ATAPI
@@ -65,7 +67,7 @@ typedef enum {
 	// Registers on the command
 	ATA_REG_DATA		= 0x00,	// The data register
 	ATA_REG_ERROR 		= 0x01,	// On read, error register.
-	ATA_REG_FEATURES 	= 0x01,  // On write, features reg
+	ATA_REG_FEATURES 	= 0x01, // On write, features reg
 	ATA_REG_SECCOUNT1	= 0x02,	// Number of sectors
 	ATA_REG_LBA0		= 0x03,	// LBA 0:7
 	ATA_REG_LBA1		= 0x04,	// LBA 8:15
@@ -88,7 +90,9 @@ typedef enum {
 
 typedef enum {
 	ATA_CMD_IDENTIFY	= 0xEC,	// Tell the device to identify itself
-	ATA_CMD_READSECE	= 0x24	// Tell the drive we want to read sectors
+	ATA_CMD_READSECE	= 0x24,	// Read sectors using 48-bit LBA
+	ATA_CMD_WRITSECE	= 0x34,	// Write sectors using 48-bit LBA 
+	ATA_CMD_FLUSHE		= 0xEA	// Flush the 48bit LBA cache
 } ATACommand;
 
 typedef struct {
@@ -101,6 +105,8 @@ typedef struct {
 	char		model[41];		// The model number of the drive
 } ATADevice;
 
+typedef Uint16 ATASector[256];
+
 // GLOBALS /////////////////////////////////////////////////////////////////
 ATADevice ata_devices[10];
 Uint8 ata_device_count; 
@@ -112,7 +118,8 @@ void _ata_initialize(ATAController *cont, Uint16 bus, Uint16 device, Uint16 func
 Uint8 _ata_read_reg(ATAChannel channel, ATAReg reg);
 void _ata_write_reg(ATAChannel channel, ATAReg reg, Uint8 payload);
 Uint16 _ata_get_bar(Uint16 bus, Uint16 device, Uint16 func, Uint16 offset);
-void _ata_read_sector(ATADevice dev, Uint64 lba);
+void _ata_read_sector(ATADevice dev, Uint64 lba, ATASector *d);
+void _ata_write_sector(ATADevice dev, Uint64 lba, ATASector *s);
 
 void _ata_wait( void );
 void _ata_wait_bsy(ATAChannel channel);

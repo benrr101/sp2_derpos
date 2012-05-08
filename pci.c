@@ -70,9 +70,25 @@ void _pci_probe_devices(){
 			);
 	}
 
-	// Print out the first sector of drive 0
-	_ata_read_sector(ata_devices[0], 0x0);
+	// Build a test sector to write to the SECOND drive
+	ATASector in, out;
+	Uint16 j;
+	for(j = 0; j < 512; j++) { // 0 it out
+		((Uint8*)in)[i] = 0x0;
+	}
+	out[0]=0x484F; out[1]=0x4C59; out[2]=0x2046; out[3]=0x5543; out[4]=0x4B21; out[255]=0xAAAA; // HOLY FUCK!
+	_ata_read_sector(ata_devices[0], 0x1, &in);
+	c_printf("Read: %04x ... %04x\n", in[0], in[255]);
+	_ata_write_sector(ata_devices[2], 0x1, &out);
+	_ata_read_sector(ata_devices[2], 0x0, &in);
+	c_printf("Read: %04x ... %04x\n", in[0], in[255]);
+	_ata_read_sector(ata_devices[2], 0x1, &in);
+	c_printf("Read: %04x ... %04x\n", in[0], in[255]);
+	_ata_read_sector(ata_devices[2], 0x2, &in);
+	c_printf("Read: %04x ... %04x\n", in[0], in[255]);
+	//c_printf("--->%c%c%c%c%c%c%c%c%c%c\n\n", ((Uint8*)t)[0],((Uint8*)t)[1],((Uint8*)t)[2],((Uint8*)t)[3],((Uint8*)t)[4],((Uint8*)t)[5],((Uint8*)t)[6],((Uint8*)t)[7],((Uint8*)t)[8],((Uint8*)t)[9]);
 
+	// Print out the first sector of drive 0
 	__panic("HOLY FUCK.");
 }
 
