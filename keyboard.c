@@ -14,6 +14,7 @@
 #include "keyboard.h"
 
 // Scan Code Set #1
+// (copied from c_io.c)
 unsigned char _ps2_scan_code[ 2 ][ 128 ] = {
 	{
 /* 00-07 */	'\377',	'\033',	'1',	'2',	'3',	'4',	'5',	'6',
@@ -67,11 +68,14 @@ void _ps2_keyboard_init( void ){
 
 	
 	// Try turning on the caps-lock light
+	/*
 	_ps2_keyboard_clear();
 	__outb( PS2_PORT, PS2_K_LED );
 	c_puts( "Waiting for argument buffer to be clear...\n" );
-	_ps2_keyboard_ready();
+	while( (__inb( PS2_PORT ) & 1) == 1 )
+		;
 	__outb( PS2_STAT, PS2_K_CAPS | PS2_K_NUML | PS2_K_SCRL );
+	*/
 
 	// install our ISR
 	__install_isr( 0x21, _ps2_keyboard_isr );
@@ -222,7 +226,7 @@ void _ps2_keyboard_isr( int vec, int code ){
 			return;
 	}
 	if( key < 0x80 ){
-		c_printf( "%c", _ps2_scan_code[ shift_pressed][key] );
+		c_printf( "%c", _ps2_scan_code[ shift_pressed ][ key ] );
 	}
 	else if( key >= 0x80 && key <= 0xD8){
 		// key released!
