@@ -22,6 +22,8 @@
 #include "sio.h"
 #include "scheduler.h"
 #include "vga_dr.h"
+#include "gl.h"
+#include "win_man.h"
 
 // need init() address
 #include "users.h"
@@ -202,7 +204,7 @@ void _init( void ) {
 	** Console I/O system.
 	*/
 	
-	c_io_init();
+	c_io_init();	
 	c_setscroll( 0, 7, 99, 99 );
 	c_puts_at( 0, 6, "================================================================================" );
 
@@ -219,8 +221,10 @@ void _init( void ) {
 	_q_init();		// must be first
 	_pcb_init();
 	_stack_init();
-	_sio_init();
-	_vga_init();
+	_sio_init();	
+	_win_man_init();	
+		//vga_init
+		//gl_init
 	_syscall_init();
 	_sched_init();
 	_clock_init();
