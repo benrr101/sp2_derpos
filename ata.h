@@ -105,7 +105,7 @@ typedef struct {
 	char		model[41];		// The model number of the drive
 } ATADevice;
 
-typedef Uint16 ATASector[256];
+typedef Uint8 ATASector[512];
 
 // GLOBALS /////////////////////////////////////////////////////////////////
 ATADevice ata_devices[10];
