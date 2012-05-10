@@ -126,5 +126,8 @@ void _ata_wait( void );
 void _ata_wait_bsy(ATAChannel channel);
 void _ata_blank_sector(ATASector *s);
 Uint32 _sector_get_long(ATASector *s, Uint16 offset);
+Uint16 _sector_get_word(ATASector *s, Uint16 offset);
+void _sector_put_long(ATASector *s, Uint16 offset, Uint32 payload);
+void _sector_put_word(ATASector *s, Uint16 offset, Uint16 payload);
 
 #endif

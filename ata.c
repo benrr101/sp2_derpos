@@ -341,3 +341,15 @@ Uint32 _sector_get_long(ATASector *s, Uint16 offset) {
 Uint16 _sector_get_word(ATASector *s, Uint16 offset) {
 	return (*s)[offset+1]<<8|(*s)[offset];
 }
+
+void _sector_put_long(ATASector *s, Uint16 offset, Uint32 payload) {
+	(*s)[offset+3] = payload >> 24;
+	(*s)[offset+2] = payload >> 16;
+	(*s)[offset+1] = payload >> 8;
+	(*s)[offset]   = payload;
+}
+
+void _sector_put_word(ATASector *s, Uint16 offset, Uint16 payload) {
+	(*s)[offset+1] = payload >> 8;
+	(*s)[offset]   = payload;
+}
