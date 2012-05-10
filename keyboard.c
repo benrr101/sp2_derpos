@@ -24,6 +24,7 @@ typedef struct ps2_io_req{
 
 // Array of IO Requests currently outstanding
 static ps2_io_req *requests [ TOTAL_IO_REQS ];
+static Pcb *pcb_reqs [ TOTAL_IO_REQS ];
 
 // Scan Code Set #1
 // (copied from c_io.c)
@@ -331,10 +332,6 @@ void buf_read( char* buf, int size ){
 	requests[index]->buf = &buf;
 	requests[index]->size = size;
 	requests[index]->index = 0;
-
-	// Add to IO-blocking queue
-
-
 }
 
 
