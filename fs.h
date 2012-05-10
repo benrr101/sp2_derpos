@@ -35,6 +35,14 @@
 #define FS_BT_ALLOCATED			0x1
 #define FS_BT_FREE				0x0
 
+// Success/Error Codes
+typedef enum {
+	FS_SUCCESS 			= 0x0,
+	FS_ERR_TOOBIG,
+	FS_ERR_BADINDEX,
+	FS_ERR_BADSECT
+} FS_STATUS;
+
 // TYPEDEFS ////////////////////////////////////////////////////////////////
 
 /**
@@ -100,6 +108,7 @@ MountPoint mount_points[26];
 Uint8 mount_point_count;
 
 // FUNCTIONS ///////////////////////////////////////////////////////////////
+FS_STATUS _fs_create_partition(ATADevice *dev, Uint32 start, Uint32 size, Uint8 index);
 void _fs_probe(ATADevice *dev);
 
 #endif

@@ -17,6 +17,12 @@
 
 // FUNCTIONS ///////////////////////////////////////////////////////////////
 
+/**
+ * Probes the given ata device for any DERP_FS partitions. If a partition is
+ * found, the partition is mounted to the mount_points global variable and the
+ * value of mount_point_count is incremented.
+ * @param	ATADevice*	dev		The device to scan for DERP_FS partitions
+ */
 void _fs_probe(ATADevice *dev) {
 	// Create a blank sector for reading in the mbr
 	ATASector mbr;
@@ -30,7 +36,7 @@ void _fs_probe(ATADevice *dev) {
 	Uint16 endOfTable = FS_PART_TABLE_OFF + (FS_PART_TABLE_SIZE * FS_PART_TABLE_ENTRIES);
 	for(i = FS_PART_TABLE_OFF; i < endOfTable; i += FS_PART_TABLE_SIZE) {
 		// What type is the partiton?
-		if(mbr[i + FS_PART_ENTRY_PT] == FS_PARTITION_TYPE || 1) {
+		if(mbr[i + FS_PART_ENTRY_PT] == FS_PARTITION_TYPE) {
 			// We found a DERP_FS partition!!
 			// Read the first sector of the partiton to see if it's derp
 			ATASector br;
@@ -57,6 +63,48 @@ void _fs_probe(ATADevice *dev) {
 	}
 
 	// DEBUG: Output the found partitions
+}
+
+FS_STATUS _fs_create_partition(ATADevice *dev, Uint32 start, Uint32 size, Uint8 index) {
+	// Detect stupidity errors
+	if(index >= FS_PART_TABLE_ENTRIES) {
+ 		// Can't have > 4 partitions
+		return FS_ERR_BADINDEX; 
+	}
+	if(size >= dev->size || size + start >= dev->size) { 
+		// Can't partition off more sectors that the drive can hold
+		return FS_ERR_TOOBIG; 
+	}
+	if(start == SECT_MBR) {
+		// Can't place a partition over the MBR
+		return FS_ERR_BADSECT;
+	}
+
+	// Read in the current MBR
+	ATASector mbr;
+	_ata_read_sector(*dev, SECT_MBR, &mbr);
+
+	// Verify that it's actually an MBR
+	if(!(mbr[510] == 0x55 && mbr[511] == 0xAA)) {
+		// It's not a valid MBR. We need to rewrite it.
+		_ata_blank_sector(&mbr);
+		mbr[510] = 0x55;	// The MBR signature
+		mbr[511] = 0xAA;
+	}
+
+	// Now jump to the index of the partition
+	Uint32 indexAddr = FS_PART_TABLE_OFF + index * FS_PART_TABLE_SIZE;
+
+	// Write the type of the partition
+	mbr[indexAddr + FS_PART_ENTRY_PT] = FS_PARTITION_TYPE;
+
+	// Write the geometry of the partition
+	mbr[indexAddr + FS_PART_ENTRY_LBA] = start;
+	mbr[indexAddr + FS_PART_ENTRY_SIZE] = size;
+
+	// Write the mbr back to the disk
+	_ata_write_sector(*dev, SECT_MBR, &mbr);
+	return FS_SUCCESS;
 }
 
 void _fs_format(MountPoint *mp, ATADevice *dev, Uint32 size) {

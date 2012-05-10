@@ -75,6 +75,17 @@ void _pci_probe_devices(){
 		_fs_probe(&ata_devices[i]);
 	}
 
+	// If there were no partitions found notify the user
+	if(mount_point_count == 0) {
+		c_puts("No DERP_FS Partitions Found!\n");
+		c_puts("... Creating test partition\n");
+
+		Uint8 code = _fs_create_partition(&ata_devices[1], 0x1, 204800, 0);
+		if(code != FS_SUCCESS) {
+			c_printf("*** Filesystem creation failed with code 0x%x\n", code);
+		}
+	}
+
 	// Build a test sector to write to the SECOND drive
 	ATASector in, out;
 	Uint16 j;
