@@ -94,6 +94,8 @@
 ** Prototypes
 */
 
+VESA_INFO *vga_vesa_info;
+MODE_INFO *vga_mode_info;
 
 #define VGA_DEBUG
 /*

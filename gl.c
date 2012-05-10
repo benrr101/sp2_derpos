@@ -4,3 +4,8 @@
 void _gl_init( void ) {
 	
 }
+
+
+void draw_active_screens() { 
+
+}
