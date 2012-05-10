@@ -11,22 +11,17 @@
 
 // #DEFINES ////////////////////////////////////////////////////////////////
 
-// PCI Configuration Addressing
-#define SATA_PCI_BUS        0
-#define SATA_PCI_DEVICE     31
-#define SATA_PCI_FUNCTION   2
-
 // PCI Configuration Register Offsets
-#define SATA_PCI_REG_VENDOR 0x00
-#define SATA_PCI_REG_DEVICE 0x02
-#define SATA_PCI_REG_HEADER 0x0E	// 16 bit
-#define SATA_PCI_REG_PCMD	0x10
-#define SATA_PCI_REG_PCTRL	0x14
-#define SATA_PCI_REG_SCMD	0x18
-#define SATA_PCI_REG_SCTRL	0x1C
-#define SATA_PCI_REG_BMAST	0x20
-#define SATA_PCI_REG_ABAR   0x24
-#define SATA_PCI_REG_MAP	0x90	// 8 bit
+#define ATA_PCI_REG_VENDOR	0x00
+#define ATA_PCI_REG_DEVICE	0x02
+#define ATA_PCI_REG_HEADER	0x0E	// 16 bit
+#define ATA_PCI_REG_PCMD	0x10
+#define ATA_PCI_REG_PCTRL	0x14
+#define ATA_PCI_REG_SCMD	0x18
+#define ATA_PCI_REG_SCTRL	0x1C
+#define ATA_PCI_REG_BMAST	0x20
+#define ATA_PCI_REG_ABAR	0x24
+#define ATA_PCI_REG_MAP		0x90	// 8 bit
 
 // IDE Types
 #define ATA_PORT_EMPTY		0x0
@@ -47,6 +42,13 @@
 #define ATA_STATUS_DRQ		0x08
 #define ATA_STATUS_RDY		0x40
 #define ATA_NOINT			0x02
+
+// Default BARs
+#define ATA_DEFAULT_PCMD	0x01F0
+#define ATA_DEFAULT_PCTRL	0x03F4
+#define ATA_DEFAULT_SCMD	0x0170
+#define ATA_DEFAULT_SCTRL	0x0374
+#define ATA_DEFAULT_BMAST	0xF0F0
 
 // Determine if the device is ATAPI
 #define ATAPI_LBA1			0x14
@@ -96,7 +98,6 @@ typedef enum {
 } ATACommand;
 
 typedef struct {
-	// VERY simple ATA device
 	ATAChannel	channel;		// The channel the device is connected to
 	Uint32		size;			// The size in sectors of the device
 	Uint8		device;			// 0 for primary, 1 for secondary
@@ -112,7 +113,6 @@ ATADevice ata_devices[10];
 Uint8 ata_device_count; 
 	
 // FUNCTIONS ///////////////////////////////////////////////////////////////
-void _testGetPCIInfo(void);
 void _ata_probe(Uint16 bus, Uint16 device, Uint16 func);
 void _ata_initialize(ATAController *cont, Uint16 bus, Uint16 device, Uint16 func);
 Uint8 _ata_read_reg(ATAChannel channel, ATAReg reg);

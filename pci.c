@@ -71,15 +71,15 @@ void _pci_probe_devices(){
 	}
 
 	// Build a test sector to write to the SECOND drive
-	ATASector in, out;
-	Uint16 j;
-	for(j = 0; j < 512; j++) { // 0 it out
-		out[i] = 0x0;
-	}
-	out[0]='H';out[1]='o';out[2]='l';out[3]='y';out[4]=' ';out[5]='F';out[6]='u';out[7]='c';out[8]='k';out[9]=' ';out[10]='B';out[11]='o';out[12]='y';out[13]='s';out[14]='!';out[15]='\0';
-	_ata_write_sector(ata_devices[2], 0x1, &out);
-	_ata_read_sector(ata_devices[2], 0x1, &in);
-	c_printf("--->%s\n\n", out);
+	//ATASector in, out;
+	//Uint16 j;
+	//for(j = 0; j < 512; j++) { // 0 it out
+	//	out[i] = 0x0;
+	//}
+	//out[0]='H';out[1]='o';out[2]='l';out[3]='y';out[4]=' ';out[5]='F';out[6]='u';out[7]='c';out[8]='k';out[9]=' ';out[10]='B';out[11]='o';out[12]='y';out[13]='s';out[14]='!';out[15]='\0';
+	//_ata_write_sector(ata_devices[2], 0x1, &out);
+	//_ata_read_sector(ata_devices[2], 0x1, &in);
+	//c_printf("--->%s\n\n", out);
 
 	// Print out the first sector of drive 0
 	__panic("HOLY FUCK.");
