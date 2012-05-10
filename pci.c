@@ -11,6 +11,7 @@
 #include "startup.h"
 #include "pci.h"
 #include "ata.h"
+#include "fs.h"
 
 /**
  * Scans for all PCI devices, and printing information about discovered devices
@@ -23,6 +24,7 @@ void _pci_probe_devices(){
 
 	// Initialize the number of ATA devices to 0
 	ata_device_count = 0;
+	mount_point_count = 0;
 
 	// Iterate over the entire PCI bus
 	Uint16 bus;
@@ -68,18 +70,22 @@ void _pci_probe_devices(){
 			ata_devices[i].serial,
 			ata_devices[i].size
 			);
+
+		// Probe it for partitions
+		_fs_probe(&ata_devices[i]);
 	}
 
 	// Build a test sector to write to the SECOND drive
-	//ATASector in, out;
-	//Uint16 j;
-	//for(j = 0; j < 512; j++) { // 0 it out
-	//	out[i] = 0x0;
-	//}
-	//out[0]='H';out[1]='o';out[2]='l';out[3]='y';out[4]=' ';out[5]='F';out[6]='u';out[7]='c';out[8]='k';out[9]=' ';out[10]='B';out[11]='o';out[12]='y';out[13]='s';out[14]='!';out[15]='\0';
-	//_ata_write_sector(ata_devices[2], 0x1, &out);
-	//_ata_read_sector(ata_devices[2], 0x1, &in);
-	//c_printf("--->%s\n\n", out);
+	ATASector in, out;
+	Uint16 j;
+	for(j = 0; j < 512; j++) { // 0 it out
+		out[i] = 0x0;
+	}
+	out[0]=0x76;out[1]=0x54;out[2]=0x32;out[3]=0x10;
+	_ata_write_sector(ata_devices[1], 0x1, &out);
+	_ata_read_sector(ata_devices[1], 0x1, &in);
+	Uint32 x = in[0] << 24 | in[1] << 16 | in[2] << 8 | in[3];
+	c_printf("--->%x%x%x%x -> %x\n\n", in[0], in[1], in[2], in[3], x);
 
 	// Print out the first sector of drive 0
 	__panic("HOLY FUCK.");
