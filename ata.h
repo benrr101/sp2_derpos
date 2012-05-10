@@ -121,7 +121,9 @@ Uint16 _ata_get_bar(Uint16 bus, Uint16 device, Uint16 func, Uint16 offset);
 void _ata_read_sector(ATADevice dev, Uint64 lba, ATASector *d);
 void _ata_write_sector(ATADevice dev, Uint64 lba, ATASector *s);
 
+// Utility functions
 void _ata_wait( void );
 void _ata_wait_bsy(ATAChannel channel);
+void _ata_blank_sector(ATASector *s);
 
 #endif
