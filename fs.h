@@ -30,6 +30,9 @@
 #define	FS_SECTOR_SIZE			512
 #define FS_SECT_PER_IB			112
 
+// Boot Record Offsets
+#define FS_BR_SIZE				0x8
+
 // BitTable Definitions
 #define FS_BT_SIZE				FS_SECT_PER_IB / 8
 #define FS_BT_ALLOCATED			0x1
@@ -39,8 +42,10 @@
 typedef enum {
 	FS_SUCCESS 			= 0x0,
 	FS_ERR_TOOBIG,
+	FS_ERR_TOOSMALL,
 	FS_ERR_BADINDEX,
-	FS_ERR_BADSECT
+	FS_ERR_BADSECT,
+	FS_ERR_NOTDERP
 } FS_STATUS;
 
 // TYPEDEFS ////////////////////////////////////////////////////////////////
@@ -109,6 +114,7 @@ Uint8 mount_point_count;
 
 // FUNCTIONS ///////////////////////////////////////////////////////////////
 FS_STATUS _fs_create_partition(ATADevice *dev, Uint32 start, Uint32 size, Uint8 index);
+FS_STATUS _fs_format(MountPoint *mp, ATADevice *dev, Uint8 index);
 void _fs_probe(ATADevice *dev);
 
 #endif

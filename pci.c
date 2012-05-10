@@ -76,7 +76,7 @@ void _pci_probe_devices(){
 	}
 
 	// If there were no partitions found notify the user
-	if(mount_point_count == 0) {
+	if(mount_point_count == 0 || 1) {
 		c_puts("No DERP_FS Partitions Found!\n");
 		c_puts("... Creating test partition\n");
 
@@ -84,19 +84,29 @@ void _pci_probe_devices(){
 		if(code != FS_SUCCESS) {
 			c_printf("*** Filesystem creation failed with code 0x%x\n", code);
 		}
+		code = _fs_format(&mount_points[mount_point_count], &ata_devices[1], 0);
+		if(code != FS_SUCCESS) {
+			c_printf("*** Filesystem format failed with code 0x%x\n", code);
+		}
+	}
+
+	for(i = 0; i < mount_point_count; i++) {
+		c_printf("%c: %04x bytes\n", mount_points[i].letter, mount_points[i].bootRecord.size * 512);
 	}
 
 	// Build a test sector to write to the SECOND drive
-	ATASector in, out;
+	/*ATASector in, out;
 	Uint16 j;
 	for(j = 0; j < 512; j++) { // 0 it out
 		out[i] = 0x0;
 	}
-	out[0]=0x76;out[1]=0x54;out[2]=0x32;out[3]=0x10;
+	_sector_put_long(&out, 0x0, 0x76543210);
+	//out[0]=0x76;out[1]=0x54;out[2]=0x32;out[3]=0x10;
 	_ata_write_sector(ata_devices[1], 0x1, &out);
 	_ata_read_sector(ata_devices[1], 0x1, &in);
-	Uint32 x = in[0] << 24 | in[1] << 16 | in[2] << 8 | in[3];
+	Uint32 x = _sector_get_long(&in, 0x0);
 	c_printf("--->%x%x%x%x -> %x\n\n", in[0], in[1], in[2], in[3], x);
+	*/
 
 	// Print out the first sector of drive 0
 	__panic("HOLY FUCK.");

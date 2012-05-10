@@ -45,12 +45,12 @@ void _fs_probe(ATADevice *dev) {
 
 			// Is it DERP?
 			Uint32 header = br[0]<<24|br[1]<<16|br[2]<<8|br[3];
-			Uint32 size   = _sector_get_long(&br, 0x8);
+			Uint32 size   = _sector_get_long(&br, FS_BR_SIZE);
 			if(header == FS_PARTITION_ID) {
 				// Increment the count of mount points and set up the mp
 				Uint8 mp_id = mount_point_count;
 				mount_point_count++;
-				MountPoint mp = mount_points[mp_id];
+				MountPoint mp;
 				
 				// Build the MountPoint
 				mp.device = dev;
@@ -58,11 +58,12 @@ void _fs_probe(ATADevice *dev) {
 				mp.bootRecord.size = size;
 				mp.offset = brAddr;
 				mp.letter = mp_id + 0x41;
+
+				// Store the MountPoint
+				mount_points[mp_id] = mp;
 			}
 		}
 	}
-
-	// DEBUG: Output the found partitions
 }
 
 FS_STATUS _fs_create_partition(ATADevice *dev, Uint32 start, Uint32 size, Uint8 index) {
@@ -74,6 +75,10 @@ FS_STATUS _fs_create_partition(ATADevice *dev, Uint32 start, Uint32 size, Uint8 
 	if(size >= dev->size || size + start >= dev->size) { 
 		// Can't partition off more sectors that the drive can hold
 		return FS_ERR_TOOBIG; 
+	}
+	if(size <= 4) {
+		// Can't have less sectors than required for metadata
+		return FS_ERR_TOOSMALL;
 	}
 	if(start == SECT_MBR) {
 		// Can't place a partition over the MBR
@@ -99,15 +104,45 @@ FS_STATUS _fs_create_partition(ATADevice *dev, Uint32 start, Uint32 size, Uint8 
 	mbr[indexAddr + FS_PART_ENTRY_PT] = FS_PARTITION_TYPE;
 
 	// Write the geometry of the partition
-	mbr[indexAddr + FS_PART_ENTRY_LBA] = start;
-	mbr[indexAddr + FS_PART_ENTRY_SIZE] = size;
+	_sector_put_long(&mbr, indexAddr + FS_PART_ENTRY_LBA, start);
+	_sector_put_long(&mbr, indexAddr + FS_PART_ENTRY_SIZE, size);
 
 	// Write the mbr back to the disk
 	_ata_write_sector(*dev, SECT_MBR, &mbr);
 	return FS_SUCCESS;
 }
 
-void _fs_format(MountPoint *mp, ATADevice *dev, Uint32 size) {
-	// Start building structures for the boot record
+FS_STATUS _fs_format(MountPoint *mp, ATADevice *dev, Uint8 index) {
+	// Load up the mbr of the device
+	ATASector mbr;
+	_ata_read_sector(*dev, SECT_MBR, &mbr);
+
+	// Verify that the partition is DERP
+	Uint32 indexAddr = FS_PART_TABLE_OFF + index * FS_PART_TABLE_SIZE;
+	if(mbr[indexAddr + FS_PART_ENTRY_PT] != FS_PARTITION_TYPE) {
+		return FS_ERR_NOTDERP;
+	}
+
+	// BOOT RECORD /////////////////////////////////////////////////////////
+	// Grab the LBA for the partition
+	Uint32 lba  = _sector_get_long(&mbr, indexAddr + FS_PART_ENTRY_LBA);
+	Uint32 size = _sector_get_long(&mbr, indexAddr + FS_PART_ENTRY_SIZE);
+	c_printf("Size 0x%x\n", size);
+
+	// Build a boot record for the partition
+	ATASector br;
+	_ata_blank_sector(&br);
+
+	// Write the header of the br
+	br[0]=0x44; br[1]=0x45; br[2]=0x52; br[3]=0x50;
+
+	// Write the size of the partition to the br
+	_sector_put_long(&br, FS_BR_SIZE, size);
+
+	// Write out the bootrecord
+	_ata_write_sector(*dev, lba, &br);
 	
+	// INDEX BLOCKS ////////////////////////////////////////////////////////
+	
+	return FS_SUCCESS;
 }
