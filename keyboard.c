@@ -11,7 +11,19 @@
 #include "headers.h"
 #include "ps2.h"
 #include "startup.h"
+#include "ulib.h"
 #include "keyboard.h"
+
+// Struct to handle IO-Request information
+typedef struct ps2_io_req{
+	Pid pid;
+	char **buf;
+	int size;
+	int index;
+} ps2_io_req;
+
+// Array of IO Requests currently outstanding
+static ps2_io_req *requests [ TOTAL_IO_REQS ];
 
 // Scan Code Set #1
 // (copied from c_io.c)
@@ -56,17 +68,26 @@ unsigned char _ps2_scan_code[ 2 ][ 128 ] = {
 };
 
 // Key Modifiers
-char shift_pressed = 0;
-char ctrl_pressed = 0;
-char alt_pressed = 0;
-char num_lock = 1;
-char caps_lock = 0;
-char scroll_lock = 0;
+static char shift_pressed = 0;
+static char ctrl_pressed = 0;
+static char alt_pressed = 0;
+static char num_lock = 1;
+static char caps_lock = 0;
+static char scroll_lock = 0;
 
 
 void _ps2_keyboard_init( void ){
 
-	
+	// For simplicity, null-out the io-requests
+	ps2_io_req *req;
+	for( int i = 0; i < TOTAL_IO_REQS; i++){
+		req = requests[i];
+		req->pid = 0;
+		req->buf = 0;
+		req->size = -1;
+		req->index = -1;
+	}
+
 	// Try turning on the caps-lock light
 	/*
 	_ps2_keyboard_clear();
@@ -78,7 +99,7 @@ void _ps2_keyboard_init( void ){
 	*/
 
 	// install our ISR
-	__install_isr( 0x21, _ps2_keyboard_isr );
+	__install_isr( PS2_K_VEC, _ps2_keyboard_isr );
 
 	// Disable the Keyboard Interface
 #ifdef DEBUG_G
@@ -207,8 +228,6 @@ void _ps2_keyboard_clear( void ){
 void _ps2_keyboard_isr( int vec, int code ){
 	Uint key = __inb( PS2_PORT );
 
-	
-
 	switch( key ){
 		case PS2_KEY_LSHIFT_P:
 		case PS2_KEY_RSHIFT_P:
@@ -227,6 +246,7 @@ void _ps2_keyboard_isr( int vec, int code ){
 	}
 	if( key < 0x80 ){
 		c_printf( "%c", _ps2_scan_code[ shift_pressed ][ key ] );
+		_ps2_write_to_active( _ps2_scan_code[ shift_pressed ][ key ] );
 	}
 	else if( key >= 0x80 && key <= 0xD8){
 		// key released!
@@ -238,5 +258,85 @@ void _ps2_keyboard_isr( int vec, int code ){
 	__outb( 0xA0, 0x20 );
 	__outb( 0x20, 0x20 );
 }
+
+int _ps2_get_io_req( void ){
+	int index = -1;
+	for( int i = 0; i < TOTAL_IO_REQS; i++){
+		if( requests[i]->index == -1 ){
+			index = i;
+			break;
+		}
+	}
+	return index;
+}
+
+int _ps2_write_to_active( char c ){
+	
+	// grab focused process
+	Pid active_p = 0;
+
+	// Throw away the character if there is no focused process
+	if( active_p == 0 ){
+		return;
+	}
+
+	// Find the IO-request for this process
+	int index = 0;
+	while( index < TOTAL_IO_REQS ){
+		if( requests[ index ]->pid == active_p )
+			break;
+		index ++;
+	}
+	if( index == TOTAL_IO_REQS )
+		return; // The focused process does not want input
+	
+	// Write the character
+	requests[ index ]->buf[ requests[ index ]->index++ ] = c;
+	if( requests[ index ]->index == requests[ index ]->size ){
+		// pull from IO-blocking queue
+	}
+}
+
+/**
+ * Performs a blocking buffered read for keyboard input.
+ *
+ * Keystrokes are stored in the buffer and will not stop filling the buffer
+ * until 'size' characters has been read. If there is an error when processing
+ * the read request, the buffer will be left untouched.  Otherwise undefined
+ * behavior is defined for errors after the read request is processed. Note,
+ * only user programs which have focus will recieve characters.
+ *
+ * @param	buf		The buffer to fill with character input from the keyboard.
+ * @param	size	The number of characters to read.
+ */
+void buf_read( char* buf, int size ){
+	
+	// get pid of running process
+	Pid pid;
+	Status status = get_pid( &pid );
+	if( status != SUCCESS ){
+		prt_status( "keyboard: can't get pid of IO-requester: %s\n", status );
+		return;
+	}
+
+	// Create an IO-Request block
+	int index = _ps2_get_io_req();
+	if( index == -1 ){
+		c_printf( "keyboard: IO-request pool full.\n" );
+		return;
+	}
+
+	// Initialize IO-request
+	requests[index]->pid = pid;
+	requests[index]->buf = &buf;
+	requests[index]->size = size;
+	requests[index]->index = 0;
+
+	// Add to IO-blocking queue
+
+
+}
+
+
 
 
