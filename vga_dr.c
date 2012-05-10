@@ -23,8 +23,7 @@
 /*
 ** PUBLIC GLOBAL VARIABLES
 */
-VESA_INFO *vga_vesa_info;
-MODE_INFO *vga_mode_info;
+
 
 /*
 ** PRIVATE FUNCTIONS
@@ -85,7 +84,7 @@ void draw_display( void ) {
 
     for(i = o; i < vga_mode_info->XResolution; i++){
         for( j = 0; j < vga_mode_info->YResolution; j++){
-			ptr[(j*vga_mode_info->LinbytesPerScanLine) + i] = i+j;
+			ptr[(j*vga_mode_info->LinbytesPerScanLine) + i] = 0xc0c0c0 ^ (ptr[(j*vga_mode_info->LinbytesPerScanLine) + i - 1]);
         }
     }
     if ( o > vga_mode_info->XResolution)
