@@ -125,14 +125,14 @@ void _ata_write_reg(ATAChannel channel, ATAReg reg, Uint8 payload) {
  */
 void _ata_initialize(ATAController *cont, Uint16 bus, Uint16 device, Uint16 func) {
 	// Initialize the controller into IDE mode
-	_pci_config_write(bus, device, func, SATA_PCI_REG_MAP, 0x00);
+	_pci_config_write(bus, device, func, ATA_PCI_REG_MAP, 0x00);
 
-	// Store the info about the channels
-	(*cont)[ATA_PORT_CHANPRI].command = _ata_get_bar(bus, device, func, SATA_PCI_REG_PCMD);
-	(*cont)[ATA_PORT_CHANPRI].control = _ata_get_bar(bus, device, func, SATA_PCI_REG_PCTRL);
-	(*cont)[ATA_PORT_CHANSEC].command = _ata_get_bar(bus, device, func, SATA_PCI_REG_SCMD);
-	(*cont)[ATA_PORT_CHANSEC].control = _ata_get_bar(bus, device, func, SATA_PCI_REG_SCTRL);
-	(*cont)[ATA_PORT_CHANPRI].busmast = _ata_get_bar(bus, device, func, SATA_PCI_REG_BMAST);
+	// Store the bar addresses
+	(*cont)[ATA_PORT_CHANPRI].command = _ata_get_bar(bus, device, func, ATA_PCI_REG_PCMD);
+	(*cont)[ATA_PORT_CHANPRI].control = _ata_get_bar(bus, device, func, ATA_PCI_REG_PCTRL);
+	(*cont)[ATA_PORT_CHANSEC].command = _ata_get_bar(bus, device, func, ATA_PCI_REG_SCMD);
+	(*cont)[ATA_PORT_CHANSEC].control = _ata_get_bar(bus, device, func, ATA_PCI_REG_SCTRL);
+	(*cont)[ATA_PORT_CHANPRI].busmast = _ata_get_bar(bus, device, func, ATA_PCI_REG_BMAST);
 	(*cont)[ATA_PORT_CHANSEC].busmast = (*cont)[ATA_PORT_CHANPRI].busmast + 0x8;
 }
 
@@ -161,14 +161,15 @@ void _ata_probe(Uint16 bus, Uint16 device, Uint16 func) {
 	}
 
 	// Turn off IRQ's for the channels
-	_ata_write_reg(cont[ATA_PORT_CHANPRI], ATA_REG_CONTROL, 2);
-	_ata_write_reg(cont[ATA_PORT_CHANSEC], ATA_REG_CONTROL, 2);
+	//_ata_write_reg(cont[ATA_PORT_CHANPRI], ATA_REG_CONTROL, 2);
+	//_ata_write_reg(cont[ATA_PORT_CHANSEC], ATA_REG_CONTROL, 2);
 	
 	// Iterate over the channels to probe
 	for(chan = ATA_PORT_CHANPRI; chan <= ATA_PORT_CHANSEC; chan++) {
 		// Iterate over each device on the channel
 		for(dev = ATA_PORT_CHANMAST; dev <= ATA_PORT_CHANSLAV; dev++) {
 			// Tell the controller which drive we want
+			_ata_write_reg(cont[chan], ATA_REG_CONTROL, ATA_NOINT);
 			_ata_write_reg(cont[chan], ATA_REG_DRIVESEL, 0xA0 | (dev << 4));
 			_ata_wait();
 
@@ -176,33 +177,11 @@ void _ata_probe(Uint16 bus, Uint16 device, Uint16 func) {
 			_ata_write_reg(cont[chan], ATA_REG_COMMAND, ATA_CMD_IDENTIFY);
 			_ata_wait();
 			
-			// If the device exists, then identify it and store it
-			Uint8 deviceId = ata_device_count;
-
 			Uint8 status = _ata_read_reg(cont[chan], ATA_REG_STATUS);
-			if(status & 0x40) {
-				ata_devices[deviceId].channel = cont[chan];
-				ata_devices[deviceId].device  = dev;
-				
-				// Increment the number of devices
-				ata_device_count++;
-			} else {
-				// There probably isn't a device (although I'm not too sure about that)
+			if((status & 0x40) == 0 || status & 0x01) {
+				// Drive isn't there (or we don't want it)
+				// DriveRDY bit is off || error bit is set
 				continue;
-			}
-
-			// Determine if the device is ATAPI
-			Uint8 lba1 = _ata_read_reg(cont[chan], ATA_REG_LBA0);
-			Uint8 lba2 = _ata_read_reg(cont[chan], ATA_REG_LBA1);
-			if(
-				(lba1 == ATAPI_LBA1 && lba2 == ATAPI_LBA2) || 
-				(lba1 == ATAPI_ALT_LBA1 && lba2 == ATAPI_ALT_LBA2)
-			) {
-				// The device is ATAPI
-				ata_devices[deviceId].type = ATA_TYPE_ATAPI;
-			} else {
-				// The device is ATA
-				ata_devices[deviceId].type = ATA_TYPE_ATA;
 			}
 
 			// Read the identification data into the identSpace var
@@ -217,6 +196,20 @@ void _ata_probe(Uint16 bus, Uint16 device, Uint16 func) {
 			}
 
 			// Grab relevant data from the identify command
+			// Command Set
+			Uint16 commands = identSpace[82];
+			//c_printf("word 82=0x%04x\n", commands);
+			if(commands & 0x10) {
+				// Device is ATAPI, skip it
+				continue;
+			}
+
+			// Increment the drives we have
+			Uint8 deviceId = ata_device_count;
+			ata_device_count++;
+			ata_devices[deviceId].channel = cont[chan];
+			ata_devices[deviceId].device  = dev;
+
 			// Serial String - copy byte by byte (20 bytes, 10 words)
 			Uint8 m;
 			for(m = 0; m < 10; m++) {
