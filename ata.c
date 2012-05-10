@@ -282,8 +282,8 @@ void _ata_read_sector(ATADevice dev, Uint64 lba, ATASector *dest) {
 	Uint16 i, word;
 	for(i = 0; i < 512; i += 2) {
 		word = _ata_read_data(dev.channel);
-		(*dest)[i] = word >> 8;
-		(*dest)[i+1] = word;
+		(*dest)[i+1] = word >> 8;
+		(*dest)[i] = word;
 	}
 
 	// Step 5) Ack that we got the data by reading status
@@ -317,7 +317,7 @@ void _ata_write_sector(ATADevice dev, Uint64 lba, ATASector *s) {
 	// Step 4) Start sending words to the device via data register
 	Uint16 i;
 	for(i = 0; i < 512; i += 2) {
-		_ata_write_data(dev.channel, ((*s)[i] << 8) | (*s)[i+1]);
+		_ata_write_data(dev.channel, ((*s)[i+1] << 8) | (*s)[i]);
 	}
 
 	// Step 5) Ack that we are done with data, then flush the cache
