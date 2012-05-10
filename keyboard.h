@@ -4,6 +4,8 @@
 // Debug Print controls
 #define DEBUG_G
 
+// Constraints on Input
+#define TOTAL_IO_REQS	12
 
 // Commands
 // Source: http://wiki.osdev.org/PS2_Keyboard
@@ -35,14 +37,18 @@
 #define PS2_KEY_SROLCK_R	PS2_KEY_SROLCK_P + PS2_KEY_RELEASE
 
 // IRQs
-#define PS2_K_VEC	0x09
+#define PS2_K_VEC	0x21
 
+// Kernel Module Functions
 void _ps2_keyboard_init( void );
 void _ps2_keyboard_ready( void );
 void _ps2_keyboard_clear( void );
 void _ps2_keyboard_isr( int vec, int code );
 Uint _ps2_keyboard_read( void );
 void _ps2_keyboard_write( Uint command );
+int _ps2_get_io_req( void );
 
+// User functions
+void buf_read( char* buf, int size );
 
 #endif

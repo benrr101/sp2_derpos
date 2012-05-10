@@ -268,6 +268,13 @@ static void _sys_read( Pcb *pcb ) {
 
 }
 
+static void _sys_read_buf( Pcb *pcb ){
+
+
+}
+
+
+
 /*
 ** _sys_write - write a single character to the SIO
 **
@@ -596,6 +603,7 @@ void _syscall_init( void ) {
 	_syscall_tbl[ SYS_get_time ]      = _sys_get_time;
 	_syscall_tbl[ SYS_set_priority ]  = _sys_set_priority;
 	_syscall_tbl[ SYS_set_time ]      = _sys_set_time;
+	_syscall_tbl[ SYS_read_buf ]	  = _sys_read_buf;
 
 //	these are syscalls we elected not to implement
 //	_syscall_tbl[ SYS_set_pid ]    = _sys_set_pid;
