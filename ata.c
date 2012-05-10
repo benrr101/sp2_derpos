@@ -279,10 +279,11 @@ void _ata_read_sector(ATADevice dev, Uint64 lba, ATASector *dest) {
 	_ata_wait_bsy(dev.channel);
 
 	// Step 4) Read the data as words from the data reg
-	Uint16 i;
+	Uint16 i, word;
 	for(i = 0; i < 512; i += 2) {
-		(*dest)[i] = _ata_read_data(dev.channel);
-		(*dest)[i+1] = _ata_read_data(dev.channel);
+		word = _ata_read_data(dev.channel);
+		(*dest)[i] = word;
+		(*dest)[i+1] = word >> 8;
 	}
 
 	// Step 5) Ack that we got the data by reading status
@@ -316,12 +317,19 @@ void _ata_write_sector(ATADevice dev, Uint64 lba, ATASector *s) {
 	// Step 4) Start sending words to the device via data register
 	Uint16 i;
 	for(i = 0; i < 512; i += 2) {
-		Uint16 word = ((*s)[i+1] << 8) | (*s)[i];
-		_ata_write_data(dev.channel, word);
+		_ata_write_data(dev.channel, ((*s)[i+1] << 8) | (*s)[i]);
 	}
 
 	// Step 5) Ack that we are done with data, then flush the cache
 	_ata_wait_bsy(dev.channel);
 	_ata_write_reg(dev.channel, ATA_REG_COMMAND, ATA_CMD_FLUSHE);
 	_ata_wait_bsy(dev.channel);
+}
+
+void _ata_blank_sector(ATASector *s) {
+	// Store zeros in the sector in MEMORY
+	Uint16 i;
+	for(i = 0; i < 512; i++) {
+		(*s)[i] = 0x0;
+	}
 }
