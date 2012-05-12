@@ -91,6 +91,9 @@ Status exit(void);
 
 Status read(int *buf);
 
+
+Status read_buf( char *buf, int size );
+
 /*
 ** write - write a single character to the SIO
 **
