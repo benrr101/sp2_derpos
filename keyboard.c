@@ -10,14 +10,18 @@
 
 #include "headers.h"
 #include "ps2.h"
+#include "system.h"
 #include "startup.h"
+#include "queues.h"
+#include "pcbs.h"
+#include "scheduler.h"
 #include "ulib.h"
 #include "keyboard.h"
 
 // Struct to handle IO-Request information
 typedef struct ps2_io_req{
 	Pid pid;
-	char **buf;
+	char *buf;
 	int size;
 	int index;
 } ps2_io_req;
@@ -25,6 +29,9 @@ typedef struct ps2_io_req{
 // Array of IO Requests currently outstanding
 static ps2_io_req *requests [ TOTAL_IO_REQS ];
 static Pcb *pcb_reqs [ TOTAL_IO_REQS ];
+
+// Buffered-Blocking Queue
+Queue *_buf_block;
 
 // Scan Code Set #1
 // (copied from c_io.c)
@@ -79,15 +86,34 @@ static char scroll_lock = 0;
 
 void _ps2_keyboard_init( void ){
 
+	// temp vars
+	Status status;
+
 	// For simplicity, null-out the io-requests
 	ps2_io_req *req;
-	for( int i = 0; i < TOTAL_IO_REQS; i++){
+	int i;
+	for( i = 0; i < TOTAL_IO_REQS; i++){
 		req = requests[i];
 		req->pid = 0;
 		req->buf = 0;
 		req->size = -1;
 		req->index = -1;
 	}
+
+	// Create the Buffered-Blocking Process Queue
+	status = _q_alloc( &_buf_block, NULL );
+	if( status != SUCCESS ) {
+		prt_status( "keyboard, init: Unable to create buf_block queue for IO"
+					" requests, keyboard input disabled!\n Error: %s\n", 
+					status);
+	}
+
+
+	// install our ISR
+	__install_isr( PS2_K_VEC, _ps2_keyboard_isr );
+
+
+
 
 	// Try turning on the caps-lock light
 	/*
@@ -99,8 +125,6 @@ void _ps2_keyboard_init( void ){
 	__outb( PS2_STAT, PS2_K_CAPS | PS2_K_NUML | PS2_K_SCRL );
 	*/
 
-	// install our ISR
-	__install_isr( PS2_K_VEC, _ps2_keyboard_isr );
 
 	// Disable the Keyboard Interface
 #ifdef DEBUG_G
@@ -247,7 +271,19 @@ void _ps2_keyboard_isr( int vec, int code ){
 	}
 	if( key < 0x80 ){
 		c_printf( "%c", _ps2_scan_code[ shift_pressed ][ key ] );
-		_ps2_write_to_active( _ps2_scan_code[ shift_pressed ][ key ] );
+
+		// check if function-key
+		if( key >= PS2_KEY_F1_P && key <= PS2_KEY_F10_P ){
+			_ps2_change_focus( key - PS2_KEY_F1_P );
+		}
+		else if( key == PS2_KEY_F11_P || key == PS2_KEY_F12_P ){
+			_ps2_change_focus( key - PS2_KEY_F11_P + 10 );
+		}
+		else{
+
+			// otherwise give the character to the waiting focused process
+			_ps2_write_to_active( _ps2_scan_code[ shift_pressed ][ key ] );
+		}
 	}
 	else if( key >= 0x80 && key <= 0xD8){
 		// key released!
@@ -262,7 +298,8 @@ void _ps2_keyboard_isr( int vec, int code ){
 
 int _ps2_get_io_req( void ){
 	int index = -1;
-	for( int i = 0; i < TOTAL_IO_REQS; i++){
+	int i;
+	for( i = 0; i < TOTAL_IO_REQS; i++){
 		if( requests[i]->index == -1 ){
 			index = i;
 			break;
@@ -271,32 +308,90 @@ int _ps2_get_io_req( void ){
 	return index;
 }
 
+/**
+ *
+ *
+ */
+void _ps2_change_focus( int window ){
+	
+
+	// Tell window manager that we want to focus on a new window
+}
+
+/**
+ *
+ * The return may not be necessary
+ */
 int _ps2_write_to_active( char c ){
 	
-	// grab focused process
-	Pid active_p = 0;
+	// temp vars
+	Status status;
+	Key key;
+
+	// Grab focused process
+//	Pid active_p = 0;
 
 	// Throw away the character if there is no focused process
-	if( active_p == 0 ){
-		return;
-	}
+	/*if( active_p == 0 ){
+		return 0;
+	}*/
 
 	// Find the IO-request for this process
 	int index = 0;
-	while( index < TOTAL_IO_REQS ){
+	/*while( index < TOTAL_IO_REQS ){
 		if( requests[ index ]->pid == active_p )
 			break;
 		index ++;
-	}
+	}*/
 	if( index == TOTAL_IO_REQS )
-		return; // The focused process does not want input
+		return 0; // The focused process does not want input
 	
 	// Write the character
-	requests[ index ]->buf[ requests[ index ]->index++ ] = c;
-	if( requests[ index ]->index == requests[ index ]->size ){
+	c_printf( "Index: %d    Size: %d\n", requests[ index ]->index, requests[ index ]->size);
+	char *buf = requests[ index ]->buf;
+	int i = requests[ index ]->index;
+	c_printf( "Writing character: %c, Prev: %c\n", c, buf[ i ] );
+	buf[ i ] = c;
+	requests[ index ]->index = i + 1;
+	c_printf( "Index: %d    Size: %d\n", i, requests[ index ]->size);
+	if( i == requests[ index ]->size ){
+		
 		// pull from IO-blocking queue
+		if( !_q_empty(_buf_block) ){
+			void *data;
+			key.u = requests[ index ]->pid;
+			status = _q_remove_by_key( _buf_block, &data, key );
+			Pcb *pcb = ( Pcb* ) data;
+			if( status != SUCCESS ){
+				prt_status( "keyboard, write active: Unable to remove process"
+						" in buf block queue!\nError: %s\n", status);
+			}
+			_sched( pcb );
+		}
+		else{
+	
+			// did someone forcefully remove it!?!
+			c_printf( "keyboard, write active: buffered block queue is"
+						" empty???\n" );
+		}
+		
+		// Delete the process from our IO request array
+		_ps2_delete_request( index );
+		return 1;
 	}
 }
+
+/**
+ * Frees the IO request
+ */
+void _ps2_delete_request( int index ){
+	requests[ index ]->pid = 0;
+	requests[ index ]->buf = 0;
+	requests[ index ]->size = -1;
+	requests[ index ]->index = -1;
+}
+
+
 
 /**
  * Performs a blocking buffered read for keyboard input.
@@ -310,28 +405,22 @@ int _ps2_write_to_active( char c ){
  * @param	buf		The buffer to fill with character input from the keyboard.
  * @param	size	The number of characters to read.
  */
-void buf_read( char* buf, int size ){
+int buf_read( char* buf, int size, Pid pid ){
 	
-	// get pid of running process
-	Pid pid;
-	Status status = get_pid( &pid );
-	if( status != SUCCESS ){
-		prt_status( "keyboard: can't get pid of IO-requester: %s\n", status );
-		return;
-	}
-
 	// Create an IO-Request block
 	int index = _ps2_get_io_req();
 	if( index == -1 ){
 		c_printf( "keyboard: IO-request pool full.\n" );
-		return;
+		return 0;
 	}
 
 	// Initialize IO-request
 	requests[index]->pid = pid;
-	requests[index]->buf = &buf;
+	requests[index]->buf = buf;
 	requests[index]->size = size;
 	requests[index]->index = 0;
+
+	return 1;
 }
 
 

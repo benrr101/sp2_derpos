@@ -21,6 +21,7 @@
 #include "system.h"
 
 #include "startup.h"
+#include "keyboard.h"
 
 /*
 ** PRIVATE DEFINITIONS
@@ -269,8 +270,32 @@ static void _sys_read( Pcb *pcb ) {
 }
 
 static void _sys_read_buf( Pcb *pcb ){
+	
+	// temp vars
+	Status status;
+	Key key;
+	char *buf;
+	int size;
 
+	// let the keyboard driver know we expect keystrokes for this process
+	buf = (char *) (ARG(pcb)[1]);
+	size = (int) (ARG(pcb)[2]);
+	if( buf_read( buf, size, _current->pid ) ){
 
+		// move process to buffered-blocking queue
+		key.u = _current->pid;
+		status = _q_insert( _buf_block, (void *) _current, key );
+		if( status != SUCCESS ){
+			_kpanic( "sys_read_buf", "insert status %s\n", status );
+		}
+		_current->state = BLOCKED;
+
+		// Dispatch a new process for running
+		_dispatch();
+	}
+	else{
+		c_printf( "Unable to acquire a PS/2 IO Request.\n" );
+	}
 }
 
 

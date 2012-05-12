@@ -1,5 +1,5 @@
-#ifndef KEYBOARD_H_
-#define KEYBOARD_H_
+#ifndef _KEYBOARD_H_
+#define _KEYBOARD_H_
 
 // Debug Print controls
 #define DEBUG_G
@@ -35,9 +35,18 @@
 #define PS2_KEY_CAPLCK_R	PS2_KEY_CAPLCK_P + PS2_KEY_RELEASE
 #define PS2_KEY_NUMLCK_R	PS2_KEY_NUMLCK_P + PS2_KEY_RELEASE
 #define PS2_KEY_SROLCK_R	PS2_KEY_SROLCK_P + PS2_KEY_RELEASE
+#define PS2_KEY_F1_P		0x3B
+#define PS2_KEY_F10_P		0x44
+#define PS2_KEY_F11_P		0x47
+#define PS2_KEY_F12_P		0x48
 
 // IRQs
 #define PS2_K_VEC	0x21
+
+
+#include "queues.h"
+
+extern Queue *_buf_block;
 
 // Kernel Module Functions
 void _ps2_keyboard_init( void );
@@ -47,8 +56,12 @@ void _ps2_keyboard_isr( int vec, int code );
 Uint _ps2_keyboard_read( void );
 void _ps2_keyboard_write( Uint command );
 int _ps2_get_io_req( void );
+void _ps2_change_focus( int window );
+void _ps2_delete_request( int index );
+int _ps2_search_pid( void *pid1, void *pid2);
+int _ps2_write_to_active( char c );
 
 // User functions
-void buf_read( char* buf, int size );
+int buf_read( char* buf, int size, Pid pid );
 
 #endif

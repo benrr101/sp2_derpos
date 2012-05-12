@@ -749,6 +749,10 @@ void user_keyboard( void ) {
 	c_puts( "User KEYBOARD running\n" );
 	_ps2_keyboard_init();	
 	c_puts( "User KEYBOARD exiting\n" );
+	char buf[] = { 'H', 'e', 'l', 'l', 'o', ' ', 'W', 'o', 'r', 'l', 'd', '\0' };
+	c_printf( "CUR BUF CONTENTS: %s\n", buf );
+	read_buf( buf, 10 );
+	c_printf( "\nNew BUF CONTENTS: %s\n", buf );
 	exit();
 }
 
