@@ -16,6 +16,7 @@
 
 #define PAGE_BITS 12
 #define PAGE_SIZE (1 << PAGE_BITS )
+#define PAGE_ADDRESS_LOC ( 0xFFFFFFFF << PAGE_BITS)
 #define PAGE_TABLE_SIZE (PAGE_SIZE * 1024)
 
 #define PAGE_DIR_ADDRESS 0xffff800
@@ -54,7 +55,10 @@ void _vmem_init( void );
 Uint32 _vmem_first_4mb( void );
 void _vmem_init_bitmap( Uint32 addr );
 
-//kernel function
+Int8 _vmem_read_bit( Uint32* address, Uint16 index, Int8 index2 );
+void _vmem_set_bit( Uint32* address, Uint16 index, Int8 index2, Int8 value );
+
+//assembly functions
 void _vmem_turnon(Uint32 page);
 
 int _vmem_getcr0(void);
