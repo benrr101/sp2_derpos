@@ -85,6 +85,13 @@ FS_STATUS _fs_create_partition(ATADevice *dev, Uint32 start, Uint32 size, Uint8 
 		return FS_ERR_BADSECT;
 	}
 
+	// Make the size divisible by 112
+	if(size % FS_SECT_PER_IB != 0) {		
+		// Size of partition is not divisible by 112. Make it so.
+		size += FS_SECT_PER_IB - (size % FS_SECT_PER_IB);
+		size++; // Making room for the BootRecord
+	}
+
 	// Read in the current MBR
 	ATASector mbr;
 	_ata_read_sector(*dev, SECT_MBR, &mbr);
@@ -127,7 +134,6 @@ FS_STATUS _fs_format(MountPoint *mp, ATADevice *dev, Uint8 index) {
 	// Grab the LBA for the partition
 	Uint32 lba  = _sector_get_long(&mbr, indexAddr + FS_PART_ENTRY_LBA);
 	Uint32 size = _sector_get_long(&mbr, indexAddr + FS_PART_ENTRY_SIZE);
-	c_printf("Size 0x%x\n", size);
 
 	// Build a boot record for the partition
 	ATASector br;
@@ -143,6 +149,49 @@ FS_STATUS _fs_format(MountPoint *mp, ATADevice *dev, Uint8 index) {
 	_ata_write_sector(*dev, lba, &br);
 	
 	// INDEX BLOCKS ////////////////////////////////////////////////////////
+	// Build an index block
+	ATASector fsTable;
+	ATASector nameTable;
+	_ata_blank_sector(&fsTable);
+	_ata_blank_sector(&nameTable);
 	
+	// Set the reserved bits of the BitTable
+	_sector_put_word(&fsTable, FS_BT_RESERVED, 0xFFFF);
+
+	// These are written every FS_MOD_INDEXBLK sectors, offset by 1 for the mbr
+	Uint32 i, count;
+	for(i = 1; i < size; i += FS_SECT_PER_IB) {
+		// Do we need to block off some sectors of the next sector?
+		/*if(i + FS_SECT_PER_IB > size) {
+			// Yep we'll be going off the partition with this set
+			// Mark the allocation of the sectors that do not belong to this
+			// partition set to allocated.
+			Uint32 j;
+			for(j = i + FS_SECT_PER_IB; j > size; j--) {
+				// Mark the bit for the sector
+				Uint16 mask     = 0x1 << ( (j - i + FS_SECT_PER_IB) % 16);
+				Uint16 bitfield = _sector_get_word(&fsTable, (j - (i + FS_SECT_PER_IB)) / 16);
+				bitfield |= mask;
+				_sector_put_long(&fsTable, (j - (i + FS_SECT_PER_IB)) / 16, bitfield);
+			}
+		}*/
+		
+
+		// Mark the first 3 sectors are in use
+		Uint32 mask = 0x7;
+		Uint32 bitfield = _sector_get_word(&fsTable, 12);
+		bitfield |= mask;
+		_sector_put_long(&fsTable, 12, bitfield);
+
+		// Write the FSTable
+		_ata_write_sector(*dev, lba + i, &fsTable);
+
+		// Write the blank name table
+		_ata_write_sector(*dev, lba + i + 1, &fsTable);
+		_ata_write_sector(*dev, lba + i + 2, &fsTable);
+		count++;
+	} 
+	c_printf("Format wrote:0x%x times\n", count);
+
 	return FS_SUCCESS;
 }

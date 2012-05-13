@@ -35,6 +35,7 @@
 
 // BitTable Definitions
 #define FS_BT_SIZE				FS_SECT_PER_IB / 8
+#define FS_BT_RESERVED			14
 #define FS_BT_ALLOCATED			0x1
 #define FS_BT_FREE				0x0
 
