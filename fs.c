@@ -154,21 +154,16 @@ FS_STATUS _fs_format(MountPoint *mp, ATADevice *dev, Uint8 index) {
 	ATASector nameTable;
 	_ata_blank_sector(&fsTable);
 	_ata_blank_sector(&nameTable);
-	
-	// Set the reserved bits of the BitTable
-	_sector_put_word(&fsTable, FS_BT_END, 0xFFFF);
 
 	// Write the header of the index block
-	fsTable[0]=0x44; fsTable[1]=0x45; fsTable[2]=0x49; fsTable[3]=0x42;
+	fsTable[0]=0x49; fsTable[1]=0x42;
 
 	// These are written every FS_MOD_INDEXBLK sectors, offset by 1 for the mbr
 	Uint32 i, count;
 	for(i = 1; i < size; i += FS_SECT_PER_IB) {
 		// Mark the first 3 sectors are in use
-		Uint32 mask = 0x7;
-		Uint32 bitfield = _sector_get_long(&fsTable, 13);
-		bitfield |= mask;
-		_sector_put_long(&fsTable, 13, bitfield);
+		Uint32 bits = 0x7;
+		fsTable[FS_BT_END - 1] = bits;
 
 		// Write the FSTable
 		_ata_write_sector(*dev, lba + i, &fsTable);
@@ -231,7 +226,7 @@ FSPointer _fs_find_empty_fspointer(MountPoint *mp) {
 				// Create a fs ptr to represent it and return it
 				FSPointer f;
 				f.mp      = mp;
-				f.ib      = i;
+				f.ib      = i - mp->offset;
 				f.ibindex = (j - FS_FP_OFFSET) / FS_FP_LENGTH;
 				return f;	
 			}
@@ -242,4 +237,80 @@ FSPointer _fs_find_empty_fspointer(MountPoint *mp) {
 	FSPointer f;
 	f.mp = NULL;
 	return f;
+}
+
+FILE _fs_create_file(MountPoint *mp, char filename[8]) {
+	// Get a free file pointer
+	FSPointer fp = _fs_find_empty_fspointer(mp);
+
+	// Get a free sector 
+	Uint32 sector = _fs_find_empty_sector(mp);
+
+	// Make sure they're valid
+	if(fp.mp == NULL) { /* @TODO: INVALID */ }
+	if(sector == 0)   { /* @TODO: INVALID */ }
+
+	// Allocate the sector that's free
+	_fs_allocate_sector(mp, sector);
+
+	// Allocate the FSPointer
+	// Grab the ib sector for the fp
+	ATASector ibSector;
+	c_printf("*** mp->offset=%d fp.ib=%d\n", mp->offset, fp.ib);
+	_ata_read_sector(*(mp->device), mp->offset + fp.ib, &ibSector);
+
+	// Put a pointer to the file's first sector
+	Uint32 ibindex = fp.ibindex + FS_FP_OFFSET;
+	_sector_put_long(&ibSector, ibindex, sector);
+
+	// Write it back to the disk
+	_ata_write_sector(*(mp->device), mp->offset + fp.ib, &ibSector);
+
+	// Allocate the filename
+	ATASector nameSector;
+	ibindex = fp.ibindex;
+	if(fp.ibindex >= FS_SECTOR_SIZE) {
+		// Read from second name sector
+		_ata_read_sector(*(mp->device), mp->offset + fp.ib + 2, &nameSector);
+		ibindex -= FS_SECTOR_SIZE;
+	} else {
+		// Read from first name sector
+		_ata_read_sector(*(mp->device), mp->offset + fp.ib + 1, &nameSector);
+	}
+
+	// Write the name to the sector
+	Uint8 i;
+	for(i = 0; i < 8; i++) {
+		nameSector[ibindex + i] = filename[i];
+	}
+
+	// Write the sector back to th disk
+	if(fp.ibindex >= FS_SECTOR_SIZE) {
+		// Write to second name sector
+		_ata_write_sector(*(mp->device), mp->offset + fp.ib + 2, &nameSector);
+	} else {
+		// Write to first name sector
+		_ata_write_sector(*(mp->device), mp->offset + fp.ib + 1, &nameSector);
+	}
+
+	// Grab the sector that the file will start on
+	FILE f;
+	return f;
+}
+
+void _fs_allocate_sector(MountPoint *mp, Uint32 sector) {
+	// Read the ib sector for the bitfield
+	Uint32 ibAddr = mp->offset + ((sector / FS_SECT_PER_IB) * FS_SECT_PER_IB) + 1;
+	ATASector s;
+	_ata_read_sector(*(mp->device), ibAddr, &s);
+
+	// Mark the appropriate sector bit as unavailable
+	Uint8 mask  = FS_BT_ALLOCATED << ((sector % FS_SECT_PER_IB) % 8 - 1);
+	Uint16 byte = FS_BT_END - ((sector % FS_SECT_PER_IB) / 8) - 1;
+	c_printf("Byte %x ", s[byte]);
+	s[byte] |= mask;
+	c_printf("after=%x |w/%x\n", s[byte], mask);
+
+	// Write it back to the disk
+	_ata_write_sector(*(mp->device), ibAddr, &s);
 }

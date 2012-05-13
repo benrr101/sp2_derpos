@@ -25,7 +25,7 @@
 
 // DERP_FS identification info
 #define FS_PARTITION_ID			0x44455250		// DERP
-#define FS_PARTITION_IB_ID		0x44454942		// DEIB
+#define FS_PARTITION_IB_ID		0x4942			// IB
 #define FS_PARTITION_TYPE		0xDE			// Technically Dell diagnostics
 
 #define	FS_SECTOR_SIZE			512
@@ -35,18 +35,18 @@
 #define FS_BR_SIZE				0x8
 
 // BitTable Definitions
-#define FS_BT_SIZE				0x7
-#define FS_BT_OFFSET			0x7
-#define FS_BT_END				0xE
-#define FS_BT_ALLOCATED			0x1
-#define FS_BT_FREE				0x0
+#define FS_BT_SIZE				0x0E
+#define FS_BT_OFFSET			0x02
+#define FS_BT_END				0x10
+#define FS_BT_ALLOCATED			0x01
+#define FS_BT_FREE				0x00
 
 // FilePointer Table Definitions
 #define FS_FP_SIZE				0x1F0			// 496 bytes of pointers
-#define FS_FP_LENGTH			0x08			// 8 bytes per pointer
+#define FS_FP_LENGTH			0x04			// 4 bytes per pointer
 #define FS_FP_OFFSET			0x10			// Starts at byte 16
-#define FS_FP_END				0x200			// Ends at byte 512
-#define FS_FP_FREE				0x0
+#define FS_FP_END				0x1D0			// Ends at byte 464
+#define FS_FP_FREE				0x00
 
 // Success/Error Codes
 typedef enum {
@@ -125,6 +125,12 @@ typedef struct {
 	Uint32		ibindex;	// Index into the index block of the file
 } FSPointer;
 
+typedef struct {
+	FSPointer	fp;			// The FSPointer for this file
+	Uint64		offset;		// Byte offset into the file. This number can
+							// address like 6 exabytes, so this is unrealistic
+} FILE;
+
 // GLOBALS /////////////////////////////////////////////////////////////////
 // We can only do A-Z (26) mount points
 MountPoint mount_points[26];
@@ -137,6 +143,8 @@ FS_STATUS _fs_create_partition(ATADevice *dev, Uint32 start, Uint32 size, Uint8 
 FS_STATUS _fs_format(MountPoint *mp, ATADevice *dev, Uint8 index);
 Uint32 _fs_find_empty_sector(MountPoint *mp);
 FSPointer _fs_find_empty_fspointer(MountPoint *mp);
+FILE _fs_create_file(MountPoint *mp, char filename[8]);
 void _fs_probe(ATADevice *dev);
+void _fs_allocate_sector(MountPoint *mp, Uint32 sector);
 
 #endif
