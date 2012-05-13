@@ -24,7 +24,8 @@
 #define FS_PART_ENTRY_SIZE		0x0C			// Offset of number of sectors
 
 // DERP_FS identification info
-#define FS_PARTITION_ID			0x44455250
+#define FS_PARTITION_ID			0x44455250		// DERP
+#define FS_PARTITION_IB_ID		0x44454942		// DEIB
 #define FS_PARTITION_TYPE		0xDE			// Technically Dell diagnostics
 
 #define	FS_SECTOR_SIZE			512
@@ -34,8 +35,9 @@
 #define FS_BR_SIZE				0x8
 
 // BitTable Definitions
-#define FS_BT_SIZE				FS_SECT_PER_IB / 8
-#define FS_BT_RESERVED			14
+#define FS_BT_SIZE				7
+#define FS_BT_OFFSET			0x7
+#define FS_BT_END				0xE
 #define FS_BT_ALLOCATED			0x1
 #define FS_BT_FREE				0x0
 
@@ -116,6 +118,7 @@ Uint8 mount_point_count;
 // FUNCTIONS ///////////////////////////////////////////////////////////////
 FS_STATUS _fs_create_partition(ATADevice *dev, Uint32 start, Uint32 size, Uint8 index);
 FS_STATUS _fs_format(MountPoint *mp, ATADevice *dev, Uint8 index);
+Uint32 _fs_find_empty_sector(MountPoint *mp);
 void _fs_probe(ATADevice *dev);
 
 #endif

@@ -92,7 +92,10 @@ void _pci_probe_devices(){
 
 	for(i = 0; i < mount_point_count; i++) {
 		c_printf("%c: %04x bytes\n", mount_points[i].letter, mount_points[i].bootRecord.size * 512);
+		c_printf("    Sector %d is free\n", _fs_find_empty_sector(&mount_points[i]));
 	}
+
+	// Find a free sector
 
 	// Build a test sector to write to the SECOND drive
 	/*ATASector in, out;

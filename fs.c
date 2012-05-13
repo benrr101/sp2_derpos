@@ -156,42 +156,59 @@ FS_STATUS _fs_format(MountPoint *mp, ATADevice *dev, Uint8 index) {
 	_ata_blank_sector(&nameTable);
 	
 	// Set the reserved bits of the BitTable
-	_sector_put_word(&fsTable, FS_BT_RESERVED, 0xFFFF);
+	_sector_put_word(&fsTable, FS_BT_END, 0xFFFF);
+
+	// Write the header of the index block
+	fsTable[0]=0x44; fsTable[1]=0x45; fsTable[2]=0x49; fsTable[3]=0x42;
 
 	// These are written every FS_MOD_INDEXBLK sectors, offset by 1 for the mbr
 	Uint32 i, count;
 	for(i = 1; i < size; i += FS_SECT_PER_IB) {
-		// Do we need to block off some sectors of the next sector?
-		/*if(i + FS_SECT_PER_IB > size) {
-			// Yep we'll be going off the partition with this set
-			// Mark the allocation of the sectors that do not belong to this
-			// partition set to allocated.
-			Uint32 j;
-			for(j = i + FS_SECT_PER_IB; j > size; j--) {
-				// Mark the bit for the sector
-				Uint16 mask     = 0x1 << ( (j - i + FS_SECT_PER_IB) % 16);
-				Uint16 bitfield = _sector_get_word(&fsTable, (j - (i + FS_SECT_PER_IB)) / 16);
-				bitfield |= mask;
-				_sector_put_long(&fsTable, (j - (i + FS_SECT_PER_IB)) / 16, bitfield);
-			}
-		}*/
-		
-
 		// Mark the first 3 sectors are in use
 		Uint32 mask = 0x7;
-		Uint32 bitfield = _sector_get_word(&fsTable, 12);
+		Uint32 bitfield = _sector_get_long(&fsTable, 13);
 		bitfield |= mask;
-		_sector_put_long(&fsTable, 12, bitfield);
+		_sector_put_long(&fsTable, 13, bitfield);
 
 		// Write the FSTable
 		_ata_write_sector(*dev, lba + i, &fsTable);
 
 		// Write the blank name table
-		_ata_write_sector(*dev, lba + i + 1, &fsTable);
-		_ata_write_sector(*dev, lba + i + 2, &fsTable);
+		_ata_write_sector(*dev, lba + i + 1, &nameTable);
+		_ata_write_sector(*dev, lba + i + 2, &nameTable);
 		count++;
 	} 
-	c_printf("Format wrote:0x%x times\n", count);
 
 	return FS_SUCCESS;
+}
+
+Uint32 _fs_find_empty_sector(MountPoint *mp) {
+	// Start checking index blocks
+	Uint32 i, j, byte;
+	Uint32 end = mp->offset + mp->bootRecord.size;
+
+	// Loop from the first index block to the last index block
+	for(i = mp->offset + 1; i < end; i += FS_SECT_PER_IB) {
+		// Load the sector
+		ATASector s;
+		_ata_read_sector(*(mp->device), i, &s);
+		
+		// Start iterating over the bits in the bitfield
+		for(j = 0; j < FS_BT_SIZE * sizeof(char); j++) {
+			// Which byte do we need 
+			byte = FS_BT_OFFSET + (FS_BT_END - (FS_BT_OFFSET + (j / 8)));
+			byte -= 1;
+
+			// Grab that byte and check if the bit we need is allocated
+			if(((s[byte] >> (j % 8)) & FS_BT_ALLOCATED) == 0) {
+				c_printf("Free bitfieldbyte is: 0x%x (byte %x)\n", s[byte], byte);
+				// Sector isn't allocated. This is our golden nugget
+				// Calculate the sector into the partition this is
+				return (i - mp->offset) + j;
+			}
+		}
+	}
+
+	// If we make it here, there's no free sectors
+	return 0x0;
 }
