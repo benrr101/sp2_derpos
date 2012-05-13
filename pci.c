@@ -94,7 +94,9 @@ void _pci_probe_devices(){
 		c_printf("%c: %04x bytes\n", mount_points[i].letter, mount_points[i].bootRecord.size * 512);
 		c_printf("    Sector %d is free\n", _fs_find_empty_sector(&mount_points[i]));
 		FSPointer f = _fs_find_empty_fspointer(&mount_points[i]);
-		c_printf("    FSPointer %d on ib %d is free\n", f.ibindex, f.ib); 
+		c_printf("    FSPointer %d on ib @sect %d is free\n", f.ibindex, f.ib);
+		// Create a file!
+		_fs_create_file(&mount_points[i], "HOLYFUCK"); 
 	}
 
 	// Find a free sector
