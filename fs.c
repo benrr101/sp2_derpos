@@ -186,11 +186,11 @@ Uint32 _fs_find_empty_sector(MountPoint *mp) {
 	// Start checking index blocks
 	Uint32 i, j, byte;
 	Uint32 end = mp->offset + mp->bootRecord.size;
+	ATASector s;
 
 	// Loop from the first index block to the last index block
 	for(i = mp->offset + 1; i < end; i += FS_SECT_PER_IB) {
 		// Load the sector
-		ATASector s;
 		_ata_read_sector(*(mp->device), i, &s);
 		
 		// Start iterating over the bits in the bitfield
@@ -211,4 +211,35 @@ Uint32 _fs_find_empty_sector(MountPoint *mp) {
 
 	// If we make it here, there's no free sectors
 	return 0x0;
+}
+
+FSPointer _fs_find_empty_fspointer(MountPoint *mp) {
+	// Start checking index blocks
+	Uint32 i, j;
+	Uint32 end = mp->offset + mp->bootRecord.size;
+	ATASector s;
+	
+	// Loop from the first index block to the last index block
+	for(i = mp->offset + 1; i < end; i += FS_SECT_PER_IB) {
+		// Load the sector
+		_ata_read_sector(*(mp->device), i, &s);
+
+		// Start iterating over the pointers in the table
+		for(j = FS_FP_OFFSET; j < FS_FP_END; j += FS_FP_LENGTH) {
+			if(_sector_get_long(&s, j) == FS_FP_FREE) {
+				// This file pointer entry is free
+				// Create a fs ptr to represent it and return it
+				FSPointer f;
+				f.mp      = mp;
+				f.ib      = i;
+				f.ibindex = (j - FS_FP_OFFSET) / FS_FP_LENGTH;
+				return f;	
+			}
+		}
+	}
+
+	// If we make it here, there are no free pointers
+	FSPointer f;
+	f.mp = NULL;
+	return f;
 }

@@ -35,11 +35,18 @@
 #define FS_BR_SIZE				0x8
 
 // BitTable Definitions
-#define FS_BT_SIZE				7
+#define FS_BT_SIZE				0x7
 #define FS_BT_OFFSET			0x7
 #define FS_BT_END				0xE
 #define FS_BT_ALLOCATED			0x1
 #define FS_BT_FREE				0x0
+
+// FilePointer Table Definitions
+#define FS_FP_SIZE				0x1F0			// 496 bytes of pointers
+#define FS_FP_LENGTH			0x08			// 8 bytes per pointer
+#define FS_FP_OFFSET			0x10			// Starts at byte 16
+#define FS_FP_END				0x200			// Ends at byte 512
+#define FS_FP_FREE				0x0
 
 // Success/Error Codes
 typedef enum {
@@ -57,7 +64,7 @@ typedef enum {
  * FSPointer - ABSOLUTE LBA of the sector where a file resides with respect
  * to the start of the partition.
  */
-typedef Uint16 FSPointer;
+//typedef Uint16 FSPointer;
 
 /**
  * FileName - A filename. We're going OLD SKOOL, baby! Max size of 8 chars!
@@ -68,7 +75,7 @@ typedef char FileName[8];
  * BitTable - Bits to represent the allocation of the next FS_SECT_PER_IB
  * sectors of the partition (including the FSTable at currentsector-1)
  */
-typedef	char BitTable[FS_BT_SIZE];
+//typedef	char BitTable[FS_BT_SIZE];
 
 /**
  * The boot record of the device
@@ -88,7 +95,7 @@ typedef struct {
 /**
  * FSTable - A table that represents the next FS_SECT_PER_IB sectors INCLUDING
  * ITSELF and the next FS_SECT_PER_IB files.
- */
+ 
 typedef struct {
 	BitTable	sectorAllocation;	// Bits to represent the next
 									// FS_MOD_INDEXBLK sectors
@@ -96,7 +103,7 @@ typedef struct {
 	FSPointer	fsPointers[FS_SECT_PER_IB];	// Pointers to the next 112 files
 } FSTable;
 
-/**
+**
  * MountPoint - Points to a ATADevice, the offset into the drive where the
  * partition starts at, and stores the BootRecord of the partition.
  */
@@ -107,6 +114,16 @@ typedef struct {
 							// begins
 	char		letter;		// The mount point. A-Z
 } MountPoint;
+
+/**
+ * FSPointer - A FSPointer structure that is used for looking up files.
+ */
+typedef struct {
+	MountPoint	*mp;		// Pointer to the mountpoint the file lives on
+	Uint32		ib;			// The sector number (relative to partition) of the
+							// index block the file is indexed on
+	Uint32		ibindex;	// Index into the index block of the file
+} FSPointer;
 
 // GLOBALS /////////////////////////////////////////////////////////////////
 // We can only do A-Z (26) mount points
@@ -119,6 +136,7 @@ Uint8 mount_point_count;
 FS_STATUS _fs_create_partition(ATADevice *dev, Uint32 start, Uint32 size, Uint8 index);
 FS_STATUS _fs_format(MountPoint *mp, ATADevice *dev, Uint8 index);
 Uint32 _fs_find_empty_sector(MountPoint *mp);
+FSPointer _fs_find_empty_fspointer(MountPoint *mp);
 void _fs_probe(ATADevice *dev);
 
 #endif
