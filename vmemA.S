@@ -31,4 +31,11 @@ _vmem_turnon:
 _vmem_getcr0:
 	movl	%cr0, %eax
 	ret
-	
+
+	.globl	_vmem_bsf
+_vmem_bsf:
+	enter   $0,$0
+	movl    8(%ebp),%ebx
+	bsf	%ebx, %eax
+	leave
+	ret

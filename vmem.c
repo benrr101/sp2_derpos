@@ -14,6 +14,9 @@
 #define TRUE    1
 #define FALSE   0
 
+static Uint32* _vmem_page_dir = (Uint32*)0xFFFFFFFF;
+static Uint32* _vmem_bitmap_start = (Uint32*)(PAGE_TABLE_SIZE);
+
 /*
 ** _vmem_init()
 **
@@ -22,6 +25,19 @@ void _vmem_init( void )
 {
 	Uint32 address = _vmem_first_4mb();
 	_vmem_init_bitmap( address );
+#ifdef _VMEM_DEBUG
+	_vmem_addresses_test();
+	c_printf("Next availible address %x \n", _vmem_get_next_address());
+	_vmem_set_address(0x800000);
+	c_printf("Next availible address %x \n", _vmem_get_next_address());
+	_vmem_set_address(0x801000);
+	c_printf("Next availible address %x \n", _vmem_get_next_address());
+	_vmem_set_address(0x808000);
+	c_printf("Next availible address %x \n", _vmem_get_next_address());
+	_vmem_clear_address(0x800000);
+	c_printf("Next availible address %x \n", _vmem_get_next_address());
+#endif
+	
 }
 
 Uint32 _vmem_first_4mb( void )
@@ -86,14 +102,14 @@ void _vmem_init_bitmap( Uint32 addr )
 
 	for( i = 0; i < (PAGE_TABLE_SIZE/32); i++ )
 	{
-		_vmem_bitmap_start[i] = 0;
+		_vmem_bitmap_start[i] = 0xFFFFFFFF;
 	}
 
-	for( i = 0; i < 0x400; i++)
+	Uint32 size = PAGE_TABLE_SIZE * 2;
+	for( i = 0; i < size; i = i + 0x1000 )
 	{
-		_vmem_set_bit( _vmem_bitmap_start, i/32, i%32, 1);
+		_vmem_set_address(i);
 	}
-
 #ifdef _VMEM_DEBUG
 	c_printf("Bitmap ending init addr: %x \n", _vmem_bitmap_start );
 	c_printf(" %x : ", PAGE_TABLE_SIZE);
@@ -111,8 +127,8 @@ void _vmem_init_bitmap( Uint32 addr )
 	c_printf( "Bitmap entry 0 is %x \n", _vmem_read_bit( _vmem_bitmap_start, 0, 0));
 	c_printf( "Bitmap entry 1 is %x \n", _vmem_read_bit( _vmem_bitmap_start, 0, 1));
 	c_printf( "Bitmap entry 2 is %x \n", _vmem_read_bit( _vmem_bitmap_start, 0, 2));
-	c_printf( "Bitmap entry n is %x \n", _vmem_read_bit( _vmem_bitmap_start, 31, 31));
-	c_printf( "Bitmap entry n is %x \n", _vmem_read_bit( _vmem_bitmap_start, 32, 0));
+	c_printf( "Bitmap entry n is %x \n", _vmem_read_bit( _vmem_bitmap_start, 63, 32));
+	c_printf( "Bitmap entry n is %x \n", _vmem_read_bit( _vmem_bitmap_start, 64, 0));
 #endif	
 }
 
@@ -122,16 +138,90 @@ Int8 _vmem_read_bit( Uint32* address, Uint16 index, Int8 index2 )
 
 }
 
-void _vmem_set_bit( Uint32* address, Uint16 index, Int8 index2, Int8 value )
+void _vmem_set_bit( Uint32* address, Uint16 index, Int8 index2 )
 {
-	address[index] |=  value << index2;
+	address[index] |=  1 << index2;
+}
+
+void _vmem_clear_bit( Uint32* address, Uint16 index, Int8 index2)
+{
+	address[index] &= ~(1 << index2);
+
 }
 
 void _vmem_set_address( Uint32 address )
 {
-	Uint32 new = 0x0;
-	new = address / 0x1000;
-	Uint32 index = new / 32;
-	Uint32 index2 = new % 32;
-	c_printf( "Bitmap entry n is %x \n", 0x2000);
+	Uint16 index[1];
+	Uint8 index2[1];
+	_vmem_address_calc( address, index, index2);
+	_vmem_clear_bit( _vmem_bitmap_start, *index, *index2);
 }
+
+void _vmem_clear_address( Uint32 address )
+{
+	Uint16 index[1];
+	Uint8 index2[1];
+	_vmem_address_calc( address, index, index2);
+	_vmem_set_bit( _vmem_bitmap_start, *index, *index2 );
+}
+
+
+Uint32 _vmem_get_next_address(void)
+{
+	int i;
+	int memory_size = PAGE_TABLE_SIZE/32;
+	for( i = 0; i < memory_size; i++ )
+	{
+		if( 0 != _vmem_bitmap_start[i] )
+		{
+#ifndef _VMEM_DEBUG
+			c_printf( "%x %d\n", _vmem_bitmap_start[i],_vmem_bsf(_vmem_bitmap_start[i]));
+#endif
+			return _vmem_get_address(i,_vmem_bsf(_vmem_bitmap_start[i]));
+		}
+	}
+
+	__panic( "vmem: OUT OF PHYISCAL MEMORY :(" );
+	return 0x0;
+}
+
+void _vmem_address_calc( Uint32 address, Uint16* index, Uint8* index2 )
+{
+	Uint32 new = address / PAGE_SIZE;
+	*index = new / 32;
+	*index2 = new % 32;
+}
+
+Uint32 _vmem_get_address( Uint16 index, Uint8 index2 )
+{
+	Uint32 addr = index * 32 + index2;
+	addr = addr * PAGE_SIZE;
+	return addr;
+}
+
+
+#ifdef _VMEM_DEBUG
+void _vmem_addresses_test(void)
+{
+	_vmem_address_test( 0x00, 0, 0 );
+	_vmem_address_test( 0x1000, 0, 1 );
+	_vmem_address_test( 0x2000, 0, 2 );
+	_vmem_address_test( 0x3000, 0, 3 );
+	_vmem_address_test( 0x4000, 0, 4 );
+	_vmem_address_test( 0x400000, 32, 0);
+	_vmem_address_test( 0x408000, 32, 8);
+	_vmem_address_test( 0x800000, 64, 0);
+}
+
+void _vmem_address_test(Uint32 addr, Uint16 i, Uint8 i2)
+{  
+	Uint16 index[1];
+	Uint8 index2[1];
+	Uint32 result;
+
+	c_printf( "Index: %d Index2: %d address %x ==", i, i2, addr);
+	_vmem_address_calc( addr, index, index2);
+	result = _vmem_get_address( i, i2);
+	c_printf( "Index: %d Index2: %d address %x\n", *index, *index2, result);
+}
+#endif	

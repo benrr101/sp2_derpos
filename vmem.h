@@ -43,9 +43,6 @@
 #define PAGE_TABLE_READ 0x2
 #define PAGE_TABLE_PRESENT 0x1
 
-static Uint32* _vmem_page_dir = (Uint32*)0xFFFFFFFF;
-static Uint32* _vmem_bitmap_start = (Uint32*)(PAGE_TABLE_SIZE);
-
 /*
 ** _vmem_init()
 **
@@ -56,11 +53,26 @@ Uint32 _vmem_first_4mb( void );
 void _vmem_init_bitmap( Uint32 addr );
 
 Int8 _vmem_read_bit( Uint32* address, Uint16 index, Int8 index2 );
-void _vmem_set_bit( Uint32* address, Uint16 index, Int8 index2, Int8 value );
+void _vmem_set_bit( Uint32* address, Uint16 index, Int8 index2 );
+void _vmem_clear_bit( Uint32* address, Uint16 index, Int8 index2);
+
+void _vmem_set_address( Uint32 address );
+void _vmem_clear_address( Uint32 address );
+Uint32 _vmem_get_next_address(void);
+
+void _vmem_address_calc( Uint32 address, Uint16* index, Uint8* index2 );
+Uint32 _vmem_get_address( Uint16 index, Uint8 index2 );
+
 
 //assembly functions
 void _vmem_turnon(Uint32 page);
 
 int _vmem_getcr0(void);
 
+int _vmem_bsf(Uint32 word);
+
+#ifdef _VMEM_DEBUG
+void _vmem_addresses_test(void);
+void _vmem_address_test(Uint32 addr, Uint16 index, Uint8 index2);
+#endif	
 #endif
