@@ -1,1 +1,9 @@
-.*.swp
+*.o
+*.s
+*.image
+*.sw*
+*.bak
+*.lst
+*.nl
+BuildImage
+*.b

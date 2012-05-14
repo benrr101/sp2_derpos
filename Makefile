@@ -9,8 +9,8 @@
 #
 # User supplied files
 #
-U_C_SRC = clock.c klibc.c pcbs.c queues.c scheduler.c sio.c stacks.c syscalls.c system.c ulibc.c users.c mouse.c keyboard.c
-U_C_OBJ = clock.o klibc.o pcbs.o queues.o scheduler.o sio.o stacks.o syscalls.o system.o ulibc.o users.o mouse.o keyboard.o
+U_C_SRC = clock.c klibc.c pcbs.c queues.c scheduler.c sio.c stacks.c syscalls.c system.c ulibc.c users.c mouse.c keyboard.c vga_dr.c win_man.c gl.c
+U_C_OBJ = clock.o klibc.o pcbs.o queues.o scheduler.o sio.o stacks.o syscalls.o system.o ulibc.o users.o mouse.o keyboard.o vga_dr.o win_man.o gl.o
 U_S_SRC = klibs.S ulibs.S
 U_S_OBJ = klibs.o ulibs.o
 U_LIBS	=
@@ -87,7 +87,7 @@ LD = ld
 # Binary/source file for system bootstrap code
 
 BOOT_OBJ = bootstrap.b
-BOOT_SRC = bootstrap.S
+BOOT_SRC = bootstrap.S vga_dr_S.S
 
 # Assembly language object/source files
 
@@ -194,6 +194,7 @@ bootstrap.o: bootstrap.h
 startup.o: bootstrap.h
 isr_stubs.o: bootstrap.h
 ulibs.o: syscalls.h headers.h queues.h /home/fac/wrc/include/x86arch.h
+vga_dr_S.o: vga_define.h
 c_io.o: c_io.h startup.h support.h /home/fac/wrc/include/x86arch.h
 support.o: startup.h support.h c_io.h /home/fac/wrc/include/x86arch.h
 support.o: bootstrap.h
