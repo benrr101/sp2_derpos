@@ -71,6 +71,7 @@
 */
 //#define SPAWN_MOUSE	// initializes the mouse, resets it
 #define SPAWN_KEYBOARD
+#define SPAWN_GRAPHICS
 
 /*
 ** Users W-Z are spawned from other processes; they
