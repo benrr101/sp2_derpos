@@ -190,11 +190,11 @@ depend:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-bootstrap.o: bootstrap.h
+bootstrap.o: bootstrap.h vga_dr_S.S vga_define.h
+vga_dr_S.o: vga_define.h
 startup.o: bootstrap.h
 isr_stubs.o: bootstrap.h
 ulibs.o: syscalls.h headers.h queues.h /home/fac/wrc/include/x86arch.h
-vga_dr_S.o: vga_define.h
 c_io.o: c_io.h startup.h support.h /home/fac/wrc/include/x86arch.h
 support.o: startup.h support.h c_io.h /home/fac/wrc/include/x86arch.h
 support.o: bootstrap.h
@@ -209,10 +209,15 @@ sio.o: startup.h /home/fac/wrc/include/uart.h /home/fac/wrc/include/x86arch.h
 stacks.o: headers.h queues.h stacks.h
 syscalls.o: headers.h pcbs.h clock.h stacks.h scheduler.h queues.h sio.h
 syscalls.o: syscalls.h /home/fac/wrc/include/x86arch.h system.h startup.h
+syscalls.o: keyboard.h
 system.o: headers.h system.h pcbs.h clock.h stacks.h bootstrap.h syscalls.h
-system.o: queues.h /home/fac/wrc/include/x86arch.h sio.h scheduler.h users.h
-system.o: keyboard.h ulib.h types.h
+system.o: queues.h /home/fac/wrc/include/x86arch.h sio.h scheduler.h vga_dr.h
+system.o: gl.h win_man.h users.h keyboard.h ulib.h types.h
 ulibc.o: headers.h
-users.o: headers.h users.h keyboard.h
+users.o: headers.h users.h keyboard.h queues.h
 mouse.o: headers.h startup.h ps2.h mouse.h
-keyboard.o: headers.h ps2.h startup.h keyboard.h
+keyboard.o: headers.h ps2.h system.h pcbs.h clock.h stacks.h startup.h
+keyboard.o: queues.h scheduler.h ulib.h types.h keyboard.h
+vga_dr.o: headers.h vga_dr.h vga_define.h
+win_man.o: headers.h win_man.h vga_dr.h gl.h c_io.h
+gl.o: gl.h headers.h vga_dr.h
