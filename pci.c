@@ -96,7 +96,13 @@ void _pci_probe_devices(){
 		FSPointer f = _fs_find_empty_fspointer(&mount_points[i]);
 		c_printf("    FSPointer %d on ib @sect %d is free\n", f.ibindex, f.ib);
 		// Create a file!
-		_fs_create_file(&mount_points[i], "HOLYFUCK"); 
+		_fs_create_file(&mount_points[i], "HOLYFUCK");
+		f = _fs_find_file(&mount_points[i], "HOLYFUCK");
+		if(f.mp == NULL) {
+			c_printf("File not found");
+		} else {
+			c_printf("    FSPointer %d on ib @sect %d is free\n", f.ibindex, f.ib);
+		}	
 	}
 
 	// Find a free sector
