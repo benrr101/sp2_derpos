@@ -37,7 +37,7 @@ Screen positions
 |            |            |
 +------------+------------+
 
-and there are 12 screens in the background
+and there are 12 buffers in the background
 */
 void _win_man_init( void );
 
