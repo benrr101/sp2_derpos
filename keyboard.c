@@ -347,13 +347,13 @@ int _ps2_write_to_active( char c ){
 		return 0; // The focused process does not want input
 	
 	// Write the character
-	c_printf( "Index: %d    Size: %d\n", requests[ index ]->index, requests[ index ]->size);
+	//c_printf( "Index: %d    Size: %d\n", requests[ index ]->index, requests[ index ]->size);
 	char *buf = requests[ index ]->buf;
 	int i = requests[ index ]->index;
-	c_printf( "Writing character: %c, Prev: %c\n", c, buf[ i ] );
+	//c_printf( "Writing character: %c, Prev: %c\n", c, buf[ i ] );
 	buf[ i ] = c;
 	requests[ index ]->index = i + 1;
-	c_printf( "Index: %d    Size: %d\n", i, requests[ index ]->size);
+	//c_printf( "Index: %d    Size: %d\n", i, requests[ index ]->size);
 	if( i == requests[ index ]->size ){
 		
 		// pull from IO-blocking queue
