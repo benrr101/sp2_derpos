@@ -102,7 +102,10 @@ void _pci_probe_devices(){
 			c_printf("File not found");
 		} else {
 			c_printf("    FSPointer %d on ib @sect %d is free\n", f.ibindex, f.ib);
-		}	
+		}
+		// Create another file!
+		_fs_create_file(&mount_points[i], "HoShizle");
+		_fs_delete_file(&mount_points[i], "HoShizle");	
 	}
 
 	// Find a free sector

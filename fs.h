@@ -48,6 +48,16 @@
 #define FS_FP_END				0x1D0			// Ends at byte 464
 #define FS_FP_FREE				0x00
 
+// NameTable definitions
+#define FS_NAME_SIZE			0x8				// 8 bytes of file name
+
+// File sector information
+#define FS_FILE_DATA_OFF		0x0C			// Data starts at 12 bytes in
+#define FS_FILE_SECT_OFF		0x04			// Next sector is 4 bytes in
+#define FS_FILE_BYTE_OFF		0x08			// Bytes allocated in sector
+#define FS_FILE_HEADER			0x46494C45		// FILE
+#define FS_FILE_EOC				0x00			// End of the chain
+
 // Success/Error Codes
 typedef enum {
 	FS_SUCCESS 			= 0x0,
@@ -55,7 +65,8 @@ typedef enum {
 	FS_ERR_TOOSMALL,
 	FS_ERR_BADINDEX,
 	FS_ERR_BADSECT,
-	FS_ERR_NOTDERP
+	FS_ERR_NOTDERP,
+	FS_ERR_FILENOTFOUND
 } FS_STATUS;
 
 // TYPEDEFS ////////////////////////////////////////////////////////////////
@@ -147,6 +158,8 @@ FSPointer _fs_find_file(MountPoint *mp, char filename[8]);
 FILE _fs_create_file(MountPoint *mp, char filename[8]);
 void _fs_probe(ATADevice *dev);
 void _fs_allocate_sector(MountPoint *mp, Uint32 sector);
+void _fs_unallocate_sector(MountPoint *mp, Uint32 sector);
+void _fs_toggle_sector(MountPoint *mp, Uint32 sector);
 int _fs_namecmp(ATASector *sect, Uint16 index, char name[8]);
 
 #endif
