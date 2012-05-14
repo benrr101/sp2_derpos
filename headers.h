@@ -21,6 +21,7 @@
 #include "types.h"
 
 #include "c_io.h"
+#include "vga_dr.h"
 #include "support.h"
 
 
