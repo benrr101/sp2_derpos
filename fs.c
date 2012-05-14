@@ -238,6 +238,46 @@ FSPointer _fs_find_empty_fspointer(MountPoint *mp) {
 	return f;
 }
 
+FS_STATUS _fs_delete_file(MountPoint *mp, char filename[8]) {
+	// Find the file
+	FSPointer fp = _fs_find_file(mp, filename);
+
+	// Verify we found it
+	if(fp.mp == NULL) {
+		return FS_ERR_FILENOTFOUND;
+	}
+
+	// Load the ib of the file
+	ATASector ib;
+	_ata_read_sector(*(mp->device), mp->offset + fp.ib, &ib);
+
+	// @TODO: Verify it's an IB
+	// Get the sector value from the table
+	Uint32 offset = (fp.ibindex * FS_FP_LENGTH) + FS_FP_OFFSET;
+	Uint32 sector = _sector_get_long(&ib, offset);
+
+	// Mark the filepointer as available
+	_sector_put_long(&ib, offset, FS_FP_FREE);
+
+	// Write it back to the disk
+	_ata_write_sector(*(mp->device), mp->offset + fp.ib, &ib);
+	
+	// Traverse the file chain's sector's and unallocate as we go
+	ATASector fileSector;
+	while(sector != FS_FILE_EOC) {
+		// Grab the sector
+		_ata_read_sector(*(mp->device), mp->offset + sector, &fileSector);
+
+		// Unallocate the sector
+		_fs_unallocate_sector(mp, sector);
+
+		// Go to next sector
+		sector = _sector_get_long(&fileSector, FS_FILE_SECT_OFF);
+	}
+
+	return FS_SUCCESS;
+}
+
 FILE _fs_create_file(MountPoint *mp, char filename[8]) {
 	// Get a free file pointer
 	FSPointer fp = _fs_find_empty_fspointer(mp);
@@ -258,7 +298,7 @@ FILE _fs_create_file(MountPoint *mp, char filename[8]) {
 	_ata_read_sector(*(mp->device), mp->offset + fp.ib, &ibSector);
 
 	// Put a pointer to the file's first sector
-	Uint32 ibindex = fp.ibindex + FS_FP_OFFSET;
+	Uint32 ibindex = (fp.ibindex * FS_FP_LENGTH) + FS_FP_OFFSET;
 	_sector_put_long(&ibSector, ibindex, sector);
 
 	// Write it back to the disk
@@ -279,7 +319,7 @@ FILE _fs_create_file(MountPoint *mp, char filename[8]) {
 	// Write the name to the sector
 	Uint8 i;
 	for(i = 0; i < 8; i++) {
-		nameSector[ibindex + i] = filename[i];
+		nameSector[(ibindex * FS_NAME_SIZE) + i] = filename[i];
 	}
 
 	// Write the sector back to th disk
@@ -318,7 +358,6 @@ FSPointer _fs_find_file(MountPoint *mp, char filename[8]) {
 	// Prebuild the file pointer to save code
 	FSPointer fp;
 	fp.mp = mp;
-	
 
 	for(i = start; i <= end; i += FS_SECT_PER_IB) {
 		c_printf("Looking at ib at sector %d\n", i);
@@ -328,7 +367,7 @@ FSPointer _fs_find_file(MountPoint *mp, char filename[8]) {
 		// Does the file exist in this name file
 		for(j = 0; j < 64; j++) {
 			// Compare the file name
-			if(j < 4) { c_printf("Filename starts with: %c\n", nameSector[j]); }
+			if(j < 4) { c_printf("Filename starts with: %c\n", nameSector[j * 8]); }
 			if(_fs_namecmp(&nameSector, j*8, filename) == 0) {
 				// Return the found file
 				fp.ib      = i / FS_SECT_PER_IB +1;
@@ -371,16 +410,27 @@ int _fs_namecmp(ATASector *sect, Uint16 index, char name[8]) {
 }
 
 void _fs_allocate_sector(MountPoint *mp, Uint32 sector) {
+	_fs_toggle_sector(mp, sector);
+}
+
+void _fs_unallocate_sector(MountPoint *mp, Uint32 sector) {
+	_fs_toggle_sector(mp, sector);
+}
+
+void _fs_toggle_sector(MountPoint *mp, Uint32 sector) {
 	// Read the ib sector for the bitfield
 	Uint32 ibAddr = mp->offset + ((sector / FS_SECT_PER_IB) * FS_SECT_PER_IB) + 1;
 	ATASector s;
 	_ata_read_sector(*(mp->device), ibAddr, &s);
 
-	// Mark the appropriate sector bit as unavailable
+	// Toggle the appropriate sector bit
 	Uint8 mask  = FS_BT_ALLOCATED << ((sector % FS_SECT_PER_IB) % 8 - 1);
 	Uint16 byte = FS_BT_END - ((sector % FS_SECT_PER_IB) / 8) - 1;
-	s[byte] |= mask;
+	c_printf("Sector: %x Before byte: %x = %x ", sector,byte, s[byte]);
+	s[byte] ^= mask;
+	c_printf("After %x\n", s[byte]);
 
 	// Write it back to the disk
 	_ata_write_sector(*(mp->device), ibAddr, &s);
 }
+
