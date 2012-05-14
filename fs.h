@@ -143,8 +143,10 @@ FS_STATUS _fs_create_partition(ATADevice *dev, Uint32 start, Uint32 size, Uint8 
 FS_STATUS _fs_format(MountPoint *mp, ATADevice *dev, Uint8 index);
 Uint32 _fs_find_empty_sector(MountPoint *mp);
 FSPointer _fs_find_empty_fspointer(MountPoint *mp);
+FSPointer _fs_find_file(MountPoint *mp, char filename[8]);
 FILE _fs_create_file(MountPoint *mp, char filename[8]);
 void _fs_probe(ATADevice *dev);
 void _fs_allocate_sector(MountPoint *mp, Uint32 sector);
+int _fs_namecmp(ATASector *sect, Uint16 index, char name[8]);
 
 #endif

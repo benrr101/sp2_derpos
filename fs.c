@@ -196,7 +196,6 @@ Uint32 _fs_find_empty_sector(MountPoint *mp) {
 
 			// Grab that byte and check if the bit we need is allocated
 			if(((s[byte] >> (j % 8)) & FS_BT_ALLOCATED) == 0) {
-				c_printf("Free bitfieldbyte is: 0x%x (byte %x)\n", s[byte], byte);
 				// Sector isn't allocated. This is our golden nugget
 				// Calculate the sector into the partition this is
 				return (i - mp->offset) + j;
@@ -253,10 +252,9 @@ FILE _fs_create_file(MountPoint *mp, char filename[8]) {
 	// Allocate the sector that's free
 	_fs_allocate_sector(mp, sector);
 
-	// Allocate the FSPointer
+	// Allocate the FSPointer ----------------------------------------------
 	// Grab the ib sector for the fp
 	ATASector ibSector;
-	c_printf("*** mp->offset=%d fp.ib=%d\n", mp->offset, fp.ib);
 	_ata_read_sector(*(mp->device), mp->offset + fp.ib, &ibSector);
 
 	// Put a pointer to the file's first sector
@@ -266,7 +264,7 @@ FILE _fs_create_file(MountPoint *mp, char filename[8]) {
 	// Write it back to the disk
 	_ata_write_sector(*(mp->device), mp->offset + fp.ib, &ibSector);
 
-	// Allocate the filename
+	// Allocate the filename -----------------------------------------------
 	ATASector nameSector;
 	ibindex = fp.ibindex;
 	if(fp.ibindex >= FS_SECTOR_SIZE) {
@@ -293,9 +291,83 @@ FILE _fs_create_file(MountPoint *mp, char filename[8]) {
 		_ata_write_sector(*(mp->device), mp->offset + fp.ib + 1, &nameSector);
 	}
 
+	// Allocate 0th Sector of File -----------------------------------------
 	// Grab the sector that the file will start on
+	ATASector fileSector;
+	_ata_blank_sector(&fileSector);
+
+	// Just set the header and write it back to the disk
+	fileSector[0]=0x46;fileSector[1]=0x49;fileSector[2]=0x4C;fileSector[3]=0x45;
+	_ata_write_sector(*(mp->device), sector, &fileSector);
+
+	// Return a FILE pointer -----------------------------------------------
 	FILE f;
+	f.fp = fp;
+	f.offset = 0;
+	// @TODO: Find errors
 	return f;
+}
+
+FSPointer _fs_find_file(MountPoint *mp, char filename[8]) {
+	// Start iterating over all the index blocks in the partition
+	Uint32 start = mp->offset + 1;
+	Uint32 end   = mp->offset + mp->bootRecord.size;
+	Uint32 i, j;
+	ATASector nameSector;
+	
+	// Prebuild the file pointer to save code
+	FSPointer fp;
+	fp.mp = mp;
+	
+
+	for(i = start; i <= end; i += FS_SECT_PER_IB) {
+		c_printf("Looking at ib at sector %d\n", i);
+		// Read the first name sector (ib + 1)
+		_ata_read_sector(*(mp->device), i + 1, &nameSector);
+
+		// Does the file exist in this name file
+		for(j = 0; j < 64; j++) {
+			// Compare the file name
+			if(j < 4) { c_printf("Filename starts with: %c\n", nameSector[j]); }
+			if(_fs_namecmp(&nameSector, j*8, filename) == 0) {
+				// Return the found file
+				fp.ib      = i / FS_SECT_PER_IB +1;
+				fp.ibindex = j;
+				return fp;
+			}
+		}
+
+		// File wasn't in this sector of names. Maybe the next? (ib+2)
+		_ata_read_sector(*(mp->device), i+2, &nameSector);
+		
+		// Does the file exist in this name file
+		for(j = 0; j < 48; j++) {
+			// Compare the filenames
+			if(_fs_namecmp(&nameSector, i*8, filename) == 0) {
+				// Return the found file
+				fp.ib      = i / FS_SECT_PER_IB + 1;
+				fp.ibindex = j + 64;
+				return fp;
+			}
+		}
+	}
+
+	// We didn't find it
+	fp.mp = NULL;
+	return fp;
+}
+
+int _fs_namecmp(ATASector *sect, Uint16 index, char name[8]) {
+	// Iterate over the chars and see if they match
+	Uint8 i;
+	for(i = 0; i < 8; i++) {
+		if((*sect)[index + i] != name[i]) {
+			return -1;
+		}
+	}
+
+	// They match!
+	return 0;
 }
 
 void _fs_allocate_sector(MountPoint *mp, Uint32 sector) {
@@ -307,9 +379,7 @@ void _fs_allocate_sector(MountPoint *mp, Uint32 sector) {
 	// Mark the appropriate sector bit as unavailable
 	Uint8 mask  = FS_BT_ALLOCATED << ((sector % FS_SECT_PER_IB) % 8 - 1);
 	Uint16 byte = FS_BT_END - ((sector % FS_SECT_PER_IB) / 8) - 1;
-	c_printf("Byte %x ", s[byte]);
 	s[byte] |= mask;
-	c_printf("after=%x |w/%x\n", s[byte], mask);
 
 	// Write it back to the disk
 	_ata_write_sector(*(mp->device), ibAddr, &s);
