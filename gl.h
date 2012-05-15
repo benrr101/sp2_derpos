@@ -16,7 +16,10 @@ void _gl_init( void );
 //buffers into the main lin buffer
 void draw_active_screens( void );
 
+void draw_scr_0( void );
 void draw_scr_1( void );
+void draw_scr_2( void );
+void draw_scr_3( void );
 
 void draw_pixel(Uint32 x, Uint32 y, pixel p);
 

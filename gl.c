@@ -134,7 +134,12 @@ void draw_pixel(Uint32 x, Uint32 y, pixel p) {
 	Uint32			pix = 0;
 	Uint32*  		buffer_ptr;
 	screen_info 	curr_si;
-	curr_si = 		(scrn_info_arr[0]);
+	Pid pid = 0;
+	
+	get_pid( &pid );
+
+	curr_si = 		get_screen_info( pid );
+	//(scrn_info_arr[0]);
 	buffer_ptr = 	(Uint32 *) (curr_si.bPtr);
 	
 	pix = p.r;
