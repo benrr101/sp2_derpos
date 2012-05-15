@@ -24,6 +24,7 @@
 #define PS2_K_Inhibited		PS2_K_IBH
 
 // Special Keys
+#define PS2_KEY_EXT			0xE0
 #define PS2_KEY_RELEASE		0x80
 #define PS2_KEY_LSHIFT_P	0x2A
 #define PS2_KEY_RSHIFT_P	0x36
@@ -39,6 +40,12 @@
 #define PS2_KEY_F10_P		0x44
 #define PS2_KEY_F11_P		0x47
 #define PS2_KEY_F12_P		0x48
+#define PS2_KEY_LWIN_P		0x5B
+#define PS2_KEY_RWIN_P		0x5C
+#define PS2_KEY_UP_P		0x48
+#define PS2_KEY_LEFT_P		0x4B
+#define PS2_KEY_RIGHT_P		0x4D
+#define PS2_KEY_DOWN_P		0x50
 
 // IRQs
 #define PS2_K_VEC	0x21
@@ -60,6 +67,7 @@ void _ps2_change_focus( int window );
 void _ps2_delete_request( int index );
 int _ps2_search_pid( void *pid1, void *pid2);
 int _ps2_write_to_active( char c );
+void _ps2_ack_int( void );
 
 // User functions
 int buf_read( char* buf, int size, Pid pid );

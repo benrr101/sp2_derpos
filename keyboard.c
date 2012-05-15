@@ -83,7 +83,10 @@ static char alt_pressed = 0;
 static char num_lock = 1;
 static char caps_lock = 0;
 static char scroll_lock = 0;
+static char win_pressed = 0;
 
+// Used to await another byte for an extended key
+static char await_next = 0;
 
 void _ps2_keyboard_init( void ){
 
@@ -252,8 +255,48 @@ void _ps2_keyboard_clear( void ){
 }
 
 void _ps2_keyboard_isr( int vec, int code ){
+	
+	// temp vars
+	Uint quad;
+
 	Uint key = __inb( PS2_PORT );
 
+	// Handle extended keys first
+	if( await_next ){
+		if( key == 0xFE ){
+			_ps2_ack_int();
+			return;
+		}
+		else{
+			if( win_pressed ){
+				quad = get_active();
+				switch( key ){
+					case PS2_KEY_UP_P:
+					case PS2_KEY_DOWN_P:
+						if( quad > 1 )
+							quad -= 2;
+						else
+							quad += 2;
+					case PS2_KEY_LEFT_P:
+					case PS2_KEY_RIGHT_P:
+						if( quad % 2 == 0 )
+							quad += 1;
+						else
+							quad -= 1;
+				}
+				switch_active( quad );
+			}
+			switch( key ){
+				case PS2_KEY_LWIN_P:
+				case PS2_KEY_RWIN_P:
+					win_pressed = 1;
+					break;
+			}
+			await_next = 0;
+		}
+	}
+
+	// Next, handle special keys
 	switch( key ){
 		case PS2_KEY_LSHIFT_P:
 		case PS2_KEY_RSHIFT_P:
@@ -270,6 +313,8 @@ void _ps2_keyboard_isr( int vec, int code ){
 			caps_lock = 0;
 			return;
 	}
+
+	// normal ASCII characters
 	if( key < 0x80 ){
 		c_printf( "%c", _ps2_scan_code[ shift_pressed ][ key ] );
 
@@ -286,13 +331,24 @@ void _ps2_keyboard_isr( int vec, int code ){
 			_ps2_write_to_active( _ps2_scan_code[ shift_pressed ][ key ] );
 		}
 	}
+
+	// Just the ASCII characters being released
 	else if( key >= 0x80 && key <= 0xD8){
 		// key released!
 	}
-	else{
-		//c_printf( "?" );
-	}
 
+	// If we get this byte then that means we should expect an extended key
+	else{
+		if( key == 0xE0 ){
+			await_next = 1;
+			__outb( PS2_PORT, 0x0 );
+		}
+	}
+	
+	_ps2_ack_int();
+}
+
+void _ps2_ack_int( void ){
 	__outb( 0xA0, 0x20 );
 	__outb( 0x20, 0x20 );
 }

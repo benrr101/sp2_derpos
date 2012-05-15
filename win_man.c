@@ -114,7 +114,14 @@ Uint8 replace_active( Uint32 buffer_num ){
 	return set_active( buffer_num, get_active() );
 }
 
-
+Uint8 switch_active( Uint8 quadrant ){
+	Uint8 prev_quad = wm_memory->active_quad; 
+	if( quadrant < 4 )
+		wm_memory->active_quad = quadrant;
+	else
+		prev_quad = -1;
+	return prev_quad;
+}
 
 
 
