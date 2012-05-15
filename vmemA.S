@@ -42,3 +42,11 @@ _vmem_bsf:
 	bsf	%ebx, %eax
 	leave
 	ret
+
+	.globl	_vmeml2_change_page
+_vmeml2_change_page:
+        enter   $0,$0
+	movl    8(%ebp),%eax	// Get the address of the page directory into %eax,
+	movl	%eax, %cr3
+	leave			
+	ret

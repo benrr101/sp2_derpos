@@ -116,6 +116,7 @@ typedef struct pcb {
 	Context		*context;	// process context
 	Stack		*stack;		// this process' stack
 	Time		wakeup;		// wakeup time for sleeping process
+	Uint32		*pdt;
 	// two-byte fields
 	Pid		pid;		// our processid
 	Pid		ppid;		// who created us

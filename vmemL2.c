@@ -1,0 +1,99 @@
+#include "vmem.h"
+#include "vmemL2.h"
+
+static Uint32 _vmeml2_all_pages_tables[40];
+static Uint8 _vmeml2_all_pages_tables_size = 0;
+
+Uint32* _vmeml2_create_page_dir( void )
+{
+	Uint32 addrRaw = _vmem_get_next_address();
+	_vmem_set_address( addrRaw );
+	
+	Uint32* addr = (Uint32*) addrRaw;
+
+	int i;
+	for(i = 0; i < 1024; i++ )
+	{
+		addr[i] = PAGE_DIR_WRITE;
+	}
+
+	for( i=0; i < _vmeml2_all_pages_tables_size; i++ )
+	{
+		addr[_vmeml2_all_pages_tables[i]] = _vmem_page_dir[_vmeml2_all_pages_tables[i]];
+	}
+	return addr;
+}
+
+Uint32* _vmeml2_create_page_table( Uint32* table, Uint16* index, Uint32 vaddr )
+{
+	return 0x00;
+}
+
+void _vmeml2_create_page( Uint32* dir, Uint32 vaddr )
+{
+	
+}
+
+Uint32* _vmeml2_create_4MB_page( Uint32* dir, Uint32 vaddr )
+{
+	return 0x00;
+}
+
+void _vmeml2_release_page_dir( Uint32* dir )
+{
+}
+
+void _vmeml2_static_address( Uint32 addr1, Uint32 addr2)
+{
+
+	if( addr1 % PAGE_TABLE_SIZE != 0 ) 
+	{
+		__panic("Static address not aligned on 4MB boundary");
+	}
+
+	Uint32 tempAddr;
+	Uint32 index;
+	for( tempAddr = addr1; tempAddr < addr2; tempAddr = tempAddr + PAGE_TABLE_SIZE )
+	{
+		_vmem_set_4MB_address( tempAddr);
+		index = tempAddr / PAGE_TABLE_SIZE;
+		_vmeml2_static_dir_entry( index);
+		_vmem_page_dir[index] = tempAddr | PAGE_DIR_PRESENT | PAGE_DIR_WRITE | PAGE_DIR_SIZE;
+		//c_printf("Index: %x Address: %x\n", index, tempAddr);
+	}
+
+}
+
+void _vmeml2_static_dir_entry( Uint32 index)
+{
+		_vmeml2_all_pages_tables[_vmeml2_all_pages_tables_size] = index;
+		_vmeml2_all_pages_tables_size++;
+}
+
+Uint8 _vmeml2_is_empty_dir_entry( Uint32* dir, Uint32 index)
+{
+	Uint32 present = dir[index] & PAGE_DIR_PRESENT;
+	if( present == PAGE_DIR_PRESENT )
+	{
+		return TRUE;
+	}
+	return FALSE;
+}
+
+Uint8 _vmeml2_is_empty_page_entry( Uint32* table, Uint32 index)
+{
+	Uint32 present = table[index] & PAGE_TABLE_PRESENT;
+	if( present == PAGE_TABLE_PRESENT )
+	{
+		return TRUE;
+	}
+	return FALSE;
+}
+
+void _vmeml2_test(void)
+{
+	_vmeml2_static_address(0xD0000000, ( 0xD0000000 + PAGE_TABLE_SIZE ) );
+	c_printf( "%x \n", _vmem_page_dir[0]); 
+	c_printf( "%x \n", _vmem_page_dir[0x340]);
+	c_printf("Info %x \n", *((Uint32*)0xD0000000) );
+}

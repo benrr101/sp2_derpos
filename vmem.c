@@ -14,8 +14,9 @@
 #define TRUE    1
 #define FALSE   0
 
-static Uint32* _vmem_page_dir = (Uint32*)0xFFFFFFFF;
-static Uint32* _vmem_bitmap_start = (Uint32*)(PAGE_TABLE_SIZE);
+Uint32* _vmem_bitmap_start = (Uint32*)(PAGE_TABLE_SIZE);
+Uint32* _vmem_page_dir = (Uint32*)0xFFFFFFFF;
+
 
 /*
 ** _vmem_init()
@@ -23,6 +24,7 @@ static Uint32* _vmem_bitmap_start = (Uint32*)(PAGE_TABLE_SIZE);
 */
 void _vmem_init( void )
 {
+	*((Uint32*)0xD0000000) = 0x1234;
 	Uint32 address = _vmem_first_4MB();
 	_vmem_init_bitmap( address );
 #ifdef _VMEM_DEBUG
