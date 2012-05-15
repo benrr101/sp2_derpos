@@ -5,8 +5,8 @@
 #include "c_io.h"
 
 //TODO: build a struct for the wm_memory
-static void* 			wm_memory;
-static screen_info* 	win_bufs;
+static win_man_vars*	wm_memory;
+static screen_info* 	screen_info_arr;
 
 void _win_man_init( void ) {
 	int i = 0;
@@ -20,42 +20,53 @@ void _win_man_init( void ) {
 	// this module
 	wm_memory = (void *)( _vga_get_end_mem() );
 	//array of screen_infos
-	win_bufs = (screen_info *)( wm_memory + WIN_MAN_MEM );
+	screen_info_arr = (screen_info *)( wm_memory + WIN_MAN_MEM );
 	//begining of buffers
-	bPtrOffset = (void *)(win_bufs + ( (DEFAULT_SCREENS+1) * sizeof( struct screen_info ) ) );
+	bPtrOffset = (void *)(screen_info_arr + ( (DEFAULT_SCREENS+1) * sizeof( struct screen_info ) ) );
+	//TODO: give the VM_man_our addresses
+	//
+	//
+	//
+	
 	//get screen info
 	dW = vga_mode_info->XResolution / 2;
 	dH = vga_mode_info->YResolution / 2;
 	
 	//fill out the default screens [[ * vga_mode_info->LinbytesPerScanLine)/8) ]]
 	for(i = 0; i < DEFAULT_SCREENS; i++) {
-		win_bufs[i].screen_num = i;
-		win_bufs[i].w = dW;
-		win_bufs[i].h = dH;
-		win_bufs[i].bPtr = (Uint32 *)(bPtrOffset + (( i * dH * dW )));
+		screen_info_arr[i].buf_num = i;
+		screen_info_arr[i].w = dW;
+		screen_info_arr[i].h = dH;
+		screen_info_arr[i].bPtr = (Uint32 *)(bPtrOffset + (( i * dH * dW )));
 		c_printf("%d  - %x || ", i, ( i * dH * dW) );
 	}
 	for(i = 0; i < DEFAULT_SCREENS; i++) {
 		c_printf("%d - (%d, %d) - %x || ", 
-		win_bufs[i].screen_num, 
-		win_bufs[i].w, 
-		win_bufs[i].h, 
-		win_bufs[i].bPtr);
+		screen_info_arr[i].buf_num, 
+		screen_info_arr[i].w, 
+		screen_info_arr[i].h, 
+		screen_info_arr[i].bPtr);
 	}
+	//set the default displayed screens
+	wm_memory->screens[0] = 0;
+	wm_memory->screens[1] = 1;
+	wm_memory->screens[2] = 2;
+	wm_memory->screens[3] = 3;
 }
 
-Uint8 get_blocking( Uint32 screen_num ) {
-	return win_bufs[screen_num].blocking;	
+
+Uint8 get_blocking( Uint32 buf_num ) {
+	return screen_info_arr[buf_num].blocking;	
 }
 
-Uint8 set_blocking( Uint32 screen_num, Uint8 new_val) {
-	win_bufs[screen_num].blocking = new_val;
-	return win_bufs[screen_num].blocking;
+Uint8 set_blocking( Uint32 buf_num, Uint8 quadrant) {
+	screen_info_arr[buf_num].blocking = quadrant;
+	return screen_info_arr[buf_num].blocking;
 }
 
-//returns the position on the screen.
-Uint8 get_active( Uint32 screen_num ) {
-	return win_bufs[screen_num].active;
+//returns the active quadrant
+Uint8 get_active( ) {
+	return wm_memory->active_quad;
 }
 
 /**
@@ -65,15 +76,33 @@ Uint8 get_active( Uint32 screen_num ) {
  * @param	quadrant		The quadrant to draw the process' buffer to
  * @return					The quadrant of the active buffer
  */
-Uint8 set_active( Uint32 buffer_num, Uint8 quadrant ) {
-
-	// only offset the buffer-quadrant if it is a valid value
+Uint8 set_active( Uint32 buf_num, Uint8 quadrant) {
 	if(quadrant < 4) {
-		((win_man_vars *) wm_memory)->screens[quadrant] = buffer_num;
-	}		
+		wm_memory->screens[quadrant] = buf_num;
+	}else{ 
+		//bad screen
+		return -1;	
+	}	
 		
-	win_bufs[screen_num].active = quadrant;
-	return win_bufs[screen_num].active;
+	screen_info_arr[buf_num].active = quadrant;
+	return screen_info_arr[buf_num].active;
+}
+
+//returns the active quadrants pid
+Pid get_active_pid( void ) {
+	//grab the buffer number of the active quad
+	Uint32 buf_num = wm_memory->screens[wm_memory->active_quad];
+	return screen_info_arr[buf_num].pid;
+}
+
+//return the screen_info structs
+screen_info* get_screen_infos( void ) {
+	return (screen_info_arr);
+}
+
+//grabs the screens array
+Uint32* get_current_bufs( void ) {
+	return (wm_memory->screens);
 }
 
 /**
@@ -84,3 +113,10 @@ Uint8 set_active( Uint32 buffer_num, Uint8 quadrant ) {
 Uint8 replace_active( Uint32 buffer_num ){
 	return set_active( buffer_num, get_active() );
 }
+
+
+
+
+
+
+

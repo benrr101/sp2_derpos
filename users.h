@@ -16,6 +16,7 @@
 #include "headers.h"
 //#include "mouse.h"
 #include "keyboard.h"
+#include "gl.h"
 
 /*
 ** General (C and/or assembly) definitions
@@ -71,6 +72,7 @@
 */
 //#define SPAWN_MOUSE	// initializes the mouse, resets it
 #define SPAWN_KEYBOARD
+//#define SPAWN_GRAPHICS
 
 /*
 ** Users W-Z are spawned from other processes; they

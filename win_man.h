@@ -9,9 +9,10 @@
 
 typedef struct screen_info
 {
-	Uint32	screen_num;
+	Uint32	buf_num;
 	Uint32 	w;
 	Uint32	h;
+	Pid		pid;
 	Uint32*	bPtr;
 	Uint8	active;
 	Uint8	blocking;
@@ -20,8 +21,9 @@ typedef struct screen_info
 //to be 1024b
 typedef struct win_man_vars
 {
+	Uint32 	active_quad;
 	Uint32	screens[4];
-	char	reserved[992];
+	//char reserve[1024-sizeofwin_man_vars]
 	//don't need to have the array here I just did t oshow the rest of the space
 } 	win_man_vars;
 
@@ -37,16 +39,26 @@ Screen positions
 |            |            |
 +------------+------------+
 
-and there are 12 buffers in the background
+and there are 12 screens in the background
 */
 void _win_man_init( void );
 
-Uint8 get_blocking( Uint32 screen_num );
-Uint8 set_blocking( Uint32 screen_num, Uint8 new_val);
+Uint8 get_blocking( Uint32 buf_num );
+Uint8 set_blocking( Uint32 buf_num, Uint8 quadrant);
 
-//returns the position on the screen.
-Uint8 get_active( Uint32 screen_num );
-//pass into new val the position on the screen you want it at.
-Uint8 set_active( Uint32 screen_num, Uint8 new_val);
+//returns the active quadrant
+Uint8 get_active( void );
+
+//Set quadrant to a buffer
+Uint8 set_active( Uint32 buf_num, Uint8 quadrant);
+
+//returns the active quadrants pid
+Pid get_active_pid( void );
+
+//return the screen_info structs
+screen_info* get_screen_infos( void );
+
+//grabs the screens array
+Uint32* get_current_bufs( void ); 
 
 #endif //_WIN_MAN_H_
