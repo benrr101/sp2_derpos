@@ -47,6 +47,11 @@ void _win_man_init( void ) {
 		screen_info_arr[i].h, 
 		screen_info_arr[i].bPtr);
 	}
+	//set the default displayed screens
+	wm_memory->screens[0] = 0;
+	wm_memory->screens[1] = 1;
+	wm_memory->screens[2] = 2;
+	wm_memory->screens[3] = 3;
 }
 
 
@@ -60,7 +65,7 @@ Uint8 set_blocking( Uint32 buf_num, Uint8 quadrant) {
 }
 
 //returns the active quadrant
-Uint8 get_active() {
+Uint8 get_active( ) {
 	return wm_memory->active_quad;
 }
 
@@ -81,5 +86,23 @@ Uint8 set_active( Uint32 buf_num, Uint8 quadrant) {
 Pid get_active_pid( void ) {
 	//grab the buffer number of the active quad
 	Uint32 buf_num = wm_memory->screens[wm_memory->active_quad];
-	return screen_info_arr[buf_num]->pid;
+	return screen_info_arr[buf_num].pid;
 }
+
+//return the screen_info structs
+screen_info* get_screen_infos( void ) {
+	return (screen_info_arr);
+}
+
+//grabs the screens array
+Uint32* get_current_bufs( void ) {
+	return (wm_memory->screens);
+}
+
+
+
+
+
+
+
+
