@@ -65,15 +65,6 @@ Uint32 _vmem_first_4MB( void )
 	Uint32* pageTableStart = (Uint32*) ( (Uint32)_vmem_page_dir + PAGE_SIZE);
 
 	//maps the first 4 MBs 0x400000
-	//setting up and idenity page
-	//Uint32 address = 0;
-	/*for( i = 0; i < 1024; i++ )
-	{
-		pageTableStart[i] = address | PAGE_TABLE_WRITE | PAGE_TABLE_PRESENT;
-		address = address + PAGE_SIZE;
-	}*/
-	
-	//_vmem_page_dir[0] = (Uint32) pageTableStart | PAGE_DIR_WRITE | PAGE_DIR_PRESENT;
 	_vmem_page_dir[0] = (Uint32) 0x00 | PAGE_DIR_PRESENT | PAGE_DIR_WRITE | PAGE_DIR_SIZE;
 	_vmem_turnon((Uint32)_vmem_page_dir);
 
@@ -81,7 +72,6 @@ Uint32 _vmem_first_4MB( void )
 	c_printf( "\n\nEnd is at position %x \n", __get_end() );
 	c_printf( "Aligned address is %x \n", _vmem_page_dir);
 	c_printf( "First page table address is %x \n", pageTableStart);
-	//c_printf( "Ending of identify map is %x \n", address);
 	c_printf( "Cr0 is %x \n", _vmem_getcr0());
 	c_printf( "Cr0 High is %x \n", ( (_vmem_getcr0()>>31) & 0x01));
 #endif	
@@ -96,18 +86,7 @@ void _vmem_init_bitmap( Uint32 addr )
 		__panic( "vmem: bitmap start is not where expected" );
 	}
 
-	//Uint32* pageTableStart = (Uint32*) ( (Uint32)_vmem_page_dir + PAGE_SIZE + PAGE_SIZE);
-
 	//maps the next 4 MBs
-	//setting up and idenity page
-	/*int i = 0;
-	for( i = 0; i < 1024; i++ )
-	{
-		pageTableStart[i] = addr | PAGE_TABLE_WRITE | PAGE_TABLE_PRESENT;
-		addr = addr + PAGE_SIZE;
-	}
-	
-	_vmem_page_dir[1] = (Uint32) pageTableStart | PAGE_DIR_WRITE | PAGE_DIR_PRESENT;*/
 	_vmem_page_dir[1] = (Uint32) PAGE_TABLE_SIZE | PAGE_DIR_PRESENT | PAGE_DIR_WRITE | PAGE_DIR_SIZE;
 
 	int i;
@@ -122,7 +101,6 @@ void _vmem_init_bitmap( Uint32 addr )
 	c_printf("Bitmap ending init addr: %x \n", _vmem_bitmap_start );
 	c_printf(" %x : ", PAGE_TABLE_SIZE);
 	c_printf(" %x : ", PAGE_SIZE);
-	//c_printf( "Bitmap table dir %x \n", pageTableStart);
 	c_printf( "Ending of bitmap table is %x \n", addr);
 	c_printf("0: %x \n", _vmem_page_dir[0] );
 	c_printf("1: %x \n", _vmem_page_dir[1] );
