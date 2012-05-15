@@ -80,14 +80,14 @@
 		unsigned short 	LinbytesPerScanLine	;
 		unsigned char 	BankNumberOfImagePages;
 		unsigned char 	LinNumberOfImagePages;
-		unsigned char 	LinRedMaskSize		;
-		unsigned char 	LinRedFieldPosition	;
-		unsigned char 	LingreenMaskSize	;
-		unsigned char 	LinGreenFieldPosition;
-		unsigned char 	LinBlueMaskSize		;
-		unsigned char 	LinBlueFieldPosition;
-		unsigned char 	LinRsvdMaskSize		;
-		unsigned char 	LinRsvdFieldPosition;
+		unsigned char 	RedMaskS		;
+		unsigned char 	RedFPos	;
+		unsigned char 	GreenMaskS	;
+		unsigned char 	GreenFPos;
+		unsigned char 	BlueMaskS		;
+		unsigned char 	BlueFPos;
+		unsigned char 	RsvdMaskS		;
+		unsigned char 	RsvdFPos;
 		unsigned char 	Reserved[194];
 	}  __attribute__ ((packed)) MODE_INFO;
 /*
@@ -97,7 +97,6 @@
 VESA_INFO *vga_vesa_info;
 MODE_INFO *vga_mode_info;
 
-#define VGA_DEBUG
 /*
 ** _vga_init()
 **
@@ -109,7 +108,8 @@ void draw_display( void );
 
 void _vga_print_info( void );
 
-Uint32 _vga_get_end_mem( void );
+Uint32* _vga_get_end_mem( void );
+Uint32* _vga_get_start_mem( void );
 
 #endif // ACM
 

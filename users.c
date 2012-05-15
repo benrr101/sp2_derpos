@@ -933,6 +933,18 @@ void init( void ) {
 	}
 #endif
 
+#ifdef SPAWN_GRAPHICS
+	status = spawn( &pid, draw_active_screens );
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
+	}
+	
+	status = spawn( &pid, draw_scr_1);
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
+	}
+#endif
+
 	write( '!' );
 
 	/*
