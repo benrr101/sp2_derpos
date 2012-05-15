@@ -12,6 +12,9 @@
 #ifndef DERP_FS_H
 #define DERP_FS_H
 
+#include "headers.h"
+#include "ata.h"
+
 // CONSTANTS ///////////////////////////////////////////////////////////////
 #define SECT_MBR				0x0
 
@@ -66,27 +69,11 @@ typedef enum {
 	FS_ERR_BADINDEX,
 	FS_ERR_BADSECT,
 	FS_ERR_NOTDERP,
-	FS_ERR_FILENOTFOUND
+	FS_ERR_FILENOTFOUND,
+	FS_INVALID_FILENAME
 } FS_STATUS;
 
 // TYPEDEFS ////////////////////////////////////////////////////////////////
-
-/**
- * FSPointer - ABSOLUTE LBA of the sector where a file resides with respect
- * to the start of the partition.
- */
-//typedef Uint16 FSPointer;
-
-/**
- * FileName - A filename. We're going OLD SKOOL, baby! Max size of 8 chars!
- */
-typedef char FileName[8];
-
-/**
- * BitTable - Bits to represent the allocation of the next FS_SECT_PER_IB
- * sectors of the partition (including the FSTable at currentsector-1)
- */
-//typedef	char BitTable[FS_BT_SIZE];
 
 /**
  * The boot record of the device
@@ -138,8 +125,10 @@ typedef struct {
 
 typedef struct {
 	FSPointer	fp;			// The FSPointer for this file
+	char		name[8];	// The file name
 	Uint64		offset;		// Byte offset into the file. This number can
 							// address like 6 exabytes, so this is unrealistic
+	FS_STATUS	code;		// Status code for the file
 } FILE;
 
 // GLOBALS /////////////////////////////////////////////////////////////////
@@ -156,6 +145,7 @@ Uint32 _fs_find_empty_sector(MountPoint *mp);
 FSPointer _fs_find_empty_fspointer(MountPoint *mp);
 FSPointer _fs_find_file(MountPoint *mp, char filename[8]);
 FILE _fs_create_file(MountPoint *mp, char filename[8]);
+FS_STATUS _fs_delete_file(MountPoint *mp, char filename[8]);
 void _fs_probe(ATADevice *dev);
 void _fs_allocate_sector(MountPoint *mp, Uint32 sector);
 void _fs_unallocate_sector(MountPoint *mp, Uint32 sector);
