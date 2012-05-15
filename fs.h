@@ -63,14 +63,14 @@
 
 // Success/Error Codes
 typedef enum {
-	FS_SUCCESS 			= 0x0,
-	FS_ERR_TOOBIG,
-	FS_ERR_TOOSMALL,
-	FS_ERR_BADINDEX,
-	FS_ERR_BADSECT,
-	FS_ERR_NOTDERP,
-	FS_ERR_FILENOTFOUND,
-	FS_INVALID_FILENAME
+	FS_SUCCESS			= 0x00,
+	FS_ERR_TOOBIG		= 0x01,
+	FS_ERR_TOOSMALL		= 0x02,
+	FS_ERR_BADINDEX		= 0x03,
+	FS_ERR_BADSECT		= 0x04,
+	FS_ERR_NOTDERP		= 0x05,
+	FS_ERR_FILENOTFOUND	= 0x06,
+	FS_INVALID_FILENAME	= 0x07
 } FS_STATUS;
 
 // TYPEDEFS ////////////////////////////////////////////////////////////////

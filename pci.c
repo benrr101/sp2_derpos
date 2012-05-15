@@ -12,6 +12,7 @@
 #include "pci.h"
 #include "ata.h"
 #include "fs.h"
+#include "ufs.h"
 
 /**
  * Scans for all PCI devices, and printing information about discovered devices
@@ -106,6 +107,10 @@ void _pci_probe_devices(){
 		// Create another file!
 		_fs_create_file(&mount_points[i], "HoShizle");
 		_fs_delete_file(&mount_points[i], "HoShizle");	
+		FILE f2 = fopen("A:HoShizam");
+		if(f2.code != FS_SUCCESS) {
+			c_printf("*** Fopen failed with code 0x%x\n", f2.code);
+		}
 	}
 
 	// Find a free sector
