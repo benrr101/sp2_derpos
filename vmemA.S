@@ -19,6 +19,9 @@
 	.globl	_vmem_turnon
 _vmem_turnon:
         enter   $0,$0
+	movl 	%cr4, %ebx
+	or 	$0x00000010, %ebx
+	movl 	%ebx, %cr4
 	movl    8(%ebp),%eax	// Get the address of the page directory into %eax,
 	movl	%eax, %cr3
 	movl	%cr0, %eax
