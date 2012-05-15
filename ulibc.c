@@ -108,6 +108,13 @@ Status spawnp( Pid *pid, Prio prio, void (*entry)(void) ) {
 			prt_status( ", set_priority() status %s\n", status );
 			exit();
 		}
+		//request a screen
+		status = win_man_grab_screen( new );
+		if( status != SUCCESS ) {
+			prt_status( ", win_man_grab_screen() status %s\n", status );
+			exit();	
+		}
+		
 		status = exec( entry );
 		// if we got here, the exec() failed
 		status2 = get_pid( &new );

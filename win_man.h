@@ -61,4 +61,7 @@ screen_info* get_screen_infos( void );
 //grabs the screens array
 Uint32* get_current_bufs( void ); 
 
+//reserves a screen
+Status get_screen_buffer( Pid pid );
+
 #endif //_WIN_MAN_H_
