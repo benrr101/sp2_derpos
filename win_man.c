@@ -4,10 +4,14 @@
 #include "gl.h"
 #include "c_io.h"
 
-//TODO: build a struct for the wm_memory
 static win_man_vars*	wm_memory;
 static screen_info* 	screen_info_arr;
 
+/**
+ * Initializes the gl library and the vga devices. Then initializes all of the 
+ * memory required for the window manager, and sets all default values.
+ * 
+ */
 void _win_man_init( void ) {
 	int i = 0;
 	int j = 0;
@@ -41,9 +45,18 @@ void _win_man_init( void ) {
 		screen_info_arr[i].buf_num = i;
 		screen_info_arr[i].w = dW;
 		screen_info_arr[i].h = dH;
+
 		screen_info_arr[i].bPtr = (Uint32 *)( bPtrOffset + ( i * dH * dW ) );
+		
+		screen_info_arr[i].pid = 0;
+		screen_info_arr[i].active = 0;
+		screen_info_arr[i].blocking = 0;
+		
+		#ifdef WM_DEBUG
 		c_printf("%d  - %x || ", i, ( i * dH * dW) );
+		#endif
 	}
+	#ifdef WM_DEBUG
 	for(i = 0; i < DEFAULT_SCREENS; i++) {
 		c_printf("%d - (%d, %d) - %x || ", 
 		screen_info_arr[i].buf_num, 
@@ -51,6 +64,7 @@ void _win_man_init( void ) {
 		screen_info_arr[i].h, 
 		screen_info_arr[i].bPtr);
 	}
+	#endif
 	//set the default displayed screens
 	wm_memory->screens[0] = 0;
 	wm_memory->screens[1] = 1;
@@ -70,17 +84,35 @@ void _win_man_init( void ) {
 	}
 }
 
-
+/**
+ * Gets the blocking flag for the specified buffer.
+ * 
+ * @param 	buf_num	The buffer number that is being checked for blocking.
+ * @return			The current blocking flag.
+ */
 Uint8 get_blocking( Uint32 buf_num ) {
 	return screen_info_arr[buf_num].blocking;	
 }
 
+/**
+ * Sets the blocking flag for the specified buffer.
+ * 
+ * TODO: Rethink this function?
+ * 
+ * @param 	buf_num		The buffer number that is being set to blocking.
+ * @param 	quadrant	The quadrant to set as the blocking flag.
+ * @return				The blocking flag.
+ */
 Uint8 set_blocking( Uint32 buf_num, Uint8 quadrant) {
 	screen_info_arr[buf_num].blocking = quadrant;
 	return screen_info_arr[buf_num].blocking;
 }
 
-//returns the active quadrant
+/**
+ * Grabs the currently active quadrant.
+ * 
+ * @return	The quadrant number.
+ */
 Uint8 get_active( ) {
 	return wm_memory->active_quad;
 }
@@ -104,19 +136,31 @@ Uint8 set_active( Uint32 buf_num, Uint8 quadrant) {
 	return screen_info_arr[buf_num].active;
 }
 
-//returns the active quadrants pid
+/**
+ * Grabs the currently active screens pid.
+ * 
+ * @return	The pid of the active program.
+ */
 Pid get_active_pid( void ) {
 	//grab the buffer number of the active quad
 	Uint32 buf_num = wm_memory->screens[wm_memory->active_quad];
 	return screen_info_arr[buf_num].pid;
 }
 
-//return the screen_info structs
+/**
+ * Grabs screen info array.
+ * 
+ * @return	The pointer to the screens info array.
+ */
 screen_info* get_screen_infos( void ) {
 	return (screen_info_arr);
 }
 
-//grabs the screens array
+/**
+ * Grabs the currently displayed screens array.
+ * 
+ * @return	The pointer to the array.
+ */
 Uint32* get_current_bufs( void ) {
 	return (wm_memory->screens);
 }
@@ -126,11 +170,48 @@ Uint32* get_current_bufs( void ) {
  * 
  * @param	buffer_num		The window (user process) to make active
  */
-Uint8 replace_active( Uint32 buffer_num ){
+
+Uint8 replace_active( Uint32 buffer_num ) {
 	return set_active( buffer_num, get_active() );
 }
 
+/**
+ * Requests a screen buffer and reserves the buffer using the pid of 
+ * process.
+ * 
+ * @param	pid		The pid of the user process makeing the request.
+ * @return			SUCCESS if there was a free buffer.
+ */
+Status get_screen_buffer( Pid pid ) {
+	int i = 0;
+	Status ret = FAILURE;
+	
+	for( i = 0; i < DEFAULT_SCREENS; i++ ) {
+		if( screen_info_arr[i].pid == 0 ) {
+			screen_info_arr[i].pid = pid;
+			ret = SUCCESS;
+		}
+	}
 
+	return ret;
+}
+//returns the screen info for the pid provided
+/**
+ * Requests a screen info struct of the pid provided.
+ * 
+ * @param	pid		The pid of the user process makeing the request.
+ * @return			The pointer of the screen_info for the pid.
+ */
+screen_info* get_screen_info( Pid pid ) {
+	int i = 0;
+	
+	for( i = 0; i < DEFAULT_SCREENS; i++ ) {
+		if( screen_info_arr[i].pid == pid ) {
+			return &(screen_info_arr[i]);
+		}
+	}
+	return NULL;
+}
 
 
 
