@@ -44,12 +44,11 @@
 #define PAGE_TABLE_WRITE 0x2
 #define PAGE_TABLE_PRESENT 0x1
 
+extern Uint32* _vmem_page_dir;
 /*
 ** _vmem_init()
 **
 */
-
-
 void _vmem_init( void );
 Uint32 _vmem_first_4MB( void );
 void _vmem_init_bitmap( Uint32 addr );
