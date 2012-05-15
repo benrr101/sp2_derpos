@@ -35,15 +35,22 @@ void draw_active_screens() {
 			buffer_ptr = (Uint32 *) (curr_si->bPtr);
 		
 		
-			x_off = curr_si->w * (i % 2);
+			//x_off = curr_si->w * (i % 2);
+			if( i == 1 || i == 3 )
+				x_off = curr_si->w;
+			else
+				x_off = 0;
+			
 			if( i == 2 || i == 3 )
 				y_off = curr_si->h;
+			else
+				y_off = 0;
 		
 			//copy the buffer
 			for(x = 0; x < curr_si->w; x++) {
 				for(y = 0; y < curr_si->h; y++) {
-					int pos1 = (y * vga_mode_info->XResolution) + x;
-					int pos2 = (y * vga_mode_info->XResolution/2) + x;
+					int pos1 = ((y + y_off) * vga_mode_info->XResolution) + (x + x_off);
+					int pos2 = (y * curr_si->w) + x;
 					//c_printf("(%d(%d,%d) -> %d) ", pos2, x_off, y_off, pos1);
 					
 					video_mem_ptr	[pos1] = 
@@ -75,15 +82,6 @@ void draw_scr_1() {
 		
 		sleep(1000);
 	}
-		Uint32 *ptr = (Uint32*)(vga_mode_info->PhysBasePtr);
-    int i = 0;
-    int j = 0;
-
-    for(i = 0; i < vga_mode_info->XResolution/2; i++){
-        for( j = 0; j < vga_mode_info->YResolution/2; j++){
-			ptr[(j*vga_mode_info->XResolution/2) + i] = 0xc0c0c0c0;
-        }
-    }
 }
 
 
@@ -91,14 +89,14 @@ void draw_pixel(Uint32 x, Uint32 y, pixel p) {
 	Uint32			pix = 0;
 	Uint32*  		buffer_ptr;
 	screen_info* 	curr_si;
-	curr_si = &(scrn_info_arr[0]);
-	buffer_ptr = (pixel *) (curr_si->bPtr);
+	curr_si = 		&(scrn_info_arr[0]);
+	buffer_ptr = 	(Uint32 *) (curr_si->bPtr);
 	
 	pix = p.r;
 	pix = (pix << 8) | p.r;
 	pix = (pix << 8) | p.g;
 	pix = (pix << 8) | p.b;
-	buffer_ptr[( y * (vga_mode_info->XResolution/2) ) + x] = pix;
+	buffer_ptr[( y * (curr_si->w) ) + x] = pix;
 }
 
 
