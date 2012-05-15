@@ -16,6 +16,7 @@
 #include "pcbs.h"
 #include "scheduler.h"
 #include "ulib.h"
+#include "win_man.h"
 #include "keyboard.h"
 
 // Struct to handle IO-Request information
@@ -314,8 +315,8 @@ int _ps2_get_io_req( void ){
  */
 void _ps2_change_focus( int window ){
 	
-
 	// Tell window manager that we want to focus on a new window
+	replace_active( window );
 }
 
 /**
