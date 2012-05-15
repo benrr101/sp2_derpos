@@ -2,6 +2,8 @@
 ** Defines for the VGA Driver
 */
 
+#define VGA_DEBUG
+
 #define V_MODE_800_600	0x011B
 #define LIN_BUF			0x4000
 #define V_MODE_TEXT		0x03

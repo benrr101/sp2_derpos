@@ -7,7 +7,8 @@ typedef struct pixel {
 	Uint8 b;
 	Uint8 g;
 	Uint8 r;
-} pixel;
+	Uint8 a;
+}  __attribute__ ((packed)) pixel ;
 
 void _gl_init( void );
 

@@ -214,7 +214,7 @@ system.o: headers.h system.h pcbs.h clock.h stacks.h bootstrap.h syscalls.h
 system.o: queues.h /home/fac/wrc/include/x86arch.h sio.h scheduler.h vga_dr.h
 system.o: gl.h win_man.h users.h keyboard.h ulib.h types.h
 ulibc.o: headers.h
-users.o: headers.h users.h keyboard.h queues.h
+users.o: headers.h users.h keyboard.h queues.h gl.h
 mouse.o: headers.h startup.h ps2.h mouse.h
 keyboard.o: headers.h ps2.h system.h pcbs.h clock.h stacks.h startup.h
 keyboard.o: queues.h scheduler.h ulib.h types.h keyboard.h

@@ -46,9 +46,7 @@ void _vga_init( void ) {
 	#ifdef VGA_DEBUG
 	_vga_print_info();
 	#endif
-
 	//draw_display();
-	
 }
 
 Uint32* _vga_get_start_mem( void ) {
@@ -75,23 +73,33 @@ void _vga_print_info( void ) {
 	c_printf("-WinFuncPrt: %x\n", vga_mode_info->WinFuncPtr);
 	c_printf("-PhysBasePrt: %x\n", vga_mode_info->PhysBasePtr);
 	c_printf("-LinbytesPerScanLine: %d\n", vga_mode_info->LinbytesPerScanLine);
+	c_printf("-RED: %d - ", vga_mode_info->RedMaskS);
+	c_printf("-RED: %d\n", vga_mode_info->RedFPos);
+	c_printf("-BLUE: %d - ", vga_mode_info->BlueMaskS);
+	c_printf("-BLUE: %d\n", vga_mode_info->BlueFPos);
+	c_printf("-GREEN: %d - ", vga_mode_info->GreenMaskS);
+	c_printf("-GREEN: %d\n", vga_mode_info->GreenFPos);
+	c_printf("-RSVD: %d - ", vga_mode_info->RsvdMaskS);
+	c_printf("-RSVD: %d\n", vga_mode_info->RsvdFPos);
 	#endif	
 }
 
 //Main draw program
 void draw_display( void ) {
 	Uint32 *ptr = (Uint32*)(vga_mode_info->PhysBasePtr);
-	static int o = 0;
-	
     int i = 0;
     int j = 0;
-
-    for(i = o; i < vga_mode_info->XResolution; i++){
+	/*
+    for(i = 0; i < vga_mode_info->XResolution; i++){
         for( j = 0; j < vga_mode_info->YResolution; j++){
-			ptr[(j*vga_mode_info->LinbytesPerScanLine) + i] = 0xc0c0c0 ^ (ptr[(j*vga_mode_info->LinbytesPerScanLine) + i - 1]);
+			ptr[(j*vga_mode_info->LinbytesPerScanLine) + i] = 0xc0c0c0c0;
+        }
+    }*/
+    for(i = 0; i < vga_mode_info->XResolution; i++){
+        for( j = 0; j < vga_mode_info->YResolution; j++){
+        	
+			ptr[j*vga_mode_info->XResolution+i] = 0xc0c0c0c0;
         }
     }
-    if ( o > vga_mode_info->XResolution)
-    	o = 0;
-    o++;
+    
 }
