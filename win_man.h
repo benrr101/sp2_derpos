@@ -47,10 +47,18 @@ Uint8 get_blocking( Uint32 buf_num );
 Uint8 set_blocking( Uint32 buf_num, Uint8 quadrant);
 
 //returns the active quadrant
-Uint8 get_active( Uint32 buf_num );
+Uint8 get_active( void );
+
 //Set quadrant to a buffer
 Uint8 set_active( Uint32 buf_num, Uint8 quadrant);
+
 //returns the active quadrants pid
 Pid get_active_pid( void );
+
+//return the screen_info structs
+screen_info* get_screen_infos( void );
+
+//grabs the screens array
+Uint32* get_current_bufs( void ); 
 
 #endif //_WIN_MAN_H_
