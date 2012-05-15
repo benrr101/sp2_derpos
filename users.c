@@ -973,7 +973,7 @@ void init( void ) {
 	/*
 	** SHOULD NEVER REACH HERE
 	*/
-
+	write( '#' );
 	c_printf( "*** IDLE IS EXITING???\n" );
 	exit();
 

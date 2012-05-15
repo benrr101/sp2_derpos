@@ -73,6 +73,7 @@ void _vga_print_info( void ) {
 	c_printf("-WinFuncPrt: %x\n", vga_mode_info->WinFuncPtr);
 	c_printf("-PhysBasePrt: %x\n", vga_mode_info->PhysBasePtr);
 	c_printf("-LinbytesPerScanLine: %d\n", vga_mode_info->LinbytesPerScanLine);
+	c_printf("-BPP: %d\n", vga_mode_info->BitsPerPixel);
 	c_printf("-RED: %d - ", vga_mode_info->RedMaskS);
 	c_printf("-RED: %d\n", vga_mode_info->RedFPos);
 	c_printf("-BLUE: %d - ", vga_mode_info->BlueMaskS);
