@@ -109,7 +109,7 @@ Status spawnp( Pid *pid, Prio prio, void (*entry)(void) ) {
 			exit();
 		}
 		//request a screen
-		status = win_man_grab_screen( new );
+		status = get_screen_buffer( new );
 		if( status != SUCCESS ) {
 			prt_status( ", win_man_grab_screen() status %s\n", status );
 			exit();	

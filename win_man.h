@@ -55,6 +55,9 @@ Uint8 set_active( Uint32 buf_num, Uint8 quadrant);
 //returns the active quadrants pid
 Pid get_active_pid( void );
 
+//returns the screen info for the pid provided
+screen_info* get_screen_info( Pid pid );
+
 //return the screen_info structs
 screen_info* get_screen_infos( void );
 

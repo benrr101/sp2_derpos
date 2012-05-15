@@ -153,7 +153,7 @@ Uint32* get_current_bufs( void ) {
  * 
  * @param	buffer_num		The window (user process) to make active
  */
-Uint8 replace_active( Uint32 buffer_num ){
+Uint8 replace_active( Uint32 buffer_num ) {
 	return set_active( buffer_num, get_active() );
 }
 
@@ -162,9 +162,9 @@ Uint8 replace_active( Uint32 buffer_num ){
  * process.
  * 
  * @param	pid		The pid of the user process makeing the request.
- * @return	SUCCESS if there was a free buffer.
+ * @return			SUCCESS if there was a free buffer.
  */
-Status get_screen_buffer( Pid pid ){
+Status get_screen_buffer( Pid pid ) {
 	int i = 0;
 	Status ret = FAILURE;
 	
@@ -177,8 +177,23 @@ Status get_screen_buffer( Pid pid ){
 
 	return ret;
 }
-
-
+//returns the screen info for the pid provided
+/**
+ * Requests a screen info struct of the pid provided.
+ * 
+ * @param	pid		The pid of the user process makeing the request.
+ * @return			The pointer of the screen_info for the pid.
+ */
+screen_info* get_screen_info( Pid pid ) {
+	int i = 0;
+	
+	for( i = 0; i < DEFAULT_SCREENS; i++ ) {
+		if( screen_info_arr[i].pid == pid ) {
+			return &(screen_info_arr[i]);
+		}
+	}
+	return NULL;
+}
 
 
 
