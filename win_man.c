@@ -69,7 +69,13 @@ Uint8 get_active( ) {
 	return wm_memory->active_quad;
 }
 
-//Set quadrant to a buffer
+/**
+ * Draws a given process' buffer to a given quadrant.
+ *
+ * @param	screen_num		The window (user process) to make active
+ * @param	quadrant		The quadrant to draw the process' buffer to
+ * @return					The quadrant of the active buffer
+ */
 Uint8 set_active( Uint32 buf_num, Uint8 quadrant) {
 	if(quadrant < 4) {
 		wm_memory->screens[quadrant] = buf_num;
@@ -99,6 +105,14 @@ Uint32* get_current_bufs( void ) {
 	return (wm_memory->screens);
 }
 
+/**
+ * Replaces the currently active quadrant with a process' buffer.
+ * 
+ * @param	buffer_num		The window (user process) to make active
+ */
+Uint8 replace_active( Uint32 buffer_num ){
+	return set_active( buffer_num, get_active() );
+}
 
 
 
