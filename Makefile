@@ -220,4 +220,4 @@ keyboard.o: headers.h ps2.h system.h pcbs.h clock.h stacks.h startup.h
 keyboard.o: queues.h scheduler.h ulib.h types.h keyboard.h
 vga_dr.o: headers.h vga_dr.h vga_define.h
 win_man.o: headers.h win_man.h vga_dr.h gl.h c_io.h
-gl.o: gl.h headers.h vga_dr.h
+gl.o: gl.h headers.h win_man.h vga_dr.h

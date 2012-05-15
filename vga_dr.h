@@ -109,7 +109,8 @@ void draw_display( void );
 
 void _vga_print_info( void );
 
-Uint32 _vga_get_end_mem( void );
+Uint32* _vga_get_end_mem( void );
+Uint32* _vga_get_start_mem( void );
 
 #endif // ACM
 

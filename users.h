@@ -16,6 +16,7 @@
 #include "headers.h"
 //#include "mouse.h"
 #include "keyboard.h"
+#include "gl.h"
 
 /*
 ** General (C and/or assembly) definitions

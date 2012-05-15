@@ -47,13 +47,17 @@ void _vga_init( void ) {
 	_vga_print_info();
 	#endif
 
-	draw_display();
+	//draw_display();
 	
 }
 
-Uint32 _vga_get_end_mem( void ) {
+Uint32* _vga_get_start_mem( void ) {
+	return (Uint32 *)(vga_mode_info->PhysBasePtr);
+}
+
+Uint32* _vga_get_end_mem( void ) {
 	//setup my buffer space @ PhysBasePtr + TotalMemory
-	return (vga_mode_info->PhysBasePtr + (vga_vesa_info->TotalMemory * 64 * 1024));
+	return (Uint32 *)(vga_mode_info->PhysBasePtr + (vga_vesa_info->TotalMemory * 64 * 1024));
 }
 	
 void _vga_print_info( void ) {
