@@ -939,7 +939,19 @@ void init( void ) {
 		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
 	}
 	
+	status = spawn( &pid, draw_scr_0);
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
+	}
 	status = spawn( &pid, draw_scr_1);
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
+	}
+	status = spawn( &pid, draw_scr_2);
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
+	}
+	status = spawn( &pid, draw_scr_3);
 	if( status != SUCCESS ) {
 		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
 	}
