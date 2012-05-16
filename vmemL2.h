@@ -1,6 +1,6 @@
 #ifndef _VMEML2_H
 #define _VMEML2_H
-#define _VMEML2_DEBUG
+//#define _VMEML2_DEBUG
 
 #include "headers.h"
 

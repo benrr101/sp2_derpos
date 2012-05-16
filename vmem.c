@@ -182,7 +182,7 @@ void _vmem_clear_4MB_address( Uint32 address )
 	int i;
 	for( i = 0; i < 1024;  i++ )
 	{	
-		_vmem_set_address(address);
+		_vmem_clear_address(address);
 		address = address + PAGE_SIZE;
 	}
 }

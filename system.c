@@ -23,6 +23,7 @@
 #include "scheduler.h"
 #include "vmem.h"
 #include "vmemL2.h"
+#include "vmem_isr.h"
 
 // need init() address
 #include "users.h"
@@ -245,6 +246,8 @@ void _init( void ) {
 	__install_isr( INT_VEC_TIMER, _isr_clock );
 	__install_isr( INT_VEC_SYSCALL, _isr_syscall );
 	__install_isr( INT_VEC_SERIAL_PORT_1, _isr_sio );
+	__install_isr( INT_VEC_GENERAL_PROTECTION, _isr_general_protect );
+	__install_isr( INT_VEC_PAGE_FAULT, _isr_page_fault);
 
 	/*
 	** Create the initial process
