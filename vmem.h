@@ -18,8 +18,9 @@
 #define PAGE_SIZE (1 << PAGE_BITS )
 #define PAGE_ADDRESS_LOC ( 0xFFFFFFFF << PAGE_BITS)
 #define PAGE_TABLE_SIZE (PAGE_SIZE * 1024)
-#define PAGE_RESERVE_AREA 0xFD800000
-#define PAGE_RESERVE_ENTRIES ( 1024 - ( PAGE_RESERVE_AREA  / PAGE_TABLE_SIZE ) )
+//#define PAGE_RESERVE_AREA 0xFD800000
+#define PAGE_RESERVE_ENTRIES 10
+#define BITMAP_NORMAL ( 32 * ( PAGE_RESERVE_ENTRIES + 2) )
 #define BITMAP_MAX 32768 //4GB
 
 #define PAGE_DIR_4KB_ADDRESS 0xffff000
@@ -55,6 +56,7 @@ extern Uint32* _vmem_page_dir;
 void _vmem_init( void );
 Uint32 _vmem_first_4MB( void );
 void _vmem_init_bitmap( Uint32 addr );
+void _vmem_make_reserve(void);
 
 Int8 _vmem_read_bit( Uint32* address, Uint32 index, Int8 index2 );
 void _vmem_set_bit( Uint32* address, Uint32 index, Int8 index2 );

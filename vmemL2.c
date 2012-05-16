@@ -10,7 +10,7 @@ Uint32* _vmeml2_create_page_dir( void )
 	_vmem_set_address( addrRaw );
 	
 	Uint32* addr = (Uint32*) addrRaw;
-
+	
 	int i;
 	for(i = 0; i < 1024; i++ )
 	{
@@ -127,13 +127,17 @@ Uint8 _vmeml2_is_empty_page_entry( Uint32* table, Uint32 index)
 
 void _vmeml2_init(void)
 {
-	_vmeml2_all_pages_tables[0] = 0;
-	_vmeml2_all_pages_tables[1] = 1;
-	_vmeml2_all_pages_tables_size = 2;
-	_vmeml2_static_address(PAGE_RESERVE_AREA, 0xFFFFFFFF, FALSE);
+	int i;
+	for( i =0; i < PAGE_RESERVE_ENTRIES + 2; i++ )
+	{ 
+		_vmeml2_all_pages_tables[i] = i;
+		_vmeml2_all_pages_tables_size++;
+	}
+#ifdef _VMEML2_DEBUG
 	Uint32* dirTable = _vmeml2_create_page_dir(); 
-//	_vmeml2_change_page( (Uint32) dirTable );
-	
+	c_printf("Dir Table %x\n", (Uint32) dirTable );
+	_vmeml2_change_page( (Uint32) dirTable );
+#endif 
 #ifdef _VMEM_DEBUG
 	_vmeml2_static_address(0xD0000000, ( 0xD0000000 + PAGE_TABLE_SIZE ), TRUE );
 	c_printf( "%x \n", _vmem_page_dir[0]); 
