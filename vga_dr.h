@@ -104,7 +104,7 @@ MODE_INFO *vga_mode_info;
 */
 void _vga_init( void );
 
-void draw_display( void );
+void clear_display( void );
 
 void _vga_print_info( void );
 

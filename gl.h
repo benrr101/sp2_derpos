@@ -3,6 +3,8 @@
 
 #include "headers.h"
 
+//#define GL_DEBUG
+
 typedef struct pixel {
 	Uint8 b;
 	Uint8 g;

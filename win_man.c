@@ -38,15 +38,18 @@ void _win_man_init( void ) {
 	//get screen info
 	dW = vga_mode_info->XResolution / 2;
 	dH = vga_mode_info->YResolution / 2;
-	c_printf("info: %x -- ", screen_info_arr );
+	c_printf("info: %x -- %x \n\n", screen_info_arr, bPtrOffset );
 	
 	//fill out the default screens [[ * vga_mode_info->LinbytesPerScanLine)/8) ]]
 	for(i = 0; i < DEFAULT_SCREENS; i++) {
 		screen_info_arr[i].buf_num = i;
 		screen_info_arr[i].w = dW;
 		screen_info_arr[i].h = dH;
-
+		
 		screen_info_arr[i].bPtr = (Uint32 *)( bPtrOffset + ( i * dH * dW ) );
+		#ifdef WM_DEBUG
+		c_printf("bufs: %d -- %x=%x \n", i, screen_info_arr[i].bPtr, (Uint32 *)( bPtrOffset + ( i * dH * dW ) ) );
+		#endif
 		
 		screen_info_arr[i].pid = 0;
 		screen_info_arr[i].active = 0;
@@ -108,7 +111,7 @@ Uint8 set_blocking( Uint32 buf_num, Uint8 quadrant) {
 	return screen_info_arr[buf_num].blocking;
 }
 
-/**
+/**bPtrOffset
  * Grabs the currently active quadrant.
  * 
  * @return	The quadrant number.
