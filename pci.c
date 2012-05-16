@@ -111,6 +111,10 @@ void _pci_probe_devices(){
 		if(f2.code != FS_SUCCESS) {
 			c_printf("*** Fopen failed with code 0x%x\n", f2.code);
 		}
+		f2 = fopen("A:HOLYFUCK");
+		if(f2.code != FS_SUCCESS) {
+			c_printf("*** Fopen failed with code 0x%x\n", f2.code);
+		}
 	}
 
 	// Find a free sector

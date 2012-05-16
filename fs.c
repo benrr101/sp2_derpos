@@ -286,8 +286,11 @@ FILE _fs_create_file(MountPoint *mp, char filename[8]) {
 	Uint32 sector = _fs_find_empty_sector(mp);
 
 	// Make sure they're valid
-	if(fp.mp == NULL) { /* @TODO: INVALID */ }
-	if(sector == 0)   { /* @TODO: INVALID */ }
+	if(fp.mp == NULL || sector == 0) { 
+		FILE f;
+		f.code = FS_ERR_FULL;
+		return f;
+	}
 
 	// Allocate the sector that's free
 	_fs_allocate_sector(mp, sector);
@@ -360,14 +363,12 @@ FSPointer _fs_find_file(MountPoint *mp, char filename[8]) {
 	fp.mp = mp;
 
 	for(i = start; i <= end; i += FS_SECT_PER_IB) {
-		c_printf("Looking at ib at sector %d\n", i);
 		// Read the first name sector (ib + 1)
 		_ata_read_sector(*(mp->device), i + 1, &nameSector);
 
 		// Does the file exist in this name file
 		for(j = 0; j < 64; j++) {
 			// Compare the file name
-			if(j < 4) { c_printf("Filename starts with: %c\n", nameSector[j * 8]); }
 			if(_fs_namecmp(&nameSector, j*8, filename) == 0) {
 				// Return the found file
 				fp.ib      = i / FS_SECT_PER_IB +1;
@@ -426,9 +427,7 @@ void _fs_toggle_sector(MountPoint *mp, Uint32 sector) {
 	// Toggle the appropriate sector bit
 	Uint8 mask  = FS_BT_ALLOCATED << ((sector % FS_SECT_PER_IB) % 8 - 1);
 	Uint16 byte = FS_BT_END - ((sector % FS_SECT_PER_IB) / 8) - 1;
-	c_printf("Sector: %x Before byte: %x = %x ", sector,byte, s[byte]);
 	s[byte] ^= mask;
-	c_printf("After %x\n", s[byte]);
 
 	// Write it back to the disk
 	_ata_write_sector(*(mp->device), ibAddr, &s);
