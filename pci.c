@@ -115,6 +115,7 @@ void _pci_probe_devices(){
 		if(f2.code != FS_SUCCESS) {
 			c_printf("*** Fopen failed with code 0x%x\n", f2.code);
 		}
+		c_printf("A:HoShizam -> %db\n", _fs_get_file_size(&f));
 	}
 
 	// Find a free sector

@@ -410,14 +410,65 @@ int _fs_namecmp(ATASector *sect, Uint16 index, char name[8]) {
 	return 0;
 }
 
+/**
+ * Given a filepointer, figure out what the size of the file is
+ * @param	FSPointer*	fp	A file pointer to the file we want to size
+ * @return	Uint64	The size of the file in bytes (up to like 10 exabytes...)
+ */
+Uint64 _fs_get_file_size(FSPointer *fp) {
+	// Check for sanity
+	if(fp->mp == NULL) {
+		return 0;
+	}
+
+	// Get the sector of the ib for this file
+	ATASector ib;
+	_ata_read_sector(*(fp->mp->device), fp->mp->offset + fp->ib, &ib);
+
+	// Read the sector number for the file
+	Uint32 sector = _sector_get_long(&ib, FS_FP_OFFSET + (fp->ibindex * FS_FP_LENGTH));
+	Uint64 size = 0;
+
+	// Read the sector of the file
+	ATASector s;
+	while(sector != FS_FILE_EOC) {
+		// Read the sector
+		_ata_read_sector(*(fp->mp->device), fp->mp->offset + sector, &s);
+
+		// Add the bytes allocated
+		size += _sector_get_long(&s, FS_FILE_BYTE_OFF);
+
+		// Get the next sector number
+		sector = _sector_get_long(&s, FS_FILE_SECT_OFF);
+	}
+}
+
+/**
+ * Marks a sector on a given mountpoint as allocated. Chains into
+ * toggle_sector.
+ * @param	MountPoint*	mp		The mountpoint of the sector
+ * @param	Uint32		sector	The sector to allocate
+ */
 void _fs_allocate_sector(MountPoint *mp, Uint32 sector) {
 	_fs_toggle_sector(mp, sector);
 }
 
+/**
+ * Marks a sector on a given mountpoint as unallocated. Chains into
+ * toggle_sector.
+ * @param	MountPoint*	mp		The mountpoint of the sector
+ * @param	Uint32		sector	The sector to allocate
+ */
 void _fs_unallocate_sector(MountPoint *mp, Uint32 sector) {
 	_fs_toggle_sector(mp, sector);
 }
 
+/**
+ * Marks a sector on a given mountpoint as allocated. Toggles the sector
+ * by xor'ing the bit that marks the sector's allocation.
+ * @param	MountPoint*	mp		The mountpoint of the sector
+ * @param	Uint32		sector	The sector to toggle
+ */
 void _fs_toggle_sector(MountPoint *mp, Uint32 sector) {
 	// Read the ib sector for the bitfield
 	Uint32 ibAddr = mp->offset + ((sector / FS_SECT_PER_IB) * FS_SECT_PER_IB) + 1;
