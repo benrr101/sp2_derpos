@@ -70,7 +70,8 @@ typedef enum {
 	FS_ERR_BADSECT		= 0x04,
 	FS_ERR_NOTDERP		= 0x05,
 	FS_ERR_FILENOTFOUND	= 0x06,
-	FS_INVALID_FILENAME	= 0x07
+	FS_ERR_FULL			= 0x07,
+	FS_INVALID_FILENAME	= 0x08
 } FS_STATUS;
 
 // TYPEDEFS ////////////////////////////////////////////////////////////////
@@ -91,17 +92,6 @@ typedef struct {
 } BootRecord;
 
 /**
- * FSTable - A table that represents the next FS_SECT_PER_IB sectors INCLUDING
- * ITSELF and the next FS_SECT_PER_IB files.
- 
-typedef struct {
-	BitTable	sectorAllocation;	// Bits to represent the next
-									// FS_MOD_INDEXBLK sectors
-	char		reserved[2];		// Reserved.
-	FSPointer	fsPointers[FS_SECT_PER_IB];	// Pointers to the next 112 files
-} FSTable;
-
-**
  * MountPoint - Points to a ATADevice, the offset into the drive where the
  * partition starts at, and stores the BootRecord of the partition.
  */
