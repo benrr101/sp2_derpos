@@ -415,25 +415,28 @@ int _fs_namecmp(ATASector *sect, Uint16 index, char name[8]) {
  * @param	FSPointer*	fp	A file pointer to the file we want to size
  * @return	Uint64	The size of the file in bytes (up to like 10 exabytes...)
  */
-Uint64 _fs_get_file_size(FSPointer *fp) {
+Uint64 _fs_get_file_size(FSPointer fp) {
 	// Check for sanity
-	if(fp->mp == NULL) {
+	if(fp.mp == NULL) {
 		return 0;
 	}
 
 	// Get the sector of the ib for this file
 	ATASector ib;
-	_ata_read_sector(*(fp->mp->device), fp->mp->offset + fp->ib, &ib);
+	_ata_read_sector(*(fp.mp->device), fp.mp->offset + fp.ib, &ib);
+	if(ib[0] != 'I' || ib[1] != 'B') {
+		__panic("NOT AN IB!!");
+	}
 
 	// Read the sector number for the file
-	Uint32 sector = _sector_get_long(&ib, FS_FP_OFFSET + (fp->ibindex * FS_FP_LENGTH));
+	Uint32 sector = _sector_get_long(&ib, FS_FP_OFFSET + (fp.ibindex * FS_FP_LENGTH));
 	Uint64 size = 0;
 
 	// Read the sector of the file
 	ATASector s;
 	while(sector != FS_FILE_EOC) {
 		// Read the sector
-		_ata_read_sector(*(fp->mp->device), fp->mp->offset + sector, &s);
+		_ata_read_sector(*(fp.mp->device), fp.mp->offset + sector, &s);
 
 		// Add the bytes allocated
 		size += _sector_get_long(&s, FS_FILE_BYTE_OFF);
@@ -441,6 +444,8 @@ Uint64 _fs_get_file_size(FSPointer *fp) {
 		// Get the next sector number
 		sector = _sector_get_long(&s, FS_FILE_SECT_OFF);
 	}
+
+	return size;
 }
 
 /**

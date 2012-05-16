@@ -115,24 +115,12 @@ void _pci_probe_devices(){
 		if(f2.code != FS_SUCCESS) {
 			c_printf("*** Fopen failed with code 0x%x\n", f2.code);
 		}
-		c_printf("A:HoShizam -> %db\n", _fs_get_file_size(&f));
+		c_printf("A:HOLYFUCK -> %db\n", _fs_get_file_size(f));
+		FS_STATUS z = fseek(&f2, 10, FS_SEEK_ABS);
+		c_printf("0x%x\n", z);
+		
 	}
 
-	// Find a free sector
-
-	// Build a test sector to write to the SECOND drive
-	/*ATASector in, out;
-	Uint16 j;
-	for(j = 0; j < 512; j++) { // 0 it out
-		out[i] = 0x0;
-	}
-	_sector_put_long(&out, 0x0, 0x76543210);
-	//out[0]=0x76;out[1]=0x54;out[2]=0x32;out[3]=0x10;
-	_ata_write_sector(ata_devices[1], 0x1, &out);
-	_ata_read_sector(ata_devices[1], 0x1, &in);
-	Uint32 x = _sector_get_long(&in, 0x0);
-	c_printf("--->%x%x%x%x -> %x\n\n", in[0], in[1], in[2], in[3], x);
-	*/
 
 	// Print out the first sector of drive 0
 	__panic("HOLY FUCK.");
