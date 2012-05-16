@@ -247,8 +247,14 @@ void _ata_wait( void ) {
  * Does a quick spin while waiting for the busy bit on the status register of
  * the device to not be set
  */
-void _ata_wait_bsy(ATAChannel channel) {
+Uint8 _ata_wait_bsy(ATAChannel channel) {
+	if(_ata_read_reg(channel, ATA_REG_STATUS) & ATA_STATUS_ERR) {
+		return _ata_read_reg(channel, ATA_REG_ERROR);
+	}
+
+	// No errors. Wait til !busy
 	while(_ata_read_reg(channel, ATA_REG_STATUS) & ATA_STATUS_BUSY);
+	return ATA_STATUS_OK;
 }
 
 
@@ -276,7 +282,11 @@ void _ata_read_sector(ATADevice dev, Uint64 lba, ATASector *dest) {
 	_ata_write_reg(dev.channel, ATA_REG_COMMAND, ATA_CMD_READSECE);
 	
 	// Step 3) Wait until the drive isn't busy
-	_ata_wait_bsy(dev.channel);
+	Uint8 status = _ata_wait_bsy(dev.channel);
+	if(status != ATA_STATUS_OK) {
+		// @TODO: error out
+		return;
+	}
 
 	// Step 4) Read the data as words from the data reg
 	Uint16 i, word;
@@ -287,7 +297,10 @@ void _ata_read_sector(ATADevice dev, Uint64 lba, ATASector *dest) {
 	}
 
 	// Step 5) Ack that we got the data by reading status
-	_ata_wait_bsy(dev.channel);
+	status = _ata_wait_bsy(dev.channel);
+	if(status != ATA_STATUS_OK) {
+		// @TODO: Error out
+	}
 }
 
 void _ata_write_sector(ATADevice dev, Uint64 lba, ATASector *s) {
@@ -295,7 +308,7 @@ void _ata_write_sector(ATADevice dev, Uint64 lba, ATASector *s) {
 	// Step 1a) Tell the controller which device to write to
 	//          Also turn off interrupts
 	_ata_write_reg(dev.channel, ATA_REG_DRIVESEL, 0xE0 | (dev.device << 4));
-	_ata_wait_bsy(dev.channel);
+	_ata_wait();
 	_ata_write_reg(dev.channel, ATA_REG_CONTROL, ATA_NOINT);
 
 	// Step 1b) Tell the device what sector to seek to
@@ -312,7 +325,11 @@ void _ata_write_sector(ATADevice dev, Uint64 lba, ATASector *s) {
 	_ata_write_reg(dev.channel, ATA_REG_COMMAND, ATA_CMD_WRITSECE);
 
 	// Step 3) Wait until the device is ready
-	_ata_wait_bsy(dev.channel);
+	Uint8 status = _ata_wait_bsy(dev.channel);
+	if(status != ATA_STATUS_OK) {
+		// @TODO: error out
+		return;
+	}
 
 	// Step 4) Start sending words to the device via data register
 	Uint16 i;
@@ -321,9 +338,18 @@ void _ata_write_sector(ATADevice dev, Uint64 lba, ATASector *s) {
 	}
 
 	// Step 5) Ack that we are done with data, then flush the cache
-	_ata_wait_bsy(dev.channel);
+	status = _ata_wait_bsy(dev.channel);
+	if(status != ATA_STATUS_OK) {
+		// @TODO: Error out
+	}
+	
 	_ata_write_reg(dev.channel, ATA_REG_COMMAND, ATA_CMD_FLUSHE);
+	
 	_ata_wait_bsy(dev.channel);
+	status = _ata_wait_bsy(dev.channel);
+	if(status != ATA_STATUS_OK) {
+		// @TODO: Error out
+	}		
 }
 
 void _ata_blank_sector(ATASector *s) {
