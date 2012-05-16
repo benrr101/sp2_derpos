@@ -26,26 +26,26 @@ void _vmem_init( void )
 {
 	Uint32 address = _vmem_first_4MB();
 	_vmem_init_bitmap( address );
+	_vmem_make_reserve();
 	c_puts(" vmem" );
 #ifdef _VMEM_DEBUG
 	//*((Uint32*)0xD0000000) = 0x1234;
 	_vmem_addresses_test();
 	c_printf("Next availible address %x \n", _vmem_get_next_address());
 	c_printf("Next availible 4MB address %x \n", _vmem_get_next_4MB_address());
-	_vmem_set_address(0x800000);
+	_vmem_set_address(0x3000000);
 	c_printf("Next availible address %x \n", _vmem_get_next_address());
 	c_printf("Next availible 4MB address %x \n", _vmem_get_next_4MB_address());
-	_vmem_set_address(0x801000);
+	_vmem_set_address(0x3001000);
 	c_printf("Next availible address %x \n", _vmem_get_next_address());
-	_vmem_set_address(0x808000);
+	_vmem_set_address(0x3008000);
 	c_printf("Next availible address %x \n", _vmem_get_next_address());
-	_vmem_clear_address(0x800000);
+	_vmem_clear_address(0x3000000);
 	c_printf("Next availible address %x \n", _vmem_get_next_address());
-	_vmem_clear_address(0x801000);
-	_vmem_clear_address(0x808000);
-	_vmem_set_address(0xB00000);
+	_vmem_clear_address(0x3001000);
+	_vmem_clear_address(0x3008000);
+	_vmem_set_address(0x3300000);
 	c_printf("Next availible 4MB address %x \n", _vmem_get_next_4MB_address());
-	
 #endif
 	
 }
@@ -76,7 +76,7 @@ Uint32 _vmem_first_4MB( void )
 #ifdef _VMEM_DEBUG
 	c_printf( "\n\nEnd is at position %x \n", __get_end() );
 	c_printf( "Aligned address is %x \n", _vmem_page_dir);
-	c_printf( "First page table address is %x \n", pageTableStart);
+	//c_printf( "First page table address is %x \n", pageTableStart);
 	c_printf( "Cr0 is %x \n", _vmem_getcr0());
 	c_printf( "Cr0 High is %x \n", ( (_vmem_getcr0()>>31) & 0x01));
 #endif	
@@ -116,6 +116,16 @@ void _vmem_init_bitmap( Uint32 addr )
 	c_printf( "Bitmap entry n is %x \n", _vmem_read_bit( _vmem_bitmap_start, 63, 32));
 	c_printf( "Bitmap entry n is %x \n", _vmem_read_bit( _vmem_bitmap_start, 64, 0));
 #endif	
+}
+
+void _vmem_make_reserve(void)
+{
+	int i;
+	int end = PAGE_RESERVE_ENTRIES + 2;
+	for( i = 2; i < PAGE_RESERVE_ENTRIES; i++ )
+	{
+		_vmem_page_dir[i] = (Uint32) ( PAGE_TABLE_SIZE * i) | PAGE_DIR_PRESENT | PAGE_DIR_WRITE | PAGE_DIR_SIZE;
+	}
 }
 
 Int8 _vmem_read_bit( Uint32* address, Uint32 index, Int8 index2 )
@@ -180,8 +190,8 @@ void _vmem_clear_4MB_address( Uint32 address )
 Uint32 _vmem_get_next_address(void)
 {
 	int i;
-	int memory_size = BITMAP_MAX - ( PAGE_RESERVE_ENTRIES * 32);
-	for( i = 0; i < memory_size; i++ )
+	int memory_size = BITMAP_MAX; 
+	for( i = BITMAP_NORMAL; i < memory_size; i++ )
 	{
 		if( 0 != _vmem_bitmap_start[i] )
 		{
@@ -199,8 +209,8 @@ Uint32 _vmem_get_next_address(void)
 Uint32 _vmem_get_next_reserve_address(void)
 {
 	Uint32 i;
-	Uint32 memory_size = BITMAP_MAX;
-	Uint32 start = BITMAP_MAX - ( PAGE_RESERVE_ENTRIES * 32);
+	Uint32 memory_size = BITMAP_NORMAL;
+	Uint32 start = 0;
 	//c_printf("D %d %d\n", start, memory_size);
 	//c_printf("? %d %d\n", PAGE_RESERVE_ENTRIES, ( PAGE_RESERVE_ENTRIES * 32));
 	for( i = start; i < memory_size; i++ )
@@ -220,8 +230,8 @@ Uint32 _vmem_get_next_reserve_address(void)
 Uint32 _vmem_get_next_4MB_address(void)
 {
 	int i;
-	int memory_size = ( BITMAP_MAX/32 ) - PAGE_RESERVE_ENTRIES;
-	for( i = 0; i < memory_size; i++ )
+	int memory_size = BITMAP_MAX/32;	
+	for( i =(BITMAP_NORMAL/32); i < memory_size; i++ )
 	{
 		int l;
 		int end = i * 32 + 32;
