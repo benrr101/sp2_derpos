@@ -22,6 +22,7 @@
 #include "sio.h"
 #include "scheduler.h"
 #include "vmem.h"
+#include "vmemL2.h"
 
 // need init() address
 #include "users.h"
@@ -218,6 +219,7 @@ void _init( void ) {
 
 	_q_init();		// must be first
 	_vmem_init();
+	_vmeml2_init();
 	_pcb_init();
 	_stack_init();
 	_sio_init();
