@@ -141,5 +141,6 @@ void _fs_allocate_sector(MountPoint *mp, Uint32 sector);
 void _fs_unallocate_sector(MountPoint *mp, Uint32 sector);
 void _fs_toggle_sector(MountPoint *mp, Uint32 sector);
 int _fs_namecmp(ATASector *sect, Uint16 index, char name[8]);
+Uint64 _fs_get_file_size(FSPointer *fp);
 
 #endif
