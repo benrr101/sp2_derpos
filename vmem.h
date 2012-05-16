@@ -10,7 +10,7 @@
 
 #ifndef _VMEM_H
 #define _VMEM_H
-#define _VMEM_DEBUG
+//#define _VMEM_DEBUG
 
 #include "headers.h"
 
@@ -18,6 +18,9 @@
 #define PAGE_SIZE (1 << PAGE_BITS )
 #define PAGE_ADDRESS_LOC ( 0xFFFFFFFF << PAGE_BITS)
 #define PAGE_TABLE_SIZE (PAGE_SIZE * 1024)
+#define PAGE_RESERVE_AREA 0xFD800000
+#define PAGE_RESERVE_ENTRIES ( 1024 - ( PAGE_RESERVE_AREA  / PAGE_TABLE_SIZE ) )
+#define BITMAP_MAX 32768 //4GB
 
 #define PAGE_DIR_4KB_ADDRESS 0xffff000
 #define PAGE_DIR_4MB_ADDRESS 0xFFC0000
@@ -63,6 +66,7 @@ void _vmem_clear_address( Uint32 address );
 void _vmem_clear_4MB_address( Uint32 address );
 
 Uint32 _vmem_get_next_address(void);
+Uint32 _vmem_get_next_reserve_address(void);
 Uint32 _vmem_get_next_4MB_address(void);
 
 void _vmem_address_calc( Uint32 address, Uint32* index, Uint8* index2 );
