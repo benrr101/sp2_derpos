@@ -71,7 +71,8 @@ typedef enum {
 	FS_ERR_NOTDERP		= 0x05,
 	FS_ERR_FILENOTFOUND	= 0x06,
 	FS_ERR_FULL			= 0x07,
-	FS_INVALID_FILENAME	= 0x08
+	FS_INVALID_FILENAME	= 0x08,
+	FS_INVALID_OFFSET   = 0x09
 } FS_STATUS;
 
 // TYPEDEFS ////////////////////////////////////////////////////////////////
@@ -141,6 +142,6 @@ void _fs_allocate_sector(MountPoint *mp, Uint32 sector);
 void _fs_unallocate_sector(MountPoint *mp, Uint32 sector);
 void _fs_toggle_sector(MountPoint *mp, Uint32 sector);
 int _fs_namecmp(ATASector *sect, Uint16 index, char name[8]);
-Uint64 _fs_get_file_size(FSPointer *fp);
+Uint64 _fs_get_file_size(FSPointer fp);
 
 #endif

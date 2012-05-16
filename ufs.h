@@ -24,5 +24,6 @@ typedef enum {
 
 // FUNCTIONS ///////////////////////////////////////////////////////////////
 FILE fopen(char filepath[10]);
+FS_STATUS fseek(FILE *file, Uint64 offset, FS_FILE_SEEK dir);
 
 #endif

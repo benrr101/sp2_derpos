@@ -45,13 +45,13 @@ FILE fopen(char filepath[10]) {
 	}
 	
 	// Determine which device we're reading
-	MountPoint mp = mount_points[mountpoint - 0x41];
+	MountPoint *mp = &mount_points[mountpoint - 0x41];
 
 	// See if we can find the file
-	FSPointer fp = _fs_find_file(&mp, f.name);
+	FSPointer fp = _fs_find_file(mp, f.name);
 	if(fp.mp == NULL) {
 		// File not found -- so create it!
-		f = _fs_create_file(&mp, f.name);
+		f = _fs_create_file(mp, f.name);
 		f.code = FS_SUCCESS;
 		return f;
 	}
@@ -63,22 +63,55 @@ FILE fopen(char filepath[10]) {
 	return f;
 }
 
-FS_STATUS fseek(FILE file, Uint64 offset, FS_FILE_SEEK dir) {
+/**
+ * Changes the internal file offset by adding, subtracting or replacing the
+ * offset value provided.
+ * @param	FILE*	file	The file to seek
+ * @param	Uint64	offset	Position to seek to or +/- position
+ * @param	FS_FILE_SEEK	dir	Direction to seek
+ * FS_SEEK_ABS	- seeks to an absolute position into the file
+ * FS_SEEK_REL	- seeks to a position relative to the current position (+ only)
+ * FS_SEEK_REL_REV	- seeks to a position relative to the current position (-)
+ * @return	FS_STATUS	status of the seek operation
+ */
+FS_STATUS fseek(FILE *file, Uint64 offset, FS_FILE_SEEK dir) {
 	// We need the size of the file
-	
+	Uint64 filesize = _fs_get_file_size(file->fp);
 
 	// Which way are we seeking
 	if(dir == FS_SEEK_ABS) {
 		// Seeking to absolute position into the disk
+		if(offset >= filesize) {
+			// We'd be going off the end of the file
+			return FS_INVALID_OFFSET;
+		}
+
+		// Set the file offset to the offset
+		file->offset = offset;
 
 	} else if(dir == FS_SEEK_REL) {
 		// Seeking to position relative to current position
+		if(offset + file->offset >= filesize) {
+			// We'd be going off the end of the file
+			return FS_INVALID_OFFSET;
+		}
+
+		// Add to the file offset
+		file->offset += offset;
 
 	} else if(dir == FS_SEEK_REL_REV) {
 		// Seeking to behind current position
+		if(offset - file->offset > file->offset) {
+			// We wrapped around... that's not good.
+			return FS_INVALID_OFFSET;
+		}
 		
+		// Subtract the offset
+		file->offset -= offset;
 	}
-	return 0x0;
+
+	// Success!
+	return FS_SUCCESS;
 }
 
 Uint64 fread(FILE file, char *buffer, Uint64 size) { return 0x0; }
