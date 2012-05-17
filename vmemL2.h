@@ -27,6 +27,11 @@ Uint8 _vmeml2_is_empty_dir_entry( Uint32* dir, Uint32 index);
 
 Uint8 _vmeml2_is_empty_page_entry( Uint32* table, Uint32 index);
 
+Uint32 _vmeml2_get_phyical_address( Uint32* table, Uint16 index );
+Uint32 _vmeml2_get_phyical_address_table( Uint32* dir, Uint16 index );
+Uint32 _vmeml2_get_phyical_address_4MB( Uint32* dir, Uint16 index);
+
+
 void _vmeml2_change_page(Uint32 page);
 
 void _vmeml2_init( void );

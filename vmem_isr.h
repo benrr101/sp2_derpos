@@ -15,8 +15,10 @@
 #include "headers.h"
 
 //aka falling down THREE flights of stairs
-void _isr_general_protect( int vector, int code );
+void _isr_vmem_general_protect( int vector, int code );
 
-void _isr_page_fault( int vector, int code );
+void _isr_vmem_page_fault( int vector, int code );
+
+int _isr_vmem_getcr2(void);
 
 #endif

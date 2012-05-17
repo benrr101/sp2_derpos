@@ -190,6 +190,22 @@ Uint8 _vmeml2_is_empty_page_entry( Uint32* table, Uint32 index)
 	return TRUE;
 }
 
+
+Uint32 _vmeml2_get_phyical_address( Uint32* table, Uint16 index )
+{
+	return table[index] & PAGE_TABLE_ADDRESS;
+}
+
+Uint32 _vmeml2_get_phyical_address_table( Uint32* dir, Uint16 index )
+{
+	return dir[index] & PAGE_DIR_4KB_ADDRESS;
+}
+
+Uint32 _vmeml2_get_phyical_address_4MB( Uint32* dir, Uint16 index)
+{
+	return dir[index] & PAGE_DIR_4MB_ADDRESS;
+}
+
 void _vmeml2_init(void)
 {
 	int i;
@@ -198,6 +214,7 @@ void _vmeml2_init(void)
 		_vmeml2_all_pages_tables[i] = i;
 		_vmeml2_all_pages_tables_size++;
 	}
+
 #ifdef _VMEML2_DEBUG
 	Uint32* dirTable = _vmeml2_create_page_dir(); 
 	Uint32* dirTable2 = _vmeml2_create_page_dir(); 
@@ -213,13 +230,16 @@ void _vmeml2_init(void)
 	_vmeml2_release_page_dir( dirTable2 );
 
 	Uint32* dirTable3 = _vmeml2_create_page_dir(); 
-	c_printf("Dir Tabl3 %x\n", (Uint32) dirTable3 );
+	c_printf("\nDir Tabl3 %x\n", (Uint32) dirTable3 );
 	c_printf("Page made physical %x \n",_vmeml2_create_4MB_page( dirTable3, 90));
 	Uint32* pTable2 = _vmeml2_create_page_table( dirTable3, 89);
 	_vmeml2_create_page( pTable2, 1);
-	_vmeml2_release_page_dir( dirTable3 );
 	
-		
+	c_printf( "\n%x |",_vmeml2_get_phyical_address( pTable2, 1) );	
+	c_printf( "%x |",_vmeml2_get_phyical_address_table( dirTable3, 89));	
+	c_printf( "%x |\n",_vmeml2_get_phyical_address_4MB( dirTable3, 90));	
+	_vmeml2_release_page_dir( dirTable3 );
+	__panic("Please Inspect");
 
 #endif 
 #ifdef _VMEM_DEBUG

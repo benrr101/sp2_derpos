@@ -50,3 +50,8 @@ _vmeml2_change_page:
 	movl	%eax, %cr3
 	leave			
 	ret
+	
+	.globl	_isr_vmem_getcr2
+_isr_vmem_getcr2:
+	movl	%cr2, %eax
+	ret
