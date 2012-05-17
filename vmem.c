@@ -27,6 +27,7 @@ void _vmem_init( void )
 	Uint32 address = _vmem_first_4MB();
 	_vmem_init_bitmap( address );
 	_vmem_make_reserve();
+
 	c_puts(" vmem" );
 #ifdef _VMEM_DEBUG
 	//*((Uint32*)0xD0000000) = 0x1234;
@@ -67,10 +68,11 @@ Uint32 _vmem_first_4MB( void )
 		_vmem_page_dir[i] = PAGE_DIR_WRITE;
 	}
 
-	//Uint32* pageTableStart = (Uint32*) ( (Uint32)_vmem_page_dir + PAGE_SIZE);
+	Uint32* pageTableStart = (Uint32*) ( (Uint32)_vmem_page_dir + PAGE_SIZE);
 
 	//maps the first 4 MBs 0x400000
 	_vmem_page_dir[0] = (Uint32) 0x00 | PAGE_DIR_PRESENT | PAGE_DIR_WRITE | PAGE_DIR_SIZE;
+	
 	_vmem_turnon((Uint32)_vmem_page_dir);
 
 #ifdef _VMEM_DEBUG
@@ -122,7 +124,7 @@ void _vmem_make_reserve(void)
 {
 	int i;
 	int end = PAGE_RESERVE_ENTRIES + 2;
-	for( i = 2; i < PAGE_RESERVE_ENTRIES; i++ )
+	for( i = 2; i < end; i++ )
 	{
 		_vmem_page_dir[i] = (Uint32) ( PAGE_TABLE_SIZE * i) | PAGE_DIR_PRESENT | PAGE_DIR_WRITE | PAGE_DIR_SIZE;
 	}
