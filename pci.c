@@ -92,37 +92,11 @@ void _pci_probe_devices(){
 	}
 
 	for(i = 0; i < mount_point_count; i++) {
-		//c_printf("%c: %04x bytes\n", mount_points[i].letter, mount_points[i].bootRecord.size * 512);
-		//c_printf("    Sector %d is free\n", _fs_find_empty_sector(&mount_points[i]));
-		FSPointer f = _fs_find_empty_fspointer(&mount_points[i]);
-		c_printf("    FSPointer %d on ib @sect %d is free\n", f.ibindex, f.ib);
-		// Create a file!
-		_fs_create_file(&mount_points[i], "HOLYFUCK");
-		f = _fs_find_file(&mount_points[i], "HOLYFUCK");
-		//if(f.mp == NULL) {
-		//	c_printf("File not found");
-		//} else {
-		//	c_printf("    FSPointer %d on ib @sect %d is free\n", f.ibindex, f.ib);
-		//}
-		// Create another file!
-		_fs_create_file(&mount_points[i], "HoShizle");
-		//_fs_delete_file(&mount_points[i], "HoShizle");	
-		FILE f2 = fopen("A:HoShizle");
-		if(f2.code != FS_SUCCESS) {
-			c_printf("*** Fopen failed with code 0x%x\n", f2.code);
-		}
-		f2 = fopen("A:HOLYFUCK");
-		//if(f2.code != FS_SUCCESS) {
-		//	c_printf("*** Fopen failed with code 0x%x\n", f2.code);
-		//}
-		c_printf("A:HOLYFUCK -> %db\n", _fs_get_file_size(f));
-		FS_STATUS z = fseek(&f2, 10, FS_SEEK_ABS);
-		c_printf("0x%x\n", z);
-		Uint8 j;
-		for(j = 0; j < 10; j++) {
-			c_printf("%c", f2.fp.bufsect[j]);
-		}
-		c_puts("\n");
+		// Create a file
+		FILE file = fopen("A:FUCKSTIC");
+		fwrite(&file, "Frig off, Barb!", 15);
+		c_puts("flushing...\n");
+		fflush(&file);
 	}
 
 

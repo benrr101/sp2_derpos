@@ -56,6 +56,7 @@
 
 // File sector information
 #define FS_FILE_DATA_OFF		0x0C			// Data starts at 12 bytes in
+#define FS_FILE_DATA_LENGTH		0x200			// 500 bytes of data
 #define FS_FILE_SECT_OFF		0x04			// Next sector is 4 bytes in
 #define FS_FILE_BYTE_OFF		0x08			// Bytes allocated in sector
 #define FS_FILE_HEADER			0x46494C45		// FILE
@@ -112,8 +113,10 @@ typedef struct {
 	Uint32		ib;			// The sector number (relative to partition) of the
 							// index block the file is indexed on
 	Uint32		ibindex;	// Index into the index block of the file
-	ATASector	bufsect;	// A buffered sector of the hard drive
-	Uint32		bufindex;	// The sector number (relative to partition) of the
+	ATASector	buffer;		// A buffered sector of the hard drive
+	Uint32		bufindex;	// The sector number (relative to the file) of the
+							// buffered sector
+	Uint32		bufsect;	// The sector number (relative to partition) of the
 							// buffered sector
 } FSPointer;
 

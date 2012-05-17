@@ -362,7 +362,8 @@ FILE _fs_create_file(MountPoint *mp, char filename[8]) {
 	_ata_write_sector(*(mp->device), sector, &fileSector);
 
 	// Store the filesector as the bufferred sector
-	_fs_copy_sector(&fileSector, &fp.bufsect);
+	_fs_copy_sector(&fileSector, &fp.buffer);
+	fp.bufsect  = sector - mp->offset;
 	fp.bufindex = 0;
 
 	// Return a FILE pointer -----------------------------------------------
@@ -404,7 +405,7 @@ FSPointer _fs_find_file(MountPoint *mp, char filename[8]) {
 				// Return the found file
 				fp.ib       = i / FS_SECT_PER_IB +1;
 				fp.ibindex  = j;
-				_fs_copy_sector(&fileSect, &fp.bufsect);
+				_fs_copy_sector(&fileSect, &fp.buffer);
 				fp.bufindex = 0;
 				return fp;
 			}
@@ -430,7 +431,8 @@ FSPointer _fs_find_file(MountPoint *mp, char filename[8]) {
 				// Return the found file
 				fp.ib       = i / FS_SECT_PER_IB + 1;
 				fp.ibindex  = j + 64;
-				_fs_copy_sector(&fileSect, &fp.bufsect);
+				_fs_copy_sector(&fileSect, &fp.buffer);
+				fp.bufsect  = fsect;
 				fp.bufindex = 0;
 				return fp;
 			}

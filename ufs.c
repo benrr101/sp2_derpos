@@ -63,6 +63,17 @@ FILE fopen(char filepath[10]) {
 	return f;
 }
 
+FS_STATUS fflush(FILE *file) {
+	// Calculate which sector to write
+	Uint32 sector = file->fp.mp->offset + file->fp.bufsect;
+	
+	// Write to the appropriate sector
+	_ata_write_sector(*(file->fp.mp->device), sector, &(file->fp.buffer));
+
+	//@TODO Error handling
+	return FS_SUCCESS;
+}
+
 /**
  * Changes the internal file offset by adding, subtracting or replacing the
  * offset value provided.
@@ -114,6 +125,116 @@ FS_STATUS fseek(FILE *file, Uint64 offset, FS_FILE_SEEK dir) {
 	return FS_SUCCESS;
 }
 
-Uint64 fread(FILE file, char *buffer, Uint64 size) { 
-	return 0x0;
+/**
+ * Read bytes from the given file into the given buffer. This function checks
+ * for end of the file and reads the number of bytes specified or until the end
+ * of the file, whichever comes first. The internal file pointer is incremented
+ * as the file is read.
+ * @param	FILE*	file	The file to read from
+ * @param	char*	buffer	The buffer to place read bytes
+ * @param	Uint64	size	The maximum number of bytes to read from the file
+ * @return	Uint64	The number of bytes read.
+ */
+Uint64 fread(FILE *file, char *buffer, Uint64 size) { 
+	// @TODO Error check for dumb things
+
+	// Start copying bytes into the buffer
+	Uint64 bytes;
+	Uint32 sectBytes = file->offset % FS_FILE_DATA_LENGTH;
+	for(bytes = 0; bytes < size; bytes++, sectBytes++) {
+		// Is this byte even in the file?
+		if(sectBytes >= _sector_get_long(&(file->fp.buffer), FS_FILE_BYTE_OFF)) {
+			// The next read would be outside the file
+			return bytes;
+		}
+
+		// Does this byte require us to load a new buffer?
+		if((file->offset + bytes) / FS_FILE_DATA_LENGTH > file->fp.bufindex) {
+			// This read should be on the next sector of the file
+			Uint32 nextSector = _sector_get_long(&(file->fp.buffer), FS_FILE_SECT_OFF);
+			if(nextSector == FS_FILE_EOC) {
+				// There is no next sector... (the file is % 500 = 0)
+				return bytes;
+			}
+			
+			// Store the new buffered sector
+			ATASector newBuf;
+			_ata_read_sector(*(file->fp.mp->device), 
+				file->fp.mp->offset + nextSector, &newBuf);
+			_fs_copy_sector(&newBuf, &(file->fp.buffer));
+
+			// Increment the buffer index
+			file->fp.bufindex++;
+			file->fp.bufsect = nextSector;
+
+			// Reset the bytes into the sector
+			sectBytes = 0;
+		}
+
+		// Ok, copy the byte
+		buffer[bytes] = file->fp.buffer[FS_FILE_DATA_OFF + sectBytes];
+	}
+	
+	// Done!
+	return bytes;
+}
+
+/**
+ * Writes bytes to the given file from the given buffer. This function updates
+ * the size of the file as the file is written. The number of written bytes are
+ * returned. The internal buffer is flushed as a new buffer is required to be
+ * read in. However, any overhang on the buffer will require fflush to be
+ * called on the file.
+ * @param	FILE*	file	The file to write to
+ * @param	char*	buffer	The buffer to grab written bytes from
+ * @param	Uint64	size	The maximum number of bytes to write to the file
+ * @return	Uint64	The number of bytes written.
+ */
+Uint64 fwrite(FILE *file, char *buffer, Uint64 size) { 
+	// @TODO Error check for dumb things
+
+	// Start copying bytes into the buffer
+	Uint64 bytes;
+	Uint32 sectBytes = file->offset % FS_FILE_DATA_LENGTH;
+	for(bytes = 0; bytes < size; bytes++, sectBytes++, file->offset++) {
+		// Do we need to allocate a new sector?
+		if(sectBytes >= FS_FILE_DATA_LENGTH) {
+			// Do we need to allocate a new sector?
+			Uint32 newSector;
+			if(_sector_get_long(&(file->fp.buffer), FS_FILE_SECT_OFF) == FS_FILE_EOC) {
+				// Yep, we need to allocate a new sector
+				newSector = _fs_find_empty_sector(file->fp.mp);
+				// @TODO: Error check!
+				_fs_allocate_sector(file->fp.mp, newSector);
+				
+				// Write the next sector to the file and flush the buffer
+				_sector_put_long(&(file->fp.buffer), FS_FILE_SECT_OFF, newSector);
+			}
+
+			// Flush the file and load a new buffer
+			fflush(file);
+
+			// Load the newly minted sector into the file's buffer
+			ATASector newSect;
+			_ata_read_sector(*(file->fp.mp->device), 
+				file->fp.mp->offset + newSector, &newSect);
+			_fs_copy_sector(&newSect, &(file->fp.buffer));
+			file->fp.bufsect = newSector;
+			file->fp.bufindex++;
+
+			// Reset the bytes into the sector
+			sectBytes = 0;
+		}
+
+		// Ok, copy the byte
+		file->fp.buffer[FS_FILE_DATA_OFF + sectBytes] = buffer[bytes];
+
+		// Increment number of bytes in this sector
+		Uint32 oldbytes = _sector_get_long(&(file->fp.buffer), FS_FILE_BYTE_OFF);
+		oldbytes++;
+		_sector_put_long(&(file->fp.buffer), FS_FILE_BYTE_OFF, oldbytes);
+	}
+	
+	// Done!
+	return bytes;
 }
