@@ -62,14 +62,15 @@ void _ps2_keyboard_clear( void );
 void _ps2_keyboard_isr( int vec, int code );
 Uint _ps2_keyboard_read( void );
 void _ps2_keyboard_write( Uint command );
-int _ps2_get_io_req( void );
-void _ps2_change_focus( int window );
-void _ps2_delete_request( int index );
+Uint8 _ps2_get_io_req( void );
+void _ps2_delete_request( Uint8 index );
 int _ps2_search_pid( void *pid1, void *pid2);
-int _ps2_write_to_active( char c );
+void _ps2_write_to_active( char c );
 void _ps2_ack_int( void );
+Pcb *_ps2_remove_from_queue( Uint8 index );
 
-// User functions
+// Open functions
 int buf_read( char* buf, int size, Pid pid );
+int char_read( Pid pid );
 
 #endif
