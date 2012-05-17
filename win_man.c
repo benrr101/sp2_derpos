@@ -190,12 +190,13 @@ Status get_screen_buffer( Pid pid ) {
 	Status ret = FAILURE;
 	
 	for( i = 0; i < DEFAULT_SCREENS; i++ ) {
-		if( screen_info_arr[i].pid == 0 ) {
+		if( screen_info_arr[i].pid != 0 ) {
 			screen_info_arr[i].pid = pid;
+			c_printf("PID: %d reserved buffer %d. \n", pid, i);
 			ret = SUCCESS;
 		}
 	}
-
+	
 	return ret;
 }
 //returns the screen info for the pid provided
