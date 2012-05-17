@@ -108,11 +108,12 @@ Status _create_process( Pcb *pcb, Uint32 entry ) {
 
 	stack = pcb->stack;
 	if( stack == NULL ) {
-		stack = _stack_alloc();
+		__panic( "No stack?");
+		/*stack = _stack_alloc();
 		if( stack == NULL ) {
 			return( ALLOC_FAILED );
 		}
-		pcb->stack = stack;
+		pcb->stack = stack;*/
 	}
 
 	// clear the stack
@@ -265,15 +266,16 @@ void _init( void ) {
 		_kpanic( "_init", "first pcb alloc failed\n", FAILURE );
 	}
 
-	/*pcb->stack = _stack_alloc();
+	pcb->stack = _stack_alloc();
 	if( pcb->stack == NULL ) {
 		_kpanic( "_init", "first stack alloc failed\n", FAILURE );
-	}*/
+	}
 
-	Uint32* ptable=_vmeml2_create_page_table( _vmem_page_dir, 12 );
+	pcb->pdt = _vmem_page_dir; 
+	/*Uint32* ptable=_vmeml2_create_page_table( _vmem_page_dir, ( STACK_ADDRESS / PAGE_TABLE_SIZE)  );
 	_vmeml2_create_page( ptable, 0 );
-	_vmeml2_change_page( (Uint32)_vmem_page_dir );
-	pcb->stack = (Stack*) (0x3000000);
+	//_vmeml2_change_page( (Uint32)_vmem_page_dir );
+	pcb->stack = (Stack*) ( STACK_ADDRESS);*/
 
 	/*
 	** Next, set up various PCB fields

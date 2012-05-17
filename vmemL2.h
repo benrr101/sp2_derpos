@@ -4,6 +4,8 @@
 
 #include "headers.h"
 
+#define STACK_ADDRESS	0x3000000
+
 //create pagedir
 Uint32* _vmeml2_create_page_dir( void );
 

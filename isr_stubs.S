@@ -105,10 +105,13 @@ isr_save:
 	.globl	_current
 	.globl	_system_esp
 	.globl	_system_time
+	.globl	_vmem_page_dir
 
 	movl	_current, %edx	// save context pointer for the current proc
 	movl	%esp, (%edx)	// (must be the first PCB field)
 
+	movl 	_vmem_page_dir, %ecx
+	movl	%ecx, %cr3	
 	movl	_system_esp, %esp	// switch to OS stack
 
 /*
@@ -118,6 +121,8 @@ isr_save:
 	pushl	%ebx		// put vector & code on top of the stack ...
 	pushl	%eax		// ... as parameters for the ISR
 
+
+	
 /*
 ** Call the ISR
 */
@@ -135,6 +140,9 @@ __isr_restore:
 ** MOD for 20113 SP2
 */
 
+	movl	_current, %ebx
+	movl	12(%ebx), %ecx	// get pdt 
+	movl 	%ecx, %cr3
 	movl	_current, %ebx
 	movl	(%ebx), %esp
 
@@ -167,7 +175,7 @@ __isr_restore:
 	** IF THE LOCATION OF EITHER FIELD IN THE PCB CHANGES!
 	*/
 
-	movl	12(%ebx), %eax	// get PID and PPID of this process
+	movl	16(%ebx), %eax	// get PID and PPID of this process
 	pushl	%eax
 	pushl	_system_time	// and the current system time
 

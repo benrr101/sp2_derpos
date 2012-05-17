@@ -92,6 +92,8 @@ static void _sys_fork( Pcb *pcb ) {
 
 	_kmemcpy( (void *)new, (void *)pcb, sizeof(Pcb) );
 
+	pcb->pdt = _vmeml2_create_page_dir();
+
 	// allocate a stack for the new process
 
 	new->stack = _stack_alloc();
