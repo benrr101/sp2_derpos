@@ -11,7 +11,7 @@ void _gl_init( void ) {
 	scrn_info_arr = get_screen_infos( );
 	video_mem_ptr = (Uint32 *)_vga_get_start_mem( );
 	#ifndef GL_DEBUG
-	clear_display();
+	//clear_display();
 	#endif
 	//buff_bytes_perline = (vga_mode_info->LinbytesPerScanLine/2);
 	//bytes_perline = vga_mode_info->LinbytesPerScanLine;
@@ -38,9 +38,9 @@ void draw_active_screens() {
 			curr_si = &(scrn_info_arr[displayed[i]]);
 			write( 'M' );
 			buffer_ptr = (Uint32 *) (curr_si->bPtr);
-			#ifdef GL_DEBUG
-			c_printf("SI: %x - (%x=%x) ++ ", curr_si, curr_si->bPtr, buffer_ptr);
-			#endif
+			//#ifdef GL_DEBUG
+			//c_printf("SI: %x - (%x=%x) ++ ", curr_si, curr_si->bPtr, buffer_ptr);
+			//#endif
 		
 			//x_off = curr_si.w * (i % 2);
 			if( i == 1 || i == 3 )
@@ -60,7 +60,7 @@ void draw_active_screens() {
 					int pos2 = (y * curr_si->w) + x;
 					
 					#ifndef GL_DEBUG
-					video_mem_ptr[pos1] = buffer_ptr[pos2];
+					//video_mem_ptr[pos1] = buffer_ptr[pos2];
 					#endif
 				}
 			}
@@ -87,7 +87,7 @@ void draw_scr_0() {
 				p.b = 0x0c;
 				p.g = 0x0c;
 				p.a = 0x0c;
-				draw_pixel(x+t, y, p);
+				draw_pixel(x, y, p);
 			}
 		}
 		write( 'a' );
@@ -175,17 +175,19 @@ void draw_pixel(Uint32 x, Uint32 y, pixel p) {
 	#endif
 
 	curr_si = 		( get_screen_info( pid ) );
-	#ifdef GL_DEBUG
-	//c_printf("%x - %d ++ ", curr_si, pid);
-	#endif
+	if(curr_si != NULL) {
+		//#ifdef GL_DEBUG
+		//c_printf(" (P:%d)0x%x(%d,%d) ", pid, curr_si, curr_si->w,curr_si->h);
+		//#endif
 	
-	buffer_ptr = 	(Uint32 *) (curr_si->bPtr);
+		buffer_ptr = 	(Uint32 *) (curr_si->bPtr);
 	
-	pix = p.r;
-	pix = (pix << 8) | p.r;
-	pix = (pix << 8) | p.g;
-	pix = (pix << 8) | p.b;
-	buffer_ptr[ ( y * curr_si->w ) + x ] = pix;
+		pix = p.r;
+		pix = (pix << 8) | p.r;
+		pix = (pix << 8) | p.g;
+		pix = (pix << 8) | p.b;
+		buffer_ptr[ ( y * curr_si->w ) + x ] = pix;
+	}
 }
 
 
