@@ -63,6 +63,11 @@ FILE fopen(char filepath[10]) {
 	return f;
 }
 
+/**
+ * Flushes the internal sector buffer to the disk.
+ * @param	FILE*	file	The file to flush
+ * @return	FS_STATUS	Success/failure code.
+ */
 FS_STATUS fflush(FILE *file) {
 	// Calculate which sector to write
 	Uint32 sector = file->fp.mp->offset + file->fp.bufsect;
@@ -140,7 +145,7 @@ Uint64 fread(FILE *file, char *buffer, Uint64 size) {
 
 	// Start copying bytes into the buffer
 	Uint64 bytes;
-	Uint32 sectBytes = file->offset % FS_FILE_DATA_LENGTH;
+	Uint32 sectBytes = (Uint32)file->offset % FS_FILE_DATA_LENGTH;
 	for(bytes = 0; bytes < size; bytes++, sectBytes++) {
 		// Is this byte even in the file?
 		if(sectBytes >= _sector_get_long(&(file->fp.buffer), FS_FILE_BYTE_OFF)) {
@@ -149,7 +154,7 @@ Uint64 fread(FILE *file, char *buffer, Uint64 size) {
 		}
 
 		// Does this byte require us to load a new buffer?
-		if((file->offset + bytes) / FS_FILE_DATA_LENGTH > file->fp.bufindex) {
+		if((Uint32)(file->offset + bytes) / FS_FILE_DATA_LENGTH > file->fp.bufindex) {
 			// This read should be on the next sector of the file
 			Uint32 nextSector = _sector_get_long(&(file->fp.buffer), FS_FILE_SECT_OFF);
 			if(nextSector == FS_FILE_EOC) {
@@ -195,15 +200,16 @@ Uint64 fwrite(FILE *file, char *buffer, Uint64 size) {
 
 	// Start copying bytes into the buffer
 	Uint64 bytes;
-	Uint32 sectBytes = file->offset % FS_FILE_DATA_LENGTH;
+	Uint32 sectBytes = (Uint32)file->offset % FS_FILE_DATA_LENGTH;
 	for(bytes = 0; bytes < size; bytes++, sectBytes++, file->offset++) {
 		// Do we need to allocate a new sector?
 		if(sectBytes >= FS_FILE_DATA_LENGTH) {
 			// Do we need to allocate a new sector?
-			Uint32 newSector;
-			if(_sector_get_long(&(file->fp.buffer), FS_FILE_SECT_OFF) == FS_FILE_EOC) {
+			Uint32 newSector = _sector_get_long(&(file->fp.buffer), FS_FILE_SECT_OFF);
+			if(newSector == FS_FILE_EOC) {
 				// Yep, we need to allocate a new sector
 				newSector = _fs_find_empty_sector(file->fp.mp);
+				
 				// @TODO: Error check!
 				_fs_allocate_sector(file->fp.mp, newSector);
 				

@@ -94,8 +94,10 @@ void _pci_probe_devices(){
 	for(i = 0; i < mount_point_count; i++) {
 		// Create a file
 		FILE file = fopen("A:FUCKSTIC");
-		fwrite(&file, "Frig off, Barb!", 15);
-		c_puts("flushing...\n");
+		Uint16 x;
+		for(x = 0; x < 36; x++) {
+			fwrite(&file, "FRIG OFF, BARB!", 15);
+		}
 		fflush(&file);
 	}
 

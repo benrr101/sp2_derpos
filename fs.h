@@ -56,7 +56,7 @@
 
 // File sector information
 #define FS_FILE_DATA_OFF		0x0C			// Data starts at 12 bytes in
-#define FS_FILE_DATA_LENGTH		0x200			// 500 bytes of data
+#define FS_FILE_DATA_LENGTH		0x01f4			// 500 bytes of data
 #define FS_FILE_SECT_OFF		0x04			// Next sector is 4 bytes in
 #define FS_FILE_BYTE_OFF		0x08			// Bytes allocated in sector
 #define FS_FILE_HEADER			0x46494C45		// FILE
