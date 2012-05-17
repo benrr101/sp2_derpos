@@ -207,6 +207,15 @@ Uint32 _fs_find_empty_sector(MountPoint *mp) {
 	return 0x0;
 }
 
+/**
+ * Finds the first empty file pointer in the filesystem. If one is
+ * not found, the MountPoint (mp) of the returned FSPointer will be
+ * NULL. There are no guarantees on the buffered sector in the FSPointer.
+ * @param	MountPoint*	mp	The MountPoint to search for free FSPointers.
+ * @return	FSPointer	A FSPointer representing the first free pointer
+ *						index of the MountPoint. mp will be NULL if there
+ *						are no FSPointers available.
+ */
 FSPointer _fs_find_empty_fspointer(MountPoint *mp) {
 	// Start checking index blocks
 	Uint32 i, j;
@@ -238,6 +247,15 @@ FSPointer _fs_find_empty_fspointer(MountPoint *mp) {
 	return f;
 }
 
+/**
+ * Searches for and deletes the requested filename from the provided MountPoint.
+ * If the file cannot be found FS_ERR_FILENOTFOUND is returned.
+ * @param	MountPoint*	mp			The mountpoint to delete the file from
+ * @param	char[8]		filename	The name of the file to delete. Filename
+ *									only please, no mountpoint letter.
+ * @return	FS_STATUS	FS_SUCCESS on successful deletion. Anything else on
+ *						failure.
+ */
 FS_STATUS _fs_delete_file(MountPoint *mp, char filename[8]) {
 	// Find the file
 	FSPointer fp = _fs_find_file(mp, filename);
@@ -343,6 +361,10 @@ FILE _fs_create_file(MountPoint *mp, char filename[8]) {
 	fileSector[0]=0x46;fileSector[1]=0x49;fileSector[2]=0x4C;fileSector[3]=0x45;
 	_ata_write_sector(*(mp->device), sector, &fileSector);
 
+	// Store the filesector as the bufferred sector
+	_fs_copy_sector(&fileSector, &fp.bufsect);
+	fp.bufindex = 0;
+
 	// Return a FILE pointer -----------------------------------------------
 	FILE f;
 	f.fp = fp;
@@ -370,9 +392,20 @@ FSPointer _fs_find_file(MountPoint *mp, char filename[8]) {
 		for(j = 0; j < 64; j++) {
 			// Compare the file name
 			if(_fs_namecmp(&nameSector, j*8, filename) == 0) {
+				// Grab the ib of the file and get the file's first sector
+				ATASector ib;
+				_ata_read_sector(*(mp->device), mp->offset + i - 1, &ib);
+				Uint32 fsect = _sector_get_long(&ib, FS_FP_OFFSET + (j * FS_FP_LENGTH));
+				
+				// Grab the first sector of the file for buffering
+				ATASector fileSect;
+				_ata_read_sector(*(mp->device), mp->offset + fsect, &fileSect);
+
 				// Return the found file
-				fp.ib      = i / FS_SECT_PER_IB +1;
-				fp.ibindex = j;
+				fp.ib       = i / FS_SECT_PER_IB +1;
+				fp.ibindex  = j;
+				_fs_copy_sector(&fileSect, &fp.bufsect);
+				fp.bufindex = 0;
 				return fp;
 			}
 		}
@@ -384,9 +417,21 @@ FSPointer _fs_find_file(MountPoint *mp, char filename[8]) {
 		for(j = 0; j < 48; j++) {
 			// Compare the filenames
 			if(_fs_namecmp(&nameSector, i*8, filename) == 0) {
+				// Grab the index block of the file and get the file's first
+				// sector index
+				ATASector ib;
+				_ata_read_sector(*(mp->device), mp->offset + i - 1, &ib);
+				Uint32 fsect = _sector_get_long(&ib, FS_FP_OFFSET + (j * FS_FP_LENGTH) + 64);
+
+				// Grab the first sector of the file for buffering
+				ATASector fileSect;
+				_ata_read_sector(*(mp->device), mp->offset + fsect, &fileSect);
+
 				// Return the found file
-				fp.ib      = i / FS_SECT_PER_IB + 1;
-				fp.ibindex = j + 64;
+				fp.ib       = i / FS_SECT_PER_IB + 1;
+				fp.ibindex  = j + 64;
+				_fs_copy_sector(&fileSect, &fp.bufsect);
+				fp.bufindex = 0;
 				return fp;
 			}
 		}
@@ -489,3 +534,11 @@ void _fs_toggle_sector(MountPoint *mp, Uint32 sector) {
 	_ata_write_sector(*(mp->device), ibAddr, &s);
 }
 
+
+void _fs_copy_sector(ATASector *source, ATASector *dest) {
+	// Start copying bytes
+	Uint16 b;
+	for(b = 0; b < FS_SECTOR_SIZE; b++) {
+		(*dest)[b] = (*source)[b];
+	}
+}
