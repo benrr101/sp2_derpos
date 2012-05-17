@@ -21,8 +21,6 @@ void _gl_init( void ) {
 void draw_active_screens() { 
 
 	//set_priority( PRIO_HIGH );
-	
-	c_printf("\n\n\n");
 	while ( 1 ) {
 		Uint32* 		displayed;
 		Uint32*  		buffer_ptr;
@@ -37,9 +35,10 @@ void draw_active_screens() {
 	
 		for(i = 0; i < 4; i++) {
 			curr_si = &(scrn_info_arr[displayed[i]]);
-			write( 'M' );
+			
 			buffer_ptr = (Uint32 *) (curr_si->bPtr);
 			//#ifdef GL_DEBUG
+			//write( 'M' );
 			//c_printf("SI: %x - (%x=%x) ++ ", curr_si, curr_si->bPtr, buffer_ptr);
 			//#endif
 		
@@ -83,6 +82,8 @@ void draw_active_screens() {
 			video_mem_ptr[(y * bytes_perline) + 640] = 0xffffffff;
 		}
 		write_x(video_mem_ptr);
+		write( '\n' );
+		write( '\r' );
 		msleep( 1 );
 	}
 }
