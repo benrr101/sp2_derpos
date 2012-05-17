@@ -363,7 +363,7 @@ FILE _fs_create_file(MountPoint *mp, char filename[8]) {
 
 	// Store the filesector as the bufferred sector
 	_fs_copy_sector(&fileSector, &fp.buffer);
-	fp.bufsect  = sector - mp->offset;
+	fp.bufsect  = sector;
 	fp.bufindex = 0;
 
 	// Return a FILE pointer -----------------------------------------------
