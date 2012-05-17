@@ -44,7 +44,7 @@
 */
 
 #define	SPAWN_A   // write, exit
-/*
+
 #define	SPAWN_B   // write, exit
 #define	SPAWN_C   // write, exit
 #define	SPAWN_D   // write, spawn, exit
@@ -66,7 +66,7 @@
 #define	SPAWN_T   // write, get_prio, set_priority, exit
 // no user U
 // no user V
-*/
+
 /*
 ** Users W-Z are spawned from other processes; they
 ** should never be spawned directly.

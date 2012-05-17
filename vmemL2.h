@@ -14,6 +14,7 @@ Uint32* _vmeml2_create_page_table( Uint32* dir, Uint16 index );
 
 //create page
 void _vmeml2_create_page( Uint32* table, Uint16 index );
+Uint32* _vmeml2_create_page_reserved( Uint32* table, Uint16 index );
 
 //create 4MB page
 Uint32* _vmeml2_create_4MB_page( Uint32* dir, Uint16 index); 

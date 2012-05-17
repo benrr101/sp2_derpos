@@ -13,6 +13,7 @@
 #define	__KERNEL__20113__
 
 #include "headers.h"
+#include "vmemL2.h"
 
 #include "scheduler.h"
 
@@ -138,6 +139,9 @@ void _dispatch( void ) {
 
 			_current->state = RUNNING;
 			_current->quantum = STD_QUANTUM;
+
+//			c_printf("Change table for pid:%x address:%x\n", _current->pid, _current->pdt);
+			_vmeml2_change_page( (Uint32) _current->pdt );
 			return;
 		} else {
 			_kpanic( "_dispatch", "readyq deque status %s",

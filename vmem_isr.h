@@ -19,6 +19,10 @@ void _isr_vmem_general_protect( int vector, int code );
 
 void _isr_vmem_page_fault( int vector, int code );
 
-int _isr_vmem_getcr2(void);
+Uint32 _isr_vmem_getcr2(void);
+
+Uint32 _isr_vmem_geteip(void);
+
+Uint32 _isr_vmem_getcs(void);
 
 #endif
