@@ -5,7 +5,7 @@
 static screen_info* scrn_info_arr;
 static Uint32* video_mem_ptr;
 //static Uint32 buff_bytes_perline;
-//static Uint32 bytes_perline;
+static Uint32 bytes_perline;
 
 void _gl_init( void ) {
 	scrn_info_arr = get_screen_infos( );
@@ -13,8 +13,9 @@ void _gl_init( void ) {
 	#ifndef GL_DEBUG
 	//clear_display();
 	#endif
-	//buff_bytes_perline = (vga_mode_info->LinbytesPerScanLine/2);
-	//bytes_perline = vga_mode_info->LinbytesPerScanLine;
+	bytes_perline = vga_mode_info->LinbytesPerScanLine/4;
+	//buff_bytes_perline = bytes_perline/2;
+	
 }
 
 void draw_active_screens() { 
@@ -56,15 +57,32 @@ void draw_active_screens() {
 			//copy the buffer
 			for(x = 0; x < curr_si->w; x++) {
 				for(y = 0; y < curr_si->h; y++) {
-					int pos1 = ((y + y_off) * vga_mode_info->XResolution) + (x + x_off);
+					int pos1 = ((y + y_off) * bytes_perline) + (x + x_off);
 					int pos2 = (y * curr_si->w) + x;
 					
 					#ifndef GL_DEBUG
-					//video_mem_ptr[pos1] = buffer_ptr[pos2];
+					video_mem_ptr[pos1] = buffer_ptr[pos2];
 					#endif
 				}
 			}
 		}
+		//draw system stuff mouse, screen seperators etc
+		/*
+		pixel p;
+		p.r = 0;
+		p.b = 0;
+		p.g = 0;
+		p.a = 0;
+		draw_line(640, 0, 640, 512, p);
+		draw_line(0, 512, 640, 512, p);
+		*/
+		for(x = 0; x <= 1280; x++) {
+			video_mem_ptr[(512 * bytes_perline) + x] = 0xffffffff;
+		}
+		for(y = 0; y <= 1024; y++) {
+			video_mem_ptr[(y * bytes_perline) + 640] = 0xffffffff;
+		}
+		write_x(video_mem_ptr);
 		msleep( 1 );
 	}
 }
@@ -164,9 +182,10 @@ void draw_scr_3() {
 
 void draw_pixel(Uint32 x, Uint32 y, pixel p) {
 	Uint32			pix = 0;
-	Uint32*  		buffer_ptr;
+	char*  			buffer_ptr;
 	screen_info* 	curr_si;
-	Uint32 pid = 0;
+	Pid pid = 0;
+	int i = 0;
 	Status s;
 	
 	s = get_pid( &pid );
@@ -174,19 +193,68 @@ void draw_pixel(Uint32 x, Uint32 y, pixel p) {
 	//c_printf(" S:%d P:%d ", s, pid);
 	#endif
 
-	curr_si = 		( get_screen_info( pid ) );
+	curr_si = ( get_screen_info( pid ) );
 	if(curr_si != NULL) {
-		//#ifdef GL_DEBUG
-		//c_printf(" (P:%d)0x%x(%d,%d) ", pid, curr_si, curr_si->w,curr_si->h);
-		//#endif
+		#ifdef GL_DEBUG
+		if(x == 0)
+			c_printf(" (P:%d)0x%x(%d,%d) ", pid, curr_si, curr_si->w,curr_si->h);
+		#endif
 	
-		buffer_ptr = 	(Uint32 *) (curr_si->bPtr);
+		buffer_ptr = 	(char*) (curr_si->bPtr);
 	
 		pix = p.r;
 		pix = (pix << 8) | p.r;
 		pix = (pix << 8) | p.g;
 		pix = (pix << 8) | p.b;
-		buffer_ptr[ ( y * curr_si->w ) + x ] = pix;
+		for(i = 0; i < 4; i++) {
+			buffer_ptr[ ( y * curr_si->w * 4  ) + (x*4)  + i] = ((char*)(&pix))[i];
+		}
+	}
+}
+
+void set_pixel(Uint32 x, Uint32 y, pixel p, screen_info* curr_si) {
+	Uint32			pix = 0;
+	Uint32*			buffer_ptr;
+	
+	buffer_ptr = 	(Uint32*) (curr_si->bPtr);
+	
+	buffer_ptr[ ( y * curr_si->w  ) + (x)] = 0x0000000;
+}
+
+void draw_line(Uint32 x, Uint32 y, Uint32 x2, Uint32 y2, pixel p) {
+	Uint32			pix = 0;
+	char*  			buffer_ptr;
+	screen_info* 	curr_si;
+	Pid pid = 0;
+	int i = 0;
+	Status s;
+	int dx = 0;
+	int dy = 0;
+	
+	
+	s = get_pid( &pid );
+
+	curr_si = ( get_screen_info( pid ) );
+	if(curr_si != NULL) {
+		#ifdef GL_DEBUG
+		if(x == 0)
+			c_printf(" (P:%d)0x%x(%d,%d) ", pid, curr_si, curr_si->w,curr_si->h);
+		#endif
+	
+		pix = p.r;
+		pix = (pix << 8) | p.r;
+		pix = (pix << 8) | p.g;
+		pix = (pix << 8) | p.b;
+
+		if( x == x2 ){
+			for(dy = 0; dy <= y2; dy++) {
+				set_pixel(x, dy, p, curr_si);
+			}
+		} else if( y == y2 ) {
+			for(dx = 0; dx <= x2; dx++) {
+				set_pixel(dx, y, p, curr_si);
+			}
+		}
 	}
 }
 

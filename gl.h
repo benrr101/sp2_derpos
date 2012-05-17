@@ -24,5 +24,7 @@ void draw_scr_2( void );
 void draw_scr_3( void );
 
 void draw_pixel(Uint32 x, Uint32 y, pixel p);
+void draw_line(Uint32 x, Uint32 y, Uint32 x2, Uint32 y2, pixel p);
+void set_pixel(Uint32 x, Uint32 y, pixel p, screen_info* curr_si);
 
 #endif //_GL_H_
