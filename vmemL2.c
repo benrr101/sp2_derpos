@@ -61,6 +61,20 @@ void _vmeml2_create_page( Uint32* table, Uint16 index )
 	table[index] = page | PAGE_TABLE_WRITE | PAGE_TABLE_PRESENT;
 }
 
+Uint32* _vmeml2_create_page_reserved( Uint32* table, Uint16 index )
+{
+	if( !_vmeml2_is_empty_page_entry(table, index))
+	{
+		__panic("Page already maped");
+	}
+
+	Uint32 page = _vmem_get_next_reserve_address();
+	_vmem_set_address(page);
+	
+	table[index] = page | PAGE_TABLE_WRITE | PAGE_TABLE_PRESENT;
+	return (Uint32*)page;
+}
+
 Uint32* _vmeml2_create_4MB_page( Uint32* dir, Uint16 index )
 {
 	if( !_vmeml2_is_empty_dir_entry( dir, index) )

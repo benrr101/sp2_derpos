@@ -66,19 +66,22 @@ void _cleanup( Pcb *pcb ) {
 		return;
 	}
 
+	/*
 	if( pcb->stack != NULL ) {
 		status = _stack_dealloc( pcb->stack );
 		if( status != SUCCESS ) {
 			_kpanic( "_cleanup", "stack dealloc status %s\n", status );
 		}
-	}
+	}*/
+
+	_vmeml2_change_page( _vmem_page_dir );
+	_vmeml2_release_page_dir( pcb->pdt );
 
 	pcb->state = FREE;
 	status = _pcb_dealloc( pcb );
 	if( status != SUCCESS ) {
 		_kpanic( "_cleanup", "pcb dealloc status %s\n", status );
 	}
-
 }
 
 
@@ -271,11 +274,14 @@ void _init( void ) {
 		_kpanic( "_init", "first stack alloc failed\n", FAILURE );
 	}
 
-	pcb->pdt = _vmem_page_dir; 
-	/*Uint32* ptable=_vmeml2_create_page_table( _vmem_page_dir, ( STACK_ADDRESS / PAGE_TABLE_SIZE)  );
-	_vmeml2_create_page( ptable, 0 );
-	//_vmeml2_change_page( (Uint32)_vmem_page_dir );
-	pcb->stack = (Stack*) ( STACK_ADDRESS);*/
+	pcb->pdt = _vmeml2_create_page_dir();
+	Uint32* ptable=_vmeml2_create_page_table( pcb->pdt, ( STACK_ADDRESS / PAGE_TABLE_SIZE)  );
+	//Uint32* rpage = _vmeml2_create_page_reserved( ptable, 0 );
+	 _vmeml2_create_page_reserved( ptable, 0 );
+	pcb->stack = (Stack*) ( STACK_ADDRESS);
+
+	_vmeml2_change_page( (Uint32) pcb->pdt );
+	pcb->stack = (Stack*) ( STACK_ADDRESS);
 
 	/*
 	** Next, set up various PCB fields

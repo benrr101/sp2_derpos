@@ -55,3 +55,18 @@ _vmeml2_change_page:
 _isr_vmem_getcr2:
 	movl	%cr2, %eax
 	ret
+
+	.globl	_isr_vmem_getcr3
+_isr_vmem_getcr3:
+	movl	%cr3, %eax
+	ret
+
+	.globl _isr_vmem_geteip
+_isr_vmem_geteip:
+	movl 4(%esp), %eax
+	ret
+	
+	.globl _isr_vmem_getcs
+_isr_vmem_getcs:
+	movl 8(%esp), %eax
+	ret
