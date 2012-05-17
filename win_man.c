@@ -38,7 +38,6 @@ void _win_man_init( void ) {
 	//get screen info
 	dW = vga_mode_info->XResolution / 2;
 	dH = vga_mode_info->YResolution / 2;
-	c_printf("info: %x -- %x \n\n", screen_info_arr, bPtrOffset );
 	
 	//fill out the default screens [[ * vga_mode_info->LinbytesPerScanLine)/8) ]]
 	for(i = 0; i < DEFAULT_SCREENS; i++) {
@@ -46,9 +45,13 @@ void _win_man_init( void ) {
 		screen_info_arr[i].w = dW;
 		screen_info_arr[i].h = dH;
 		
-		screen_info_arr[i].bPtr = (Uint32 *)( bPtrOffset + ( i * dH * dW ) );
+		// Height * Width * 4 bytes for pixel color 
+		screen_info_arr[i].bPtr = (Uint32 *)( bPtrOffset + ( i * dH * dW * 4 ) );
 		#ifdef WM_DEBUG
-		c_printf("bufs: %d -- %x=%x \n", i, screen_info_arr[i].bPtr, (Uint32 *)( bPtrOffset + ( i * dH * dW ) ) );
+		if(i%2 == 0)
+			c_printf("\n");
+		c_printf("bufs: %d -- %x=%x ", i, screen_info_arr[i].bPtr, (Uint32 *)( bPtrOffset + ( i * dH * dW * 4 ) ) );
+
 		#endif
 		
 		screen_info_arr[i].pid = 0;
@@ -59,7 +62,11 @@ void _win_man_init( void ) {
 		c_printf("%d  - %x || ", i, ( i * dH * dW) );
 		#endif
 	}
+	//clear buffer mem
+	_kmemclr(screen_info_arr[0].bPtr, ( DEFAULT_SCREENS * dH * dW * 4 ) );
+	
 	#ifdef WM_DEBUG
+	c_printf("\n-Total Memory(B): %d blocks(x64KB), %d\n", vga_vesa_info->TotalMemory, (vga_vesa_info->TotalMemory * 64)*1024);
 	for(i = 0; i < DEFAULT_SCREENS; i++) {
 		c_printf("%d - (%d, %d) - %x || ", 
 		screen_info_arr[i].buf_num, 
@@ -82,7 +89,7 @@ void _win_man_init( void ) {
 	}
 	for(i = 0; i < screen_info_arr[2].w; i++) {
 		for(j = 0; j < screen_info_arr[2].h; j++) {
-			screen_info_arr[2].bPtr[ ( j * screen_info_arr[2].w ) + i] = 0x00ee00ee;
+			screen_info_arr[2].bPtr[ ( j * screen_info_arr[2].w ) + i] = 0xffffffff;
 		}
 	}
 }
@@ -190,10 +197,13 @@ Status get_screen_buffer( Pid pid ) {
 	Status ret = FAILURE;
 	
 	for( i = 0; i < DEFAULT_SCREENS; i++ ) {
-		if( screen_info_arr[i].pid != 0 ) {
+		if( screen_info_arr[i].pid == 0 && screen_info_arr[i].pid != pid ) {
 			screen_info_arr[i].pid = pid;
+			#ifdef WM_DEBUG
 			c_printf("PID: %d reserved buffer %d. \n", pid, i);
+			#endif
 			ret = SUCCESS;
+			return ret;
 		}
 	}
 	
