@@ -112,6 +112,9 @@ typedef struct {
 	Uint32		ib;			// The sector number (relative to partition) of the
 							// index block the file is indexed on
 	Uint32		ibindex;	// Index into the index block of the file
+	ATASector	bufsect;	// A buffered sector of the hard drive
+	Uint32		bufindex;	// The sector number (relative to partition) of the
+							// buffered sector
 } FSPointer;
 
 typedef struct {
@@ -143,5 +146,6 @@ void _fs_unallocate_sector(MountPoint *mp, Uint32 sector);
 void _fs_toggle_sector(MountPoint *mp, Uint32 sector);
 int _fs_namecmp(ATASector *sect, Uint16 index, char name[8]);
 Uint64 _fs_get_file_size(FSPointer fp);
+void _fs_copy_sector(ATASector *source, ATASector *dest);
 
 #endif

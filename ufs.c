@@ -114,4 +114,6 @@ FS_STATUS fseek(FILE *file, Uint64 offset, FS_FILE_SEEK dir) {
 	return FS_SUCCESS;
 }
 
-Uint64 fread(FILE file, char *buffer, Uint64 size) { return 0x0; }
+Uint64 fread(FILE file, char *buffer, Uint64 size) { 
+	return 0x0;
+}
