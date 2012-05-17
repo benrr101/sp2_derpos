@@ -58,6 +58,7 @@ Uint32 _vmem_first_4MB( void )
 	}
 
 	_vmem_page_dir = (Uint32*)((__get_end() & PAGE_ADDRESS_LOC) + PAGE_SIZE);
+	
 #ifdef _VMEM_DEBUG
 	c_printf( "%x\n", (__get_end() & PAGE_ADDRESS_LOC) + PAGE_SIZE ) ;
 #endif
@@ -67,8 +68,6 @@ Uint32 _vmem_first_4MB( void )
 	{
 		_vmem_page_dir[i] = PAGE_DIR_WRITE;
 	}
-
-	Uint32* pageTableStart = (Uint32*) ( (Uint32)_vmem_page_dir + PAGE_SIZE);
 
 	//maps the first 4 MBs 0x400000
 	_vmem_page_dir[0] = (Uint32) 0x00 | PAGE_DIR_PRESENT | PAGE_DIR_WRITE | PAGE_DIR_SIZE;
