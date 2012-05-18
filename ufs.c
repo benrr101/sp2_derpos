@@ -102,14 +102,63 @@ FS_STATUS fseek(FILE *file, Uint64 offset, FS_FILE_SEEK dir) {
 			return FS_INVALID_OFFSET;
 		}
 
+		Uint32 nextSect = (Uint32)(offset) / FS_FILE_DATA_LENGTH;
+		// Will we be seeking into a different sector?
+		if(nextSect != file->fp.bufindex) {
+			// Yes, we will be seeking into a new sector
+	
+			// Grab the index block to get the address of the first sector
+			ATASector sect;
+			_ata_read_sector(*(file->fp.mp->device), file->fp.mp->offset + file->fp.ib, &sect);
+			Uint32 sector = _sector_get_long(&sect, 
+				FS_FP_OFFSET + (file->fp.ibindex * FS_FP_LENGTH));
+			
+			// Start from the first sector and follow the chain until we get to
+			// the sector we're looking for
+			Uint32 i;
+			for(i = 0; i  <= nextSect; i++) {
+				// Load the next sector
+				file->fp.bufsect = sector;	// Must happen here otherwise we
+											// are off by one
+				_ata_read_sector(*(file->fp.mp->device), file->fp.mp->offset + sector, &sect);
+				sector = _sector_get_long(&sect, FS_FILE_SECT_OFF);
+			}
+
+			// Store the sector as the buffer
+			_fs_copy_sector(&sect, &(file->fp.buffer));
+			file->fp.bufindex = nextSect;
+		}
+
 		// Set the file offset to the offset
 		file->offset = offset;
 
 	} else if(dir == FS_SEEK_REL) {
-		// Seeking to position relative to current position
+		// Will we be seeking off of the file?
 		if(offset + file->offset >= filesize) {
 			// We'd be going off the end of the file
 			return FS_INVALID_OFFSET;
+		}
+
+		// Will we be seeking into a different sector?
+		Uint32 nextSect = (Uint32)(file->offset + offset) / FS_FILE_DATA_LENGTH;
+		if(nextSect != file->fp.bufsect) {
+			// Yes, we will be seeking into a new sector
+			Uint32 seekSect = nextSect - file->fp.bufindex;	
+
+			Uint32 i;
+			Uint32 sector = _sector_get_long(&(file->fp.buffer), FS_FILE_SECT_OFF);
+			ATASector sect;
+			for(i = 0; i < seekSect; i++) {
+				// Load the next sector
+				file->fp.bufsect = sector;	// Must happen here otherwise we
+											// are off by one
+				_ata_read_sector(*(file->fp.mp->device), file->fp.mp->offset + sector, &sect);
+				sector = _sector_get_long(&sect, FS_FILE_SECT_OFF);
+			}
+
+			// Store the sector as the buffer
+			_fs_copy_sector(&sect, &(file->fp.buffer));
+			file->fp.bufindex += seekSect;
 		}
 
 		// Add to the file offset
@@ -117,9 +166,36 @@ FS_STATUS fseek(FILE *file, Uint64 offset, FS_FILE_SEEK dir) {
 
 	} else if(dir == FS_SEEK_REL_REV) {
 		// Seeking to behind current position
-		if(offset - file->offset > file->offset) {
+		if(file->offset - offset > file->offset) {
 			// We wrapped around... that's not good.
 			return FS_INVALID_OFFSET;
+		}
+
+		Uint32 nextSect = (Uint32)(file->offset - offset) / FS_FILE_DATA_LENGTH;
+		// Will we be seeking into a different sector?
+		if(nextSect != file->fp.bufsect) {
+			// Yes, we will be seeking into a new sector
+	
+			// Grab the index block to get the address of the first sector
+			ATASector sect;
+			_ata_read_sector(*(file->fp.mp->device), file->fp.mp->offset + file->fp.ib, &sect);
+			Uint32 sector = _sector_get_long(&sect, 
+				FS_FP_OFFSET + (file->fp.ibindex * FS_FP_LENGTH));
+			
+			// Start from the first sector and follow the chain until we get to
+			// the sector we're looking for
+			Uint32 i;
+			for(i = 0; i  <= nextSect; i++) {
+				// Load the next sector
+				file->fp.bufsect = sector;	// Must happen here otherwise we
+											// are off by one
+				_ata_read_sector(*(file->fp.mp->device), file->fp.mp->offset + sector, &sect);
+				sector = _sector_get_long(&sect, FS_FILE_SECT_OFF);
+			}
+
+			// Store the sector as the buffer
+			_fs_copy_sector(&sect, &(file->fp.buffer));
+			file->fp.bufindex = nextSect;
 		}
 		
 		// Subtract the offset
