@@ -259,7 +259,7 @@ Uint8 _ata_wait_bsy(ATAChannel channel) {
 
 
 
-void _ata_read_sector(ATADevice dev, Uint64 lba, ATASector *dest) {
+void _ata_read_sector(ATADevice dev, Uint32 lba, ATASector *dest) {
 	// Steb 1a) Tell the controller which drive we'd like to read from
 	// E0 tells the drive we're doing LBA (and some obsolete bits?)
 	_ata_write_reg(dev.channel, ATA_REG_DRIVESEL, 0xE0 | (dev.device << 4));
@@ -303,7 +303,7 @@ void _ata_read_sector(ATADevice dev, Uint64 lba, ATASector *dest) {
 	}
 }
 
-void _ata_write_sector(ATADevice dev, Uint64 lba, ATASector *s) {
+void _ata_write_sector(ATADevice dev, Uint32 lba, ATASector *s) {
 	// Step 1) Set up for the write
 	// Step 1a) Tell the controller which device to write to
 	//          Also turn off interrupts

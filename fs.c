@@ -470,9 +470,9 @@ int _fs_namecmp(ATASector *sect, Uint16 index, char name[8]) {
 /**
  * Given a filepointer, figure out what the size of the file is
  * @param	FSPointer*	fp	A file pointer to the file we want to size
- * @return	Uint64	The size of the file in bytes (up to like 10 exabytes...)
+ * @return	Uint32	The size of the file in bytes (up to 3.9999gb)
  */
-Uint64 _fs_get_file_size(FSPointer fp) {
+Uint32 _fs_get_file_size(FSPointer fp) {
 	// Check for sanity
 	if(fp.mp == NULL) {
 		return 0;
@@ -487,7 +487,7 @@ Uint64 _fs_get_file_size(FSPointer fp) {
 
 	// Read the sector number for the file
 	Uint32 sector = _sector_get_long(&ib, FS_FP_OFFSET + (fp.ibindex * FS_FP_LENGTH));
-	Uint64 size = 0;
+	Uint32 size = 0;
 
 	// Read the sector of the file
 	ATASector s;

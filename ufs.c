@@ -40,7 +40,7 @@ FILE fopen(char filepath[10]) {
 
 	char mountpoint = filepath[0];
 	Uint8 i;
-	for(i = 0; i < FS_NAME_SIZE; i++) {
+	for(i = 0; i < FS_NAME_FILENAME; i++) {
 		f.name[i] = filepath[2 + i];
 	}
 	
@@ -56,11 +56,26 @@ FILE fopen(char filepath[10]) {
 		return f;
 	}
 
+	// Mark the file as in use
+	_fs_toggle_file(&fp);
+
 	// File was found. Construct the FILE
 	f.fp     = fp;
 	f.code   = FS_SUCCESS;
 	f.offset = 0;
 	return f;
+}
+
+FS_STATUS fclose(FILE *file) {
+	// @TODO: Free the 
+
+	// Flush the file
+	fflush(file);
+
+	// Toggle the file as available
+	_fs_toggle_file(&(file->fp));
+
+	return 0x0;
 }
 
 /**
@@ -83,16 +98,16 @@ FS_STATUS fflush(FILE *file) {
  * Changes the internal file offset by adding, subtracting or replacing the
  * offset value provided.
  * @param	FILE*	file	The file to seek
- * @param	Uint64	offset	Position to seek to or +/- position
+ * @param	Uint32	offset	Position to seek to or +/- position
  * @param	FS_FILE_SEEK	dir	Direction to seek
  * FS_SEEK_ABS	- seeks to an absolute position into the file
  * FS_SEEK_REL	- seeks to a position relative to the current position (+ only)
  * FS_SEEK_REL_REV	- seeks to a position relative to the current position (-)
  * @return	FS_STATUS	status of the seek operation
  */
-FS_STATUS fseek(FILE *file, Uint64 offset, FS_FILE_SEEK dir) {
+FS_STATUS fseek(FILE *file, Uint32 offset, FS_FILE_SEEK dir) {
 	// We need the size of the file
-	Uint64 filesize = _fs_get_file_size(file->fp);
+	Uint32 filesize = _fs_get_file_size(file->fp);
 
 	// Which way are we seeking
 	if(dir == FS_SEEK_ABS) {
@@ -102,7 +117,7 @@ FS_STATUS fseek(FILE *file, Uint64 offset, FS_FILE_SEEK dir) {
 			return FS_INVALID_OFFSET;
 		}
 
-		Uint32 nextSect = (Uint32)(offset) / FS_FILE_DATA_LENGTH;
+		Uint32 nextSect = offset / FS_FILE_DATA_LENGTH;
 		// Will we be seeking into a different sector?
 		if(nextSect != file->fp.bufindex) {
 			// Yes, we will be seeking into a new sector
@@ -140,7 +155,7 @@ FS_STATUS fseek(FILE *file, Uint64 offset, FS_FILE_SEEK dir) {
 		}
 
 		// Will we be seeking into a different sector?
-		Uint32 nextSect = (Uint32)(file->offset + offset) / FS_FILE_DATA_LENGTH;
+		Uint32 nextSect = (file->offset + offset) / FS_FILE_DATA_LENGTH;
 		if(nextSect != file->fp.bufsect) {
 			// Yes, we will be seeking into a new sector
 			Uint32 seekSect = nextSect - file->fp.bufindex;	
@@ -171,7 +186,7 @@ FS_STATUS fseek(FILE *file, Uint64 offset, FS_FILE_SEEK dir) {
 			return FS_INVALID_OFFSET;
 		}
 
-		Uint32 nextSect = (Uint32)(file->offset - offset) / FS_FILE_DATA_LENGTH;
+		Uint32 nextSect = (file->offset - offset) / FS_FILE_DATA_LENGTH;
 		// Will we be seeking into a different sector?
 		if(nextSect != file->fp.bufsect) {
 			// Yes, we will be seeking into a new sector
@@ -213,15 +228,15 @@ FS_STATUS fseek(FILE *file, Uint64 offset, FS_FILE_SEEK dir) {
  * as the file is read.
  * @param	FILE*	file	The file to read from
  * @param	char*	buffer	The buffer to place read bytes
- * @param	Uint64	size	The maximum number of bytes to read from the file
- * @return	Uint64	The number of bytes read.
+ * @param	Uint32	size	The maximum number of bytes to read from the file
+ * @return	Uint32	The number of bytes read.
  */
-Uint64 fread(FILE *file, char *buffer, Uint64 size) { 
+Uint32 fread(FILE *file, char *buffer, Uint32 size) { 
 	// @TODO Error check for dumb things
 
 	// Start copying bytes into the buffer
-	Uint64 bytes;
-	Uint32 sectBytes = (Uint32)file->offset % FS_FILE_DATA_LENGTH;
+	Uint32 bytes;
+	Uint32 sectBytes = file->offset % FS_FILE_DATA_LENGTH;
 	for(bytes = 0; bytes < size; bytes++, sectBytes++) {
 		// Is this byte even in the file?
 		if(sectBytes >= _sector_get_long(&(file->fp.buffer), FS_FILE_BYTE_OFF)) {
@@ -230,7 +245,7 @@ Uint64 fread(FILE *file, char *buffer, Uint64 size) {
 		}
 
 		// Does this byte require us to load a new buffer?
-		if((Uint32)(file->offset + bytes) / FS_FILE_DATA_LENGTH > file->fp.bufindex) {
+		if((file->offset + bytes) / FS_FILE_DATA_LENGTH > file->fp.bufindex) {
 			// This read should be on the next sector of the file
 			Uint32 nextSector = _sector_get_long(&(file->fp.buffer), FS_FILE_SECT_OFF);
 			if(nextSector == FS_FILE_EOC) {
@@ -268,15 +283,15 @@ Uint64 fread(FILE *file, char *buffer, Uint64 size) {
  * called on the file.
  * @param	FILE*	file	The file to write to
  * @param	char*	buffer	The buffer to grab written bytes from
- * @param	Uint64	size	The maximum number of bytes to write to the file
- * @return	Uint64	The number of bytes written.
+ * @param	Uint32	size	The maximum number of bytes to write to the file
+ * @return	Uint32	The number of bytes written.
  */
-Uint64 fwrite(FILE *file, char *buffer, Uint64 size) { 
+Uint32 fwrite(FILE *file, char *buffer, Uint32 size) { 
 	// @TODO Error check for dumb things
 
 	// Start copying bytes into the buffer
-	Uint64 bytes;
-	Uint32 sectBytes = (Uint32)file->offset % FS_FILE_DATA_LENGTH;
+	Uint32 bytes;
+	Uint32 sectBytes = file->offset % FS_FILE_DATA_LENGTH;
 	for(bytes = 0; bytes < size; bytes++, sectBytes++, file->offset++) {
 		// Do we need to allocate a new sector?
 		if(sectBytes >= FS_FILE_DATA_LENGTH) {
