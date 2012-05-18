@@ -28,7 +28,7 @@ void draw_line(Uint32 x, Uint32 y, Uint32 x2, Uint32 y2, pixel p);
 void set_pixel(Uint32 x, Uint32 y, pixel p, screen_info* curr_si);
 
 //draw char, make the x component count down so that we can flip the characters.
-void draw_character(Uint32 x, Uint32 y, char c, pixel p);
+void draw_character( char c, Uint32 x, Uint32 y, pixel p);
 //string is easy, make a loop that is the strlen and then draw one bit line at a
 //time using the outer loop for the character height and the inner loop as the
 //character selector (a,b,c,d....etc)
