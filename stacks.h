@@ -21,7 +21,7 @@
 
 // size of a user stack (in longwords)
 
-#define	STACK_SIZE	1024
+#define	STACK_SIZE	2048
 
 // number of stacks
 
