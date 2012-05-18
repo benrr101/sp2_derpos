@@ -131,8 +131,7 @@ typedef struct {
 typedef struct {
 	FSPointer	fp;			// The FSPointer for this file
 	char		name[8];	// The file name
-	Uint64		offset;		// Byte offset into the file. This number can
-							// address like 6 exabytes, so this is unrealistic
+	Uint32		offset;		// Byte offset into the file.
 	FS_STATUS	code;		// Status code for the file
 } FILE;
 
@@ -157,7 +156,7 @@ void _fs_unallocate_sector(MountPoint *mp, Uint32 sector);
 void _fs_toggle_sector(MountPoint *mp, Uint32 sector);
 void _fs_toggle_file(FSPointer *fp);
 int _fs_namecmp(ATASector *sect, Uint16 index, char name[8]);
-Uint64 _fs_get_file_size(FSPointer fp);
+Uint32 _fs_get_file_size(FSPointer fp);
 void _fs_copy_sector(ATASector *source, ATASector *dest);
 
 #endif

@@ -121,8 +121,8 @@ void _ata_initialize(ATAController *cont, Uint16 bus, Uint16 device, Uint16 func
 Uint8 _ata_read_reg(ATAChannel channel, ATAReg reg);
 void _ata_write_reg(ATAChannel channel, ATAReg reg, Uint8 payload);
 Uint16 _ata_get_bar(Uint16 bus, Uint16 device, Uint16 func, Uint16 offset);
-void _ata_read_sector(ATADevice dev, Uint64 lba, ATASector *d);
-void _ata_write_sector(ATADevice dev, Uint64 lba, ATASector *s);
+void _ata_read_sector(ATADevice dev, Uint32 lba, ATASector *d);
+void _ata_write_sector(ATADevice dev, Uint32 lba, ATASector *s);
 
 // Utility functions
 void _ata_wait( void );
