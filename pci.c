@@ -99,6 +99,17 @@ void _pci_probe_devices(){
 			fwrite(&file, "FRIG OFF, BARB!", 15);
 		}
 		fflush(&file);
+		c_printf("File offset is now: 0x%x\n", file.offset);
+		c_printf("Buffered sector= %d, index=%d\n", file.fp.bufsect, file.fp.bufindex);
+		fseek(&file, 0, FS_SEEK_ABS);
+		c_printf("File offset is now: 0x%x\n", file.offset);
+		c_printf("Buffered sector= %d, index=%d\n", file.fp.bufsect, file.fp.bufindex);
+		fseek(&file, 0x200, FS_SEEK_REL);
+		c_printf("File offset is now: 0x%x\n", file.offset);
+		c_printf("Buffered sector= %d, index=%d\n", file.fp.bufsect, file.fp.bufindex);
+		fseek(&file, 0x40, FS_SEEK_REL_REV);
+		c_printf("File offset is now: 0x%x\n", file.offset);
+		c_printf("Buffered sector= %d, index=%d\n", file.fp.bufsect, file.fp.bufindex);
 	}
 
 
