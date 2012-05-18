@@ -93,23 +93,17 @@ void _pci_probe_devices(){
 
 	for(i = 0; i < mount_point_count; i++) {
 		// Create a file
-		FILE file = fopen("A:FUCKSTIC");
+		FILE file = fopen("A:FUCKSTI2");
 		Uint16 x;
 		for(x = 0; x < 36; x++) {
 			fwrite(&file, "FRIG OFF, BARB!", 15);
 		}
-		fflush(&file);
-		c_printf("File offset is now: 0x%x\n", file.offset);
-		c_printf("Buffered sector= %d, index=%d\n", file.fp.bufsect, file.fp.bufindex);
-		fseek(&file, 0, FS_SEEK_ABS);
-		c_printf("File offset is now: 0x%x\n", file.offset);
-		c_printf("Buffered sector= %d, index=%d\n", file.fp.bufsect, file.fp.bufindex);
-		fseek(&file, 0x200, FS_SEEK_REL);
-		c_printf("File offset is now: 0x%x\n", file.offset);
-		c_printf("Buffered sector= %d, index=%d\n", file.fp.bufsect, file.fp.bufindex);
-		fseek(&file, 0x40, FS_SEEK_REL_REV);
-		c_printf("File offset is now: 0x%x\n", file.offset);
-		c_printf("Buffered sector= %d, index=%d\n", file.fp.bufsect, file.fp.bufindex);
+		FILE file2 = fopen("A:DICKSAPO");
+		for(x = 0; x < 14; x++) {
+			fwrite(&file2, "1", 1);
+		}
+		fclose(&file);
+		fclose(&file2);
 	}
 
 

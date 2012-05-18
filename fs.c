@@ -158,6 +158,9 @@ FS_STATUS _fs_format(MountPoint *mp, ATADevice *dev, Uint8 index) {
 	// Write the header of the index block
 	fsTable[0]=0x49; fsTable[1]=0x42;
 
+	// Write the header of the name table
+	nameTable[0]=0x4E; nameTable[1]=0x41; nameTable[2]=0x4D; nameTable[3]=0x45;
+
 	// These are written every FS_MOD_INDEXBLK sectors, offset by 1 for the mbr
 	Uint32 i, count;
 	for(i = 1; i < size; i += FS_SECT_PER_IB) {
@@ -328,10 +331,10 @@ FILE _fs_create_file(MountPoint *mp, char filename[8]) {
 	// Allocate the filename -----------------------------------------------
 	ATASector nameSector;
 	ibindex = fp.ibindex;
-	if(fp.ibindex >= FS_SECTOR_SIZE) {
+	if(fp.ibindex >= FS_NAME_S1ENTRIES) {
 		// Read from second name sector
 		_ata_read_sector(*(mp->device), mp->offset + fp.ib + 2, &nameSector);
-		ibindex -= FS_SECTOR_SIZE;
+		ibindex -= FS_NAME_S1ENTRIES;
 	} else {
 		// Read from first name sector
 		_ata_read_sector(*(mp->device), mp->offset + fp.ib + 1, &nameSector);
@@ -340,8 +343,11 @@ FILE _fs_create_file(MountPoint *mp, char filename[8]) {
 	// Write the name to the sector
 	Uint8 i;
 	for(i = 0; i < 8; i++) {
-		nameSector[(ibindex * FS_NAME_SIZE) + i] = filename[i];
+		nameSector[FS_NAME_OFFSET + (ibindex * FS_NAME_SIZE) + i] = filename[i];
 	}
+
+	// Reset the sector's flags
+	nameSector[FS_NAME_OFFSET + (ibindex * FS_NAME_SIZE) + 8] = 0x0;
 
 	// Write the sector back to th disk
 	if(fp.ibindex >= FS_SECTOR_SIZE) {
@@ -359,7 +365,7 @@ FILE _fs_create_file(MountPoint *mp, char filename[8]) {
 
 	// Just set the header and write it back to the disk
 	fileSector[0]=0x46;fileSector[1]=0x49;fileSector[2]=0x4C;fileSector[3]=0x45;
-	_ata_write_sector(*(mp->device), sector, &fileSector);
+	_ata_write_sector(*(mp->device), mp->offset + sector, &fileSector);
 
 	// Store the filesector as the bufferred sector
 	_fs_copy_sector(&fileSector, &fp.buffer);
@@ -370,6 +376,10 @@ FILE _fs_create_file(MountPoint *mp, char filename[8]) {
 	FILE f;
 	f.fp = fp;
 	f.offset = 0;
+	
+	// Mark the file in use
+	_fs_toggle_file(&fp);
+
 	// @TODO: Find errors
 	return f;
 }
@@ -390,9 +400,9 @@ FSPointer _fs_find_file(MountPoint *mp, char filename[8]) {
 		_ata_read_sector(*(mp->device), i + 1, &nameSector);
 
 		// Does the file exist in this name file
-		for(j = 0; j < 64; j++) {
+		for(j = 0; j < FS_NAME_S1ENTRIES; j++) {
 			// Compare the file name
-			if(_fs_namecmp(&nameSector, j*8, filename) == 0) {
+			if(_fs_namecmp(&nameSector, j * FS_NAME_SIZE, filename) == 0) {
 				// Grab the ib of the file and get the file's first sector
 				ATASector ib;
 				_ata_read_sector(*(mp->device), mp->offset + i - 1, &ib);
@@ -415,14 +425,14 @@ FSPointer _fs_find_file(MountPoint *mp, char filename[8]) {
 		_ata_read_sector(*(mp->device), i+2, &nameSector);
 		
 		// Does the file exist in this name file
-		for(j = 0; j < 48; j++) {
+		for(j = 0; j < FS_NAME_S2ENTRIES; j++) {
 			// Compare the filenames
-			if(_fs_namecmp(&nameSector, i*8, filename) == 0) {
+			if(_fs_namecmp(&nameSector, j * FS_NAME_SIZE, filename) == 0) {
 				// Grab the index block of the file and get the file's first
 				// sector index
 				ATASector ib;
 				_ata_read_sector(*(mp->device), mp->offset + i - 1, &ib);
-				Uint32 fsect = _sector_get_long(&ib, FS_FP_OFFSET + (j * FS_FP_LENGTH) + 64);
+				Uint32 fsect = _sector_get_long(&ib, FS_FP_OFFSET + (j * FS_FP_LENGTH) + FS_NAME_S1ENTRIES);
 
 				// Grab the first sector of the file for buffering
 				ATASector fileSect;
@@ -448,7 +458,7 @@ int _fs_namecmp(ATASector *sect, Uint16 index, char name[8]) {
 	// Iterate over the chars and see if they match
 	Uint8 i;
 	for(i = 0; i < 8; i++) {
-		if((*sect)[index + i] != name[i]) {
+		if((*sect)[FS_NAME_OFFSET + index + i] != name[i]) {
 			return -1;
 		}
 	}
@@ -534,6 +544,25 @@ void _fs_toggle_sector(MountPoint *mp, Uint32 sector) {
 
 	// Write it back to the disk
 	_ata_write_sector(*(mp->device), ibAddr, &s);
+}
+
+void _fs_toggle_file(FSPointer *fp) {
+	// Read the name sector for the file
+	Uint32 nameSector = fp->mp->offset + fp->ib + 1;
+	nameSector += (fp->ibindex > FS_NAME_S1ENTRIES) ? 1 : 0;
+
+	ATASector sector;
+	_ata_read_sector(*(fp->mp->device), nameSector, &sector);
+	
+	// @TODO: Verify it's a name sector
+	
+	// Toggle the appropriate bit
+	Uint16 byte = FS_NAME_OFFSET + (fp->ibindex * FS_NAME_SIZE) + FS_NAME_FLAGS;
+	byte -= (fp->ibindex > FS_NAME_S1ENTRIES) ? FS_NAME_S1ENTRIES * FS_NAME_SIZE : 0;
+	sector[byte] ^= FS_NAME_FLAG_INUSE;
+	
+	// Write it back to the disk
+	_ata_write_sector(*(fp->mp->device), nameSector, &sector);
 }
 
 
