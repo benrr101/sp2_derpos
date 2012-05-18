@@ -259,30 +259,30 @@ Uint8 _ata_wait_bsy(ATAChannel channel) {
 
 
 
-void _ata_read_sector(ATADevice dev, Uint32 lba, ATASector *dest) {
+void _ata_read_sector(ATADevice *dev, Uint32 lba, ATASector *dest) {
 	// Steb 1a) Tell the controller which drive we'd like to read from
 	// E0 tells the drive we're doing LBA (and some obsolete bits?)
-	_ata_write_reg(dev.channel, ATA_REG_DRIVESEL, 0xE0 | (dev.device << 4));
+	_ata_write_reg(dev->channel, ATA_REG_DRIVESEL, 0xE0 | (dev->device << 4));
 	_ata_wait();
-	_ata_write_reg(dev.channel, ATA_REG_CONTROL, ATA_NOINT);	// Turn off interrupts
+	_ata_write_reg(dev->channel, ATA_REG_CONTROL, ATA_NOINT);	// Turn off interrupts
 
 	// Step 1b) Tell the drive what sector we want to read
 	// NOTE: We only support 48-bit LBA addressing for now
 	// @TODO: Support 24-bit LBA
-	_ata_write_reg(dev.channel, ATA_REG_LBA3, (lba & 0xFF000000) >> 24);
-	_ata_write_reg(dev.channel, ATA_REG_LBA4, 0x0); // Ignoring the last two
-	_ata_write_reg(dev.channel, ATA_REG_LBA5, 0x0); // regs 32-bit >= 2Tb
-	_ata_write_reg(dev.channel, ATA_REG_SECCOUNT2, 0x0);
-	_ata_write_reg(dev.channel, ATA_REG_LBA0,  lba & 0x000000FF);
-	_ata_write_reg(dev.channel, ATA_REG_LBA1, (lba & 0x0000FF00) >> 8);
-	_ata_write_reg(dev.channel, ATA_REG_LBA2, (lba & 0x00FF0000) >> 16);
-	_ata_write_reg(dev.channel, ATA_REG_SECCOUNT1, 0x1);
+	_ata_write_reg(dev->channel, ATA_REG_LBA3, (lba & 0xFF000000) >> 24);
+	_ata_write_reg(dev->channel, ATA_REG_LBA4, 0x0); // Ignoring the last two
+	_ata_write_reg(dev->channel, ATA_REG_LBA5, 0x0); // regs 32-bit >= 2Tb
+	_ata_write_reg(dev->channel, ATA_REG_SECCOUNT2, 0x0);
+	_ata_write_reg(dev->channel, ATA_REG_LBA0,  lba & 0x000000FF);
+	_ata_write_reg(dev->channel, ATA_REG_LBA1, (lba & 0x0000FF00) >> 8);
+	_ata_write_reg(dev->channel, ATA_REG_LBA2, (lba & 0x00FF0000) >> 16);
+	_ata_write_reg(dev->channel, ATA_REG_SECCOUNT1, 0x1);
 	
 	// Step 2) Tell the drive that we want to read sector
-	_ata_write_reg(dev.channel, ATA_REG_COMMAND, ATA_CMD_READSECE);
+	_ata_write_reg(dev->channel, ATA_REG_COMMAND, ATA_CMD_READSECE);
 	
 	// Step 3) Wait until the drive isn't busy
-	Uint8 status = _ata_wait_bsy(dev.channel);
+	Uint8 status = _ata_wait_bsy(dev->channel);
 	if(status != ATA_STATUS_OK) {
 		// @TODO: error out
 		return;
@@ -291,41 +291,41 @@ void _ata_read_sector(ATADevice dev, Uint32 lba, ATASector *dest) {
 	// Step 4) Read the data as words from the data reg
 	Uint16 i, word;
 	for(i = 0; i < 512; i += 2) {
-		word = _ata_read_data(dev.channel);
+		word = _ata_read_data(dev->channel);
 		(*dest)[i+1] = word >> 8;
 		(*dest)[i] = word;
 	}
 
 	// Step 5) Ack that we got the data by reading status
-	status = _ata_wait_bsy(dev.channel);
+	status = _ata_wait_bsy(dev->channel);
 	if(status != ATA_STATUS_OK) {
 		// @TODO: Error out
 	}
 }
 
-void _ata_write_sector(ATADevice dev, Uint32 lba, ATASector *s) {
+void _ata_write_sector(ATADevice *dev, Uint32 lba, ATASector *s) {
 	// Step 1) Set up for the write
 	// Step 1a) Tell the controller which device to write to
 	//          Also turn off interrupts
-	_ata_write_reg(dev.channel, ATA_REG_DRIVESEL, 0xE0 | (dev.device << 4));
+	_ata_write_reg(dev->channel, ATA_REG_DRIVESEL, 0xE0 | (dev->device << 4));
 	_ata_wait();
-	_ata_write_reg(dev.channel, ATA_REG_CONTROL, ATA_NOINT);
+	_ata_write_reg(dev->channel, ATA_REG_CONTROL, ATA_NOINT);
 
 	// Step 1b) Tell the device what sector to seek to
-	_ata_write_reg(dev.channel, ATA_REG_LBA3, (lba & 0xFF000000) >> 24);
-	_ata_write_reg(dev.channel, ATA_REG_LBA4, 0x0);
-	_ata_write_reg(dev.channel, ATA_REG_LBA5, 0x0);
-	_ata_write_reg(dev.channel, ATA_REG_SECCOUNT2, 0x0);
-	_ata_write_reg(dev.channel, ATA_REG_LBA0,  lba & 0x000000FF);
-	_ata_write_reg(dev.channel, ATA_REG_LBA1, (lba & 0x0000FF00) >> 8);
-	_ata_write_reg(dev.channel, ATA_REG_LBA2, (lba & 0x00FF0000) >> 16);
-	_ata_write_reg(dev.channel, ATA_REG_SECCOUNT1, 0x1);
+	_ata_write_reg(dev->channel, ATA_REG_LBA3, (lba & 0xFF000000) >> 24);
+	_ata_write_reg(dev->channel, ATA_REG_LBA4, 0x0);
+	_ata_write_reg(dev->channel, ATA_REG_LBA5, 0x0);
+	_ata_write_reg(dev->channel, ATA_REG_SECCOUNT2, 0x0);
+	_ata_write_reg(dev->channel, ATA_REG_LBA0,  lba & 0x000000FF);
+	_ata_write_reg(dev->channel, ATA_REG_LBA1, (lba & 0x0000FF00) >> 8);
+	_ata_write_reg(dev->channel, ATA_REG_LBA2, (lba & 0x00FF0000) >> 16);
+	_ata_write_reg(dev->channel, ATA_REG_SECCOUNT1, 0x1);
 
 	// Step 2) Issue the command
-	_ata_write_reg(dev.channel, ATA_REG_COMMAND, ATA_CMD_WRITSECE);
+	_ata_write_reg(dev->channel, ATA_REG_COMMAND, ATA_CMD_WRITSECE);
 
 	// Step 3) Wait until the device is ready
-	Uint8 status = _ata_wait_bsy(dev.channel);
+	Uint8 status = _ata_wait_bsy(dev->channel);
 	if(status != ATA_STATUS_OK) {
 		// @TODO: error out
 		return;
@@ -334,19 +334,19 @@ void _ata_write_sector(ATADevice dev, Uint32 lba, ATASector *s) {
 	// Step 4) Start sending words to the device via data register
 	Uint16 i;
 	for(i = 0; i < 512; i += 2) {
-		_ata_write_data(dev.channel, ((*s)[i+1] << 8) | (*s)[i]);
+		_ata_write_data(dev->channel, ((*s)[i+1] << 8) | (*s)[i]);
 	}
 
 	// Step 5) Ack that we are done with data, then flush the cache
-	status = _ata_wait_bsy(dev.channel);
+	status = _ata_wait_bsy(dev->channel);
 	if(status != ATA_STATUS_OK) {
 		// @TODO: Error out
 	}
 	
-	_ata_write_reg(dev.channel, ATA_REG_COMMAND, ATA_CMD_FLUSHE);
+	_ata_write_reg(dev->channel, ATA_REG_COMMAND, ATA_CMD_FLUSHE);
 	
-	_ata_wait_bsy(dev.channel);
-	status = _ata_wait_bsy(dev.channel);
+	_ata_wait_bsy(dev->channel);
+	status = _ata_wait_bsy(dev->channel);
 	if(status != ATA_STATUS_OK) {
 		// @TODO: Error out
 	}		
