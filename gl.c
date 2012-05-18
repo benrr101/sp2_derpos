@@ -1,6 +1,7 @@
 #include "gl.h"
 #include "win_man.h"
 #include "vga_dr.h"
+#include "font.h"
 
 static screen_info* scrn_info_arr;
 static Uint32* video_mem_ptr;
@@ -44,18 +45,18 @@ void draw_active_screens() {
 
 			//x_off = curr_si.w * (i % 2);
 			if( i == 1 || i == 3 )
-				x_off = curr_si->w;
+				x_off = curr_si->w+1;
 			else
 				x_off = 0;
 
 			if( i == 2 || i == 3 )
-				y_off = curr_si->h;
+				y_off = curr_si->h+1;
 			else
 				y_off = 0;
 
 			//copy the buffer
-			for(x = 0; x < curr_si->w; x++) {
-				for(y = 0; y < curr_si->h; y++) {
+			for(x = 0; x < curr_si->w -1; x++) {
+				for(y = 0; y < curr_si->h-1; y++) {
 					int pos1 = ((y + y_off) * bytes_perline) + (x + x_off);
 					int pos2 = (y * curr_si->w) + x;
 
@@ -261,8 +262,75 @@ void draw_line(Uint32 x, Uint32 y, Uint32 x2, Uint32 y2, pixel p) {
 
 void draw_character(char c, Uint32 x, Uint32 y, pixel p) {
     int i = 0;
+    char a = 'A';
+    char aa = 'a';
+    screen_info* 	curr_si;
+    Pid pid = 0;
+    unsigned char shift = 0x01;
+    unsigned char* curr = 0;
+    Status s;
+    int dx = 0;
+    int dy = 0;
+
+    s = get_pid( &pid );
+
+    curr_si = ( get_screen_info( pid ) );
+    if(c >= aa && c <= 122)
+        c -= 32; // uppercase no lower case yet
+
+    curr = FONT[a-c];
+    for(dy = 0; dy < 10; dy++) {
+        shift = 0x01;
+        for(dx = 7; dx >= 0; dx--) {
+            if((curr[dy] & shift) == shift) {
+                set_pixel(x+dx, y+dy, p, curr_si);
+            }
+            shift = shift << 1;
+        }
+    }
+}
+
+void draw_string(char* str, Uint32 x, Uint32 y, pixel p) {
+    screen_info* curr_si;
+    Status s;
+    Pid pid = 0;
+    char a = 'A';
+    char aa = 'a';
+    unsigned char shift = 0x01;
+    unsigned char* curr = 0;
+    int i = 0;
+    int dx = 0;
+    int dy = 0;
+    int len = 0;
 
 
+    //find the length
+    while(str[len] != '\0') {
+        if(str[len] >= aa && str[len] <= 122)
+            str[len] -= 32; // uppercase no lower case yet
+        len++;
+    }
+    //setup the pid and curr_si for drawing
+    s = get_pid( &pid );
+    curr_si = ( get_screen_info( pid ) );
+
+    //height
+    for(dy = 0; dy < 10; dy++) {
+        //length or changing between the characters
+        for(i = 0; i < len; i++) {
+            curr = FONT[a-str[i]];
+            //actual drawing of the current line
+            shift = 0x01;
+            for(dx = 7; dx >= 0; dx--) {
+                if((curr[dy] & shift) == shift) {
+                    //x == the start position plus the offset for the backwards character
+                    //PLUS the offset for the current character
+                    set_pixel(x+dx+(i*10), y+dy, p, curr_si);
+                }
+                shift = shift << 1;
+            }
+        }
+    }
 }
 
 
