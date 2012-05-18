@@ -95,6 +95,7 @@ void draw_scr_0() {
 	int y = 0;
 	int t = 0;
 	pixel p;
+	char* str = "HELLO WORLD";
 
 	while ( 1 ) {
 
@@ -110,6 +111,11 @@ void draw_scr_0() {
 				draw_pixel(x, y, p);
 			}
 		}
+		p.r = 0xff;
+		p.g = 0xff;
+		p.b = 0xff;
+		p.a = 0xff;
+		draw_string(str, 10, 10, p);
 		write( 'a' );
 		msleep(1500);
 	}
@@ -119,6 +125,7 @@ void draw_scr_1() {
 
 	int x = 0;
 	int y = 0;
+	char* str = "HELLO WORLD";
 	pixel p;
 
 	while ( 1 ) {
@@ -132,6 +139,11 @@ void draw_scr_1() {
 				draw_pixel(x, y, p);
 			}
 		}
+		p.r = 0x00;
+		p.g = 0x00;
+		p.b = 0x00;
+		p.a = 0x00;
+		draw_string(str, 10, 10, p);
 				write( 'b' );
 		msleep(2000);
 	}
@@ -154,6 +166,11 @@ void draw_scr_2() {
 				draw_pixel(x, y, p);
 			}
 		}
+		p.r = 0x00;
+		p.g = 0x00;
+		p.b = 0x00;
+		p.a = 0x00;
+		draw_character('A', 10, 20, p);
 				write( 'c' );
 		msleep(2500);
 	}
@@ -296,6 +313,7 @@ void draw_string(char* str, Uint32 x, Uint32 y, pixel p) {
     Pid pid = 0;
     char a = 'A';
     char aa = 'a';
+    char c = 0;
     unsigned char shift = 0x01;
     unsigned char* curr = 0;
     int i = 0;
@@ -308,8 +326,10 @@ void draw_string(char* str, Uint32 x, Uint32 y, pixel p) {
     while(str[len] != '\0') {
         if(str[len] >= aa && str[len] <= 122)
             str[len] -= 32; // uppercase no lower case yet
+        write_x(str[len]);
         len++;
     }
+    len++; // obo
     //setup the pid and curr_si for drawing
     s = get_pid( &pid );
     curr_si = ( get_screen_info( pid ) );
@@ -318,7 +338,11 @@ void draw_string(char* str, Uint32 x, Uint32 y, pixel p) {
     for(dy = 0; dy < 10; dy++) {
         //length or changing between the characters
         for(i = 0; i < len; i++) {
-            curr = FONT[a-str[i]];
+            if(str[i] == ' ')
+            	continue;
+            c = str[i];
+            curr = FONT[a-c];
+            
             //actual drawing of the current line
             shift = 0x01;
             for(dx = 7; dx >= 0; dx--) {
@@ -331,6 +355,8 @@ void draw_string(char* str, Uint32 x, Uint32 y, pixel p) {
             }
         }
     }
+    		write( '\n' );
+		write( '\r' );
 }
 
 
