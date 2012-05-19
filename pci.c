@@ -129,8 +129,23 @@ void _pci_probe_devices(){
 		buffer[20] = 0x0;
 		c_printf("%s\n", buffer);
 
-		fclose(file);
+		//fclose(file);
 		fclose(file2);
+		fdelete(file);
+
+		FILE *f3 = fopen("A:FUCKSTI3");
+		if(f3 == NULL) {
+			__panic("repoening failed :(");
+		}
+		fseek(f3, 2, FS_SEEK_ABS);
+		fread(f3, buffer, 19);
+		buffer[20] = 0x0;
+		c_printf("0x%x 0x%x 0x%x\n", file, file2, f3);
+		c_printf("%s\n", buffer);
+		fwrite(f3, "ayo, maggots!", 13);
+		fseek(f3, 200, FS_SEEK_ABS);
+		fread(f3, buffer, 19);
+		fclose(f3);
 	}
 
 

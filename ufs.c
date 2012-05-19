@@ -70,9 +70,6 @@ FILE *fopen(char filepath[10]) {
 	}
 
 	// The file was found, so package it up and send it back to the user
-	// Mark the file as in use
-	//_fs_toggle_file(file);
-
 	// Set the status code and initialize the offset
 	file->offset = 0;
 
@@ -83,10 +80,15 @@ FS_STATUS fclose(FILE *file) {
 	// Flush the file
 	fflush(file);
 
-	// Toggle the file as available
-	_fs_toggle_file(file);
+	// Unallocate the pointer
+	_fs_unallocate_filepointer(file);
 
 	return 0x0;
+}
+
+FS_STATUS fdelete(FILE *file) {
+	// Tear apart the file and send it to the deleter
+	return _fs_delete_file(file->mp, file->name);
 }
 
 /**
