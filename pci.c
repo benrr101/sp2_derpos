@@ -96,12 +96,31 @@ void _pci_probe_devices(){
 		FILE file = fopen("A:FUCKSTI2");
 		Uint16 x;
 		for(x = 0; x < 36; x++) {
-			fwrite(&file, "Sweet and sour chicken balls", 15);
+			fwrite(&file, "Sweet and sour chicken balls", 23);
 		}
 		FILE file2 = fopen("A:DICKSAPO");
 		for(x = 0; x < 14; x++) {
 			fwrite(&file2, "1", 1);
 		}
+		// Read into a buffer
+		char buffer[20];
+
+		// Do some seeking
+		fseek(&file, 0, FS_SEEK_ABS);
+		fread(&file, buffer, 19);	// Should be "Sweet and sour chic"
+		buffer[20] = 0x0;
+		c_printf("%s\n", buffer);
+
+		fseek(&file, 19, FS_SEEK_REL_REV);
+		fread(&file, buffer, 19);	// Should be same as before
+		buffer[20] = 0x0;
+		c_printf("%s\n", buffer);
+
+		fseek(&file, 1, FS_SEEK_REL);
+		fread(&file, buffer, 19);	// Should be "en ballsSweet and so"
+		buffer[20] = 0x0;
+		c_printf("%s\n", buffer);
+
 		fclose(&file);
 		fclose(&file2);
 	}
