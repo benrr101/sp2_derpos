@@ -251,7 +251,7 @@ Uint32 fread(FILE *file, char *buffer, Uint32 size) {
 		// Is this byte even in the file?
 		if(sectBytes >= _sector_get_long(&(file->buffer), FS_FILE_BYTE_OFF)) {
 			// The next read would be outside the file
-			return bytes;
+			break;
 		}
 
 		// Does this byte require us to load a new buffer?
@@ -281,6 +281,9 @@ Uint32 fread(FILE *file, char *buffer, Uint32 size) {
 		// Ok, copy the byte
 		buffer[bytes] = file->buffer[FS_FILE_DATA_OFF + sectBytes];
 	}
+
+	// Increment the internal file offset
+	file->offset += bytes;
 	
 	// Done!
 	return bytes;
