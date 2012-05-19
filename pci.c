@@ -96,7 +96,7 @@ void _pci_probe_devices(){
 		FILE file = fopen("A:FUCKSTI2");
 		Uint16 x;
 		for(x = 0; x < 36; x++) {
-			fwrite(&file, "FRIG OFF, BARB!", 15);
+			fwrite(&file, "Sweet and sour chicken balls", 15);
 		}
 		FILE file2 = fopen("A:DICKSAPO");
 		for(x = 0; x < 14; x++) {
