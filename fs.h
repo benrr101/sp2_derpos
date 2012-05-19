@@ -72,16 +72,18 @@
 
 // Success/Error Codes
 typedef enum {
-	FS_SUCCESS			= 0x00,
-	FS_ERR_TOOBIG		= 0x01,
-	FS_ERR_TOOSMALL		= 0x02,
-	FS_ERR_BADINDEX		= 0x03,
-	FS_ERR_BADSECT		= 0x04,
-	FS_ERR_NOTDERP		= 0x05,
-	FS_ERR_FILENOTFOUND	= 0x06,
-	FS_ERR_FULL			= 0x07,
-	FS_INVALID_FILENAME	= 0x08,
-	FS_INVALID_OFFSET   = 0x09
+	FS_SUCCESS = 0x00,
+	FS_SUCCESS_EMPTYFP,
+	FS_ERR_TOOBIG,
+	FS_ERR_TOOSMALL,
+	FS_ERR_BADINDEX,
+	FS_ERR_BADSECT,
+	FS_ERR_NOTDERP,
+	FS_ERR_FILENOTFOUND,
+	FS_ERR_FULL,
+	FS_ERR_NO_FP,
+	FS_INVALID_FILENAME,
+	FS_INVALID_OFFSET,
 } FS_STATUS;
 
 // TYPEDEFS ////////////////////////////////////////////////////////////////
@@ -114,23 +116,18 @@ typedef struct {
 } MountPoint;
 
 /**
- * FSPointer - A FSPointer structure that is used for looking up files.
+ * FILE - A representation of a file in the filesystem.
  */
 typedef struct {
+	ATASector	buffer;		// A buffered sector of the hard drive
 	MountPoint	*mp;		// Pointer to the mountpoint the file lives on
 	Uint32		ib;			// The sector number (relative to partition) of the
 							// index block the file is indexed on
 	Uint32		ibindex;	// Index into the index block of the file
-	ATASector	buffer;		// A buffered sector of the hard drive
 	Uint32		bufindex;	// The sector number (relative to the file) of the
 							// buffered sector
 	Uint32		bufsect;	// The sector number (relative to partition) of the
 							// buffered sector
-} FSPointer;
-
-typedef struct {
-	FSPointer	fp;			// The FSPointer for this file
-	char		name[8];	// The file name
 	Uint32		offset;		// Byte offset into the file.
 	FS_STATUS	code;		// Status code for the file
 } FILE;
@@ -142,21 +139,24 @@ MountPoint mount_points[26];
 // The current number of mount points
 Uint8 mount_point_count;
 
+// We can only have up to 50 files open at the same time
+FILE file_pointers[50];
+
 // FUNCTIONS ///////////////////////////////////////////////////////////////
 FS_STATUS _fs_create_partition(ATADevice *dev, Uint32 start, Uint32 size, Uint8 index);
 FS_STATUS _fs_format(MountPoint *mp, ATADevice *dev, Uint8 index);
 Uint32 _fs_find_empty_sector(MountPoint *mp);
-FSPointer _fs_find_empty_fspointer(MountPoint *mp);
-FSPointer _fs_find_file(MountPoint *mp, char filename[8]);
+FILE _fs_find_empty_fspointer(MountPoint *mp);
+FILE _fs_find_file(MountPoint *mp, char filename[8]);
 FILE _fs_create_file(MountPoint *mp, char filename[8]);
 FS_STATUS _fs_delete_file(MountPoint *mp, char filename[8]);
 void _fs_probe(ATADevice *dev);
 void _fs_allocate_sector(MountPoint *mp, Uint32 sector);
 void _fs_unallocate_sector(MountPoint *mp, Uint32 sector);
 void _fs_toggle_sector(MountPoint *mp, Uint32 sector);
-void _fs_toggle_file(FSPointer *fp);
+void _fs_toggle_file(FILE *file);
 int _fs_namecmp(ATASector *sect, Uint16 index, char name[8]);
-Uint32 _fs_get_file_size(FSPointer fp);
+Uint32 _fs_get_file_size(FILE *file);
 void _fs_copy_sector(ATASector *source, ATASector *dest);
 
 #endif
