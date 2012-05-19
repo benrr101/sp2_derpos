@@ -271,31 +271,43 @@ FS_STATUS _fs_delete_file(MountPoint *mp, char filename[8]) {
 		return file.code;
 	}
 
+	// Remove the name of the file by loading and removing the name table
+	Uint32 sector = mp->offset + file.ib;
+	sector += (file.ibindex >= FS_NAME_S1ENTRIES) ? 2 : 1;
+	_ata_read_sector(mp->device, sector, &file.buffer);
+
+	Uint32 offset = file.ibindex;
+	offset -= (file.ibindex >= FS_NAME_S1ENTRIES) ? FS_NAME_S1ENTRIES : 0;
+	offset = (offset * FS_NAME_SIZE) + FS_NAME_OFFSET;
+	_sector_put_long(&file.buffer, offset, 0x0);
+	_sector_put_long(&file.buffer, offset + 4, 0x0);
+	// IF THE SIZE EVER CHANGES, THESE LINES ARE BORKED.
+
 	// Load the ib of the file
-	ATASector sect;
-	_ata_read_sector(mp->device, mp->offset + file.ib, &sect);
+	// Using the file's buffer for temp actions
+	_ata_read_sector(mp->device, mp->offset + file.ib, &file.buffer);
 
 	// @TODO: Verify it's an IB
 	// Get the sector value from the table
-	Uint32 offset = (file.ibindex * FS_FP_LENGTH) + FS_FP_OFFSET;
-	Uint32 sector = _sector_get_long(&sect, offset);
+	offset = (file.ibindex * FS_FP_LENGTH) + FS_FP_OFFSET;
+	sector = _sector_get_long(&file.buffer, offset);
 
 	// Mark the filepointer as available
-	_sector_put_long(&sect, offset, FS_FP_FREE);
+	_sector_put_long(&file.buffer, offset, FS_FP_FREE);
 
 	// Write it back to the disk
-	_ata_write_sector(mp->device, mp->offset + file.ib, &sect);
+	_ata_write_sector(mp->device, mp->offset + file.ib, &file.buffer);
 	
 	// Traverse the file chain's sector's and unallocate as we go
 	while(sector != FS_FILE_EOC) {
 		// Grab the sector
-		_ata_read_sector(mp->device, mp->offset + sector, &sect);
+		_ata_read_sector(mp->device, mp->offset + sector, &file.buffer);
 
 		// Unallocate the sector
 		_fs_unallocate_sector(mp, sector);
 
 		// Go to next sector
-		sector = _sector_get_long(&sect, FS_FILE_SECT_OFF);
+		sector = _sector_get_long(&file.buffer, FS_FILE_SECT_OFF);
 	}
 
 	return FS_SUCCESS;
@@ -348,9 +360,6 @@ FILE _fs_create_file(MountPoint *mp, char filename[8]) {
 		(*nameSector)[FS_NAME_OFFSET + (file.ibindex * FS_NAME_SIZE) + i] = filename[i];
 	}
 
-	// Reset the sector's flags
-	(*nameSector)[FS_NAME_OFFSET + (file.ibindex * FS_NAME_SIZE) + FS_NAME_FLAGS] = 0x0;
-
 	// Write the sector back to th disk
 	if(file.ibindex >= FS_SECTOR_SIZE) {
 		// Write to second name sector
@@ -378,9 +387,6 @@ FILE _fs_create_file(MountPoint *mp, char filename[8]) {
 	// Return a FILE pointer -----------------------------------------------
 	file.offset = 0;
 	
-	// Mark the file in use
-	_fs_toggle_file(&file);
-
 	// @TODO: Find errors
 	return file;
 }
@@ -542,27 +548,6 @@ void _fs_toggle_sector(MountPoint *mp, Uint32 sector) {
 
 	// Write it back to the disk
 	_ata_write_sector(mp->device, ibAddr, &s);
-}
-
-void _fs_toggle_file(FILE *file) {
-	// Read the name sector for the file
-	Uint32 nameSector = file->mp->offset + file->ib + 1;
-	nameSector += (file->ibindex > FS_NAME_S1ENTRIES) ? 1 : 0;
-
-	ATASector sector;
-	_ata_read_sector(file->mp->device, nameSector, &sector);
-	
-	// @TODO: Verify it's a name sector
-	
-	// Toggle the appropriate bit
-	// Ternary subtracts 38 entries from the index if the file is on the
-	// second name sector
-	Uint16 byte = FS_NAME_OFFSET + (file->ibindex * FS_NAME_SIZE) + FS_NAME_FLAGS;
-	byte -= (file->ibindex > FS_NAME_S1ENTRIES) ? FS_NAME_S1ENTRIES * FS_NAME_SIZE : 0;
-	sector[byte] ^= FS_NAME_FLAG_INUSE;
-	
-	// Write it back to the disk
-	_ata_write_sector(file->mp->device, nameSector, &sector);
 }
 
 FS_STATUS _fs_allocate_filepointer(const FILE *source, FILE **dest) {

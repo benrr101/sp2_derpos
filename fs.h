@@ -55,15 +55,12 @@
 #define FS_FP_FREE				0x00
 
 // NameTable definitions
-#define FS_NAME_SIZE			0x9				// 8 bytes of file name, 1 byte
-												// of flags
+#define FS_NAME_SIZE			0x9				// 8 bytes of file name
 #define FS_NAME_OFFSET			0x4				// 4 bytes of header
 #define FS_NAME_S1ENTRIES		0x38			// 38 Entries on sector 1
 #define FS_NAME_S2ENTRIES		0x38			// 38 Entries of sector 2
 #define FS_NAME_FILENAME		0x8				// Filename is 8 bytes
-#define FS_NAME_FLAGS			0x8				// Flags are on the [8] byte
 #define FS_NAME_HEADER			0x4E414D45		// NAME
-#define FS_NAME_FLAG_INUSE		0x1				// File is in use
 
 // File sector information
 #define FS_FILE_DATA_OFF		0x0C			// Data starts at 12 bytes in
@@ -161,7 +158,6 @@ void _fs_probe(ATADevice *dev);
 void _fs_allocate_sector(MountPoint *mp, Uint32 sector);
 void _fs_unallocate_sector(MountPoint *mp, Uint32 sector);
 void _fs_toggle_sector(MountPoint *mp, Uint32 sector);
-void _fs_toggle_file(FILE *file);
 int _fs_namecmp(ATASector *sect, Uint16 index, char name[8]);
 Uint32 _fs_get_file_size(FILE *file);
 FS_STATUS _fs_allocate_filepointer(const FILE *source, FILE **dest);
