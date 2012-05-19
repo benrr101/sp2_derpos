@@ -74,6 +74,7 @@
 typedef enum {
 	FS_SUCCESS = 0x00,
 	FS_SUCCESS_EMPTYFP,
+	FS_SUCCESS_NEWFILE,
 	FS_ERR_TOOBIG,
 	FS_ERR_TOOSMALL,
 	FS_ERR_BADINDEX,
@@ -129,6 +130,7 @@ typedef struct {
 	Uint32		bufsect;	// The sector number (relative to partition) of the
 							// buffered sector
 	Uint32		offset;		// Byte offset into the file.
+	char		name[8];	// The name (for identification in the global array
 	FS_STATUS	code;		// Status code for the file
 } FILE;
 
