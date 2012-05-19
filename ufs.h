@@ -23,7 +23,7 @@ typedef enum {
 } FS_FILE_SEEK;
 
 // FUNCTIONS ///////////////////////////////////////////////////////////////
-FILE fopen(char filepath[10]);
+FILE *fopen(char filepath[10]);
 FS_STATUS fclose(FILE *file);
 FS_STATUS fseek(FILE *file, Uint32 offset, FS_FILE_SEEK dir);
 Uint32 fread(FILE *file, char *buffer, Uint32 size);

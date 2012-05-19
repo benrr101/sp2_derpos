@@ -565,8 +565,75 @@ void _fs_toggle_file(FILE *file) {
 	_ata_write_sector(file->mp->device, nameSector, &sector);
 }
 
+FS_STATUS _fs_allocate_filepointer(const FILE *source, FILE **dest) {
+	// Seek through the file pointers to find the available ones
+	Uint8 i;
+	for(i = 0; i < FS_MAX_FILEPOINTERS; i++) {
+		if(file_pointers[i].code == FS_AVAILABLE) {
+			// This is the free fs pointer we deserve
+			// Copy the data from source into the free pointer
+			file_pointers[i].mp = source->mp;
+			file_pointers[i].ib = source->ib;
+			file_pointers[i].ibindex = source->ibindex;
+			file_pointers[i].bufsect = source->bufsect;
+			file_pointers[i].bufindex = source->bufindex;
+			file_pointers[i].offset = source->offset;
+			file_pointers[i].code = source->code;
 
-void _fs_copy_sector(ATASector *source, ATASector *dest) {
+			// Copy the buffer into the pointer
+			_fs_copy_sector(&(source->buffer), &(file_pointers[i].buffer));
+
+			// Give back the pointer to the file
+			*dest = &file_pointers[i];
+
+			return FS_SUCCESS;
+		}
+	}
+
+	// If we made it here, none of the file pointers were free
+	return FS_ERR_NO_FP;
+}
+
+FS_STATUS _fs_unallocate_filepointer(FILE *file) {
+	// Theoretically, the file we have here will ALWAYS be an address into
+	// the global array. If it isn't we dun goof'd, hardcore. Therefore, we
+	// really only need to change the status of the file we were given...
+	// No traversal required!
+	file->code = FS_AVAILABLE;
+
+	return FS_SUCCESS;
+}
+
+FS_STATUS _fs_file_inuse(FILE *file) {
+	// Step 1) Is the file one in one of the file pointers?
+	Uint8 i;
+	for(i = 0; i < FS_MAX_FILEPOINTERS; i++) {
+		// Do the mountpoints match/do the filenames match?
+		if(file->mp == file_pointers[i].mp) {
+			// Mountpoints match. Do the filenames?
+			Uint8 j;
+			for(j = 0; j < FS_NAME_FILENAME; j++) {
+				if(file->name[j] != file_pointers[i].name[j]) {
+					break;
+				}
+			} 
+
+			// Still don't know... 
+			if(j == FS_NAME_FILENAME - 1) {
+				// Filenames match. File's in use.
+				return FS_ERR_FILE_INUSE;
+			}
+		}
+	}
+
+	// Step 2) Is the file tagged as in use on the drive?
+	// Seriously... I don't give a damn about checking this.
+
+	return FS_AVAILABLE;
+}
+	
+
+void _fs_copy_sector(const ATASector *source, ATASector *dest) {
 	// Start copying bytes
 	Uint16 b;
 	for(b = 0; b < FS_SECTOR_SIZE; b++) {

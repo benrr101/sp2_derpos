@@ -18,6 +18,9 @@
 // CONSTANTS ///////////////////////////////////////////////////////////////
 #define SECT_MBR				0x0
 
+// Maximums for globals
+#define	FS_MAX_FILEPOINTERS		50
+
 // Partition table info
 #define FS_PART_TABLE_OFF		0x01BE
 #define FS_PART_TABLE_SIZE		16				// bytes
@@ -83,8 +86,10 @@ typedef enum {
 	FS_ERR_FILENOTFOUND,
 	FS_ERR_FULL,
 	FS_ERR_NO_FP,
+	FS_ERR_FILE_INUSE,
 	FS_INVALID_FILENAME,
 	FS_INVALID_OFFSET,
+	FS_AVAILABLE
 } FS_STATUS;
 
 // TYPEDEFS ////////////////////////////////////////////////////////////////
@@ -142,7 +147,7 @@ MountPoint mount_points[26];
 Uint8 mount_point_count;
 
 // We can only have up to 50 files open at the same time
-FILE file_pointers[50];
+FILE file_pointers[FS_MAX_FILEPOINTERS];
 
 // FUNCTIONS ///////////////////////////////////////////////////////////////
 FS_STATUS _fs_create_partition(ATADevice *dev, Uint32 start, Uint32 size, Uint8 index);
@@ -159,6 +164,9 @@ void _fs_toggle_sector(MountPoint *mp, Uint32 sector);
 void _fs_toggle_file(FILE *file);
 int _fs_namecmp(ATASector *sect, Uint16 index, char name[8]);
 Uint32 _fs_get_file_size(FILE *file);
-void _fs_copy_sector(ATASector *source, ATASector *dest);
+FS_STATUS _fs_allocate_filepointer(const FILE *source, FILE **dest);
+FS_STATUS _fs_unallocate_filepointer(FILE *file);
+FS_STATUS _fs_file_inuse(FILE *file);
+void _fs_copy_sector(const ATASector *source, ATASector *dest);
 
 #endif
