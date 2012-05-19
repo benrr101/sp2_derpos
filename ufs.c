@@ -25,7 +25,7 @@
  *									y = filename up to 8 char in length.
  * @return	FILE	Pointer to the file in the filesystem.
  */
-FILE fopen(char filepath[10]) {
+FILE *fopen(char filepath[10]) {
 	// Pre generate the FILE for output
 	FILE f;
 
@@ -35,7 +35,7 @@ FILE fopen(char filepath[10]) {
 	// verify a valid filename
 	if(filepath[1] != ':') {
 		f.code = FS_INVALID_FILENAME;
-		return f;
+		return NULL;
 	}
 
 	char mountpoint = filepath[0];
@@ -46,29 +46,37 @@ FILE fopen(char filepath[10]) {
 	
 	// Determine which device we're reading
 	MountPoint *mp = &mount_points[mountpoint - 0x41];
+	// @TODO: Make sure there is a mountpoint
 
 	// See if we can find the file
 	f = _fs_find_file(mp, f.name);
 	if(f.code == FS_ERR_FILENOTFOUND) {
 		// File not found -- so create it!
 		f = _fs_create_file(mp, f.name);
+		f.code = FS_SUCCESS_NEWFILE;
+	} else {
+		// The file does exist. Is it open already
+		if(_fs_file_inuse(&f) == FS_ERR_FILE_INUSE) {
+			// File is in use, so we can't use it again
+			return NULL;
+		}
 		f.code = FS_SUCCESS;
-		
-		// Mark the file as in use
-		_fs_toggle_file(&f);
+	}
 
-		return f;
+	// Allocate a file pointer
+	FILE *file;
+	if(_fs_allocate_filepointer(&f, &file) == FS_ERR_NO_FP) {
+		return NULL;
 	}
 
 	// The file was found, so package it up and send it back to the user
 	// Mark the file as in use
-	_fs_toggle_file(&f);
+	//_fs_toggle_file(file);
 
 	// Set the status code and initialize the offset
-	f.code   = FS_SUCCESS;
-	f.offset = 0;
+	file->offset = 0;
 
-	return f;
+	return file;
 }
 
 FS_STATUS fclose(FILE *file) {
