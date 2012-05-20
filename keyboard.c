@@ -16,6 +16,7 @@
 #include "pcbs.h"
 #include "scheduler.h"
 #include "ulib.h"
+#include "win_man.h"
 #include "keyboard.h"
 
 // Struct to handle IO-Request information
@@ -82,7 +83,10 @@ static char alt_pressed = 0;
 static char num_lock = 1;
 static char caps_lock = 0;
 static char scroll_lock = 0;
+static char win_pressed = 0;
 
+// Used to await another byte for an extended key
+static char await_next = 0;
 
 void _ps2_keyboard_init( void ){
 
@@ -217,42 +221,56 @@ void _ps2_keyboard_init( void ){
 	
 }
 
-void _ps2_keyboard_ready( void ){
-	while( (__inb(PS2_STAT) & 1) != 0 )
-		;
-}
 
-Uint _ps2_keyboard_read( void ){
-	
-	_ps2_keyboard_ready();
-	return __inb( PS2_PORT );
-}
-
-void _ps2_keyboard_write( Uint command ){
-	
-	_ps2_keyboard_clear();
-
-	// let the PS2 controller know we want to send a command to the mouse
-	//c_printf("Letting Mouse know we are sending a command...\n");
-	__outb( PS2_STAT, 0xD4 );
-	_ps2_keyboard_clear();
-
-	// Now, send the mouse our command
-	//c_printf("Sending Command: 0x%x...\n", ( b & 0xFF) );
-	__outb( PS2_PORT, command );
-}
-
-void _ps2_keyboard_clear( void ){
-	while ( 1 ){
-		Uint b = __inb(PS2_STAT);
-		if( (b & 16) != 0 )
-			return;
-	}
-}
-
+/**
+ * Handles processing of interrupts from the PS/2 controller.
+ *
+ * @param	vec			The number of the interrupt code that triggered this
+ *						call.
+ */
 void _ps2_keyboard_isr( int vec, int code ){
+	
+	// temp vars
+	Uint quad;
+
 	Uint key = __inb( PS2_PORT );
 
+	// Handle extended keys first
+	if( await_next ){
+		if( key == 0xFE ){
+			_ps2_ack_int();
+			return;
+		}
+		else{
+			if( win_pressed ){
+				quad = get_active();
+				switch( key ){
+					case PS2_KEY_UP_P:
+					case PS2_KEY_DOWN_P:
+						if( quad > 1 )
+							quad -= 2;
+						else
+							quad += 2;
+					case PS2_KEY_LEFT_P:
+					case PS2_KEY_RIGHT_P:
+						if( quad % 2 == 0 )
+							quad += 1;
+						else
+							quad -= 1;
+				}
+				switch_active( quad );
+			}
+			switch( key ){
+				case PS2_KEY_LWIN_P:
+				case PS2_KEY_RWIN_P:
+					win_pressed = 1;
+					break;
+			}
+			await_next = 0;
+		}
+	}
+
+	// Next, handle special keys
 	switch( key ){
 		case PS2_KEY_LSHIFT_P:
 		case PS2_KEY_RSHIFT_P:
@@ -269,15 +287,16 @@ void _ps2_keyboard_isr( int vec, int code ){
 			caps_lock = 0;
 			return;
 	}
+
+	// normal ASCII characters
 	if( key < 0x80 ){
-		c_printf( "%c", _ps2_scan_code[ shift_pressed ][ key ] );
 
 		// check if function-key
 		if( key >= PS2_KEY_F1_P && key <= PS2_KEY_F10_P ){
-			_ps2_change_focus( key - PS2_KEY_F1_P );
+			replace_active( key - PS2_KEY_F1_P );
 		}
 		else if( key == PS2_KEY_F11_P || key == PS2_KEY_F12_P ){
-			_ps2_change_focus( key - PS2_KEY_F11_P + 10 );
+			replace_active( key - PS2_KEY_F11_P + 10 );
 		}
 		else{
 
@@ -285,18 +304,40 @@ void _ps2_keyboard_isr( int vec, int code ){
 			_ps2_write_to_active( _ps2_scan_code[ shift_pressed ][ key ] );
 		}
 	}
+
+	// Just the ASCII characters being released
 	else if( key >= 0x80 && key <= 0xD8){
 		// key released!
 	}
 	else{
-		//c_printf( "?" );
+		
+		// If we get this byte then that means we should expect an extended key
+		if( key == 0xE0 ){
+			await_next = 1;
+			__outb( PS2_PORT, 0x0 );
+		}
 	}
+	
+	_ps2_ack_int();
+}
 
+/**
+ * A conveinence function for telling the PIC_SLAVE and PIC_MASTER that we have
+ * serviced the interrupt.
+ */
+void _ps2_ack_int( void ){
 	__outb( 0xA0, 0x20 );
 	__outb( 0x20, 0x20 );
 }
 
-int _ps2_get_io_req( void ){
+/**
+ * Attempts to find an unused IO-Request block.
+ *
+ * @returns				-1 if an unused block could not be found, otherwise
+ *						a positive value up to (but not including)
+ *						TOTAL_IO_REQS is returned.
+ */
+Uint8 _ps2_get_io_req( void ){
 	int index = -1;
 	int i;
 	for( i = 0; i < TOTAL_IO_REQS; i++){
@@ -309,88 +350,111 @@ int _ps2_get_io_req( void ){
 }
 
 /**
- *
- *
+ * Writes the given character to the focused process, if one exists. Otherwise
+ * the character is discarded.
+ * 
+ * @param	c		The character to write
  */
-void _ps2_change_focus( int window ){
+void _ps2_write_to_active( char c ){
 	
-
-	// Tell window manager that we want to focus on a new window
-}
-
-/**
- *
- * The return may not be necessary
- */
-int _ps2_write_to_active( char c ){
-	
-	// temp vars
-	Status status;
-	Key key;
-
 	// Grab focused process
-//	Pid active_p = 0;
+	Pid active_p = get_active_pid();
 
 	// Throw away the character if there is no focused process
-	/*if( active_p == 0 ){
-		return 0;
-	}*/
+	if( active_p == 0 ){
+		return;
+	}
 
 	// Find the IO-request for this process
 	int index = 0;
-	/*while( index < TOTAL_IO_REQS ){
+	while( index < TOTAL_IO_REQS ){
 		if( requests[ index ]->pid == active_p )
 			break;
 		index ++;
-	}*/
+	}
 	if( index == TOTAL_IO_REQS )
-		return 0; // The focused process does not want input
+		return; // The focused process does not want input
 	
 	// Write the character
+	// Check if we need to return a special character, or write to buf
 	//c_printf( "Index: %d    Size: %d\n", requests[ index ]->index, requests[ index ]->size);
 	char *buf = requests[ index ]->buf;
-	int i = requests[ index ]->index;
-	//c_printf( "Writing character: %c, Prev: %c\n", c, buf[ i ] );
-	buf[ i ] = c;
-	requests[ index ]->index = i + 1;
-	//c_printf( "Index: %d    Size: %d\n", i, requests[ index ]->size);
-	if( i == requests[ index ]->size ){
-		
-		// pull from IO-blocking queue
-		if( !_q_empty(_buf_block) ){
-			void *data;
-			key.u = requests[ index ]->pid;
-			status = _q_remove_by_key( _buf_block, &data, key );
-			Pcb *pcb = ( Pcb* ) data;
-			if( status != SUCCESS ){
-				prt_status( "keyboard, write active: Unable to remove process"
-						" in buf block queue!\nError: %s\n", status);
-			}
-			_sched( pcb );
-		}
-		else{
-	
-			// did someone forcefully remove it!?!
-			c_printf( "keyboard, write active: buffered block queue is"
-						" empty???\n" );
-		}
-		
-		// Delete the process from our IO request array
+	if( buf == 0 ){
+		Pcb *pcb = _ps2_remove_from_queue( index );
+		//RET( pxb ) =   
 		_ps2_delete_request( index );
-		return 1;
+		_sched( pcb );
+	}
+	else{
+	
+		// We need to print the character for the user
+		c_printf( "%c", c );
+
+		int i = requests[ index ]->index;
+		//c_printf( "Writing character: %c, Prev: %c\n", c, buf[ i ] );
+		buf[ i ] = c;
+		requests[ index ]->index = i + 1;
+		//c_printf( "Index: %d    Size: %d\n", i, requests[ index ]->size);
+		if( i == requests[ index ]->size ){
+			
+			// pull from IO-blocking queue
+			if( !_q_empty( _buf_block ) ){
+				Pcb *pcb = _ps2_remove_from_queue( index );
+				_sched( pcb );
+			}
+			else{
+		
+				// did someone forcefully remove it!?!
+				c_printf( "keyboard, write active: buffered block queue is"
+							" empty???\n" );
+			}
+			
+			// Delete the process from our IO request array
+			_ps2_delete_request( index );
+		}
 	}
 }
 
 /**
- * Frees the IO request
+ * Frees the IO request.
+ *
+ * @param	index		The index of the request to remove from the requests
+ *						array.
  */
-void _ps2_delete_request( int index ){
+void _ps2_delete_request( Uint8 index ){
+	if( index >= TOTAL_IO_REQS )
+		return;
 	requests[ index ]->pid = 0;
 	requests[ index ]->buf = 0;
 	requests[ index ]->size = -1;
 	requests[ index ]->index = -1;
 }
 
+/**
+ * Removes the PCB from the buf_block queue. Note, the PCB of the process is
+ * still returned even if the PCB could not be removed from the buf_block
+ * queue, but the PCB may be 0 if the corresponding process could not be found.
+ *
+ * @param	index		The index in the requests array of the process to 
+ *						remove
+ * returns				The PCB of the process that was removed, or 0 if the
+ *						index was too large. Note, the PCB returned may be 0
+ *						if the corresponding process could not be found.
+ */
+Pcb *_ps2_remove_from_queue( Uint8 index ){
+	if( index >= TOTAL_IO_REQS )
+		return 0;
+	void *data;
+	Key key;
+	key.u = requests[ index ]->pid;
+	Status status = _q_remove_by_key( _buf_block, &data, key );
+	Pcb *pcb = ( Pcb* ) data;
+	if( status != SUCCESS ){
+		prt_status( "keyboard, write active: Unable to remove process"
+				" in buf block queue!\nError: %s\n", status);
+	}
+	return pcb;
+}
 
 
 /**
@@ -423,6 +487,48 @@ int buf_read( char* buf, int size, Pid pid ){
 	return 1;
 }
 
+/**
+ * Grabs the next available character, and also stores modifier key data at the
+ * time of the key press.
+ *
+ * @param	pid		The process that made the request
+ * @returns			1 if a proper IO-request was created, otherwise 0
+ */
+int char_read( Pid pid ){
+	return buf_read( 0, 0, pid );
+}
 
+void _ps2_keyboard_ready( void ){
+	while( (__inb(PS2_STAT) & 1) != 0 )
+		;
+}
+
+Uint _ps2_keyboard_read( void ){
+	
+	_ps2_keyboard_ready();
+	return __inb( PS2_PORT );
+}
+
+void _ps2_keyboard_write( Uint command ){
+	
+	_ps2_keyboard_clear();
+
+	// let the PS2 controller know we want to send a command to the mouse
+	//c_printf("Letting Mouse know we are sending a command...\n");
+	__outb( PS2_STAT, 0xD4 );
+	_ps2_keyboard_clear();
+
+	// Now, send the mouse our command
+	//c_printf("Sending Command: 0x%x...\n", ( b & 0xFF) );
+	__outb( PS2_PORT, command );
+}
+
+void _ps2_keyboard_clear( void ){
+	while ( 1 ){
+		Uint b = __inb(PS2_STAT);
+		if( (b & 16) != 0 )
+			return;
+	}
+}
 
 

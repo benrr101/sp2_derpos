@@ -7,6 +7,10 @@
 #define WIN_MAN_MEM 		1024
 #define DEFAULT_SCREENS		12
 
+// Callback function definition for users
+typedef void (*mouse_handler)(Uint8 x_pos, Uint8 y_pos, char left, char right,
+		char middle);
+
 typedef struct screen_info
 {
 	Uint32	buf_num;
@@ -16,6 +20,7 @@ typedef struct screen_info
 	Uint32*	bPtr;
 	Uint8	active;
 	Uint8	blocking;
+	mouse_handler	handler;
 }	screen_info;
 
 //to be 1024b
@@ -25,7 +30,8 @@ typedef struct win_man_vars
 	Uint32	screens[4];
 	//char reserve[1024-sizeofwin_man_vars]
 	//don't need to have the array here I just did t oshow the rest of the space
-} 	win_man_vars;
+} 	win_man_vars; 
+
 
 /*
 Screen positions
@@ -66,5 +72,10 @@ Uint32* get_current_bufs( void );
 
 //reserves a screen
 Status get_screen_buffer( Pid pid );
+
+// Mouse functions
+void update_cursor_pos( Uint8 x_pos, Uint8 y_pos );
+void update_mouse_button( char left, char right, char middle );
+
 
 #endif //_WIN_MAN_H_
