@@ -84,7 +84,7 @@ void _pci_probe_devices(){
 		_fs_probe(&ata_devices[i]);
 	}
 	// If there were no partitions found notify the user
-	if(mount_point_count == 0 || 1) {
+	if(mount_point_count == 0) {
 		c_puts("No DERP_FS Partitions Found!\n");
 		c_puts("... Creating test partition\n");
 
@@ -108,10 +108,22 @@ void _pci_probe_devices(){
 	for(j = 0; j < 52 ; j++) {
 		filename[9] = 0x41 + j;
 		f = fopen(filename);
-		c_printf("*** Code was: 0x%x. Addr was: 0x%x\n", f->code, f);
-			__panic("WHITE.");
-		}
+		c_printf("File %x=%x, %x Got back code: %x\n", filename[9], 0x80, j, f->code);
+		if(f->code != FS_SUCCESS) {  __panic("FAILED!"); }
+		if(j == 110) { fwrite(f, "FRIG OFF, BARB!", 15); fflush(f);}
+		fclose(f);
 	}
+
+	filename[0]='A'; filename[1]=':';filename[2]='P';filename[3]='I';filename[4]='S';filename[5]='S';filename[6]='O';filename[7]='F';filename[8]='F';
+	for(j = 0; j < 52 ; j++) {
+		filename[9] = 0x41 + j;
+		f = fopen(filename);
+		c_printf("File %x=%x, %x Got back code: %x\n", filename[9], 0x80, j, f->code);
+		if(f->code != FS_SUCCESS) {  __panic("FAILED!"); }
+		if(j == 110) { fwrite(f, "FRIG OFF, BARB!", 15); fflush(f);}
+		fclose(f);
+	}
+
 
 	// Print out the first sector of drive 0
 	__panic("HOLY FUCK.");
