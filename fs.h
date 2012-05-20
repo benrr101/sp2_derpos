@@ -55,7 +55,7 @@
 #define FS_FP_FREE				0x00
 
 // NameTable definitions
-#define FS_NAME_SIZE			0x9				// 8 bytes of file name
+#define FS_NAME_SIZE			0x8				// 8 bytes of file name
 #define FS_NAME_OFFSET			0x4				// 4 bytes of header
 #define FS_NAME_S1ENTRIES		0x38			// 38 Entries on sector 1
 #define FS_NAME_S2ENTRIES		0x38			// 38 Entries of sector 2
