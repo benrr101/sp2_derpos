@@ -345,30 +345,26 @@ FILE _fs_create_file(MountPoint *mp, char filename[8]) {
 	// Allocate the filename -----------------------------------------------
 	// Using the buffer again to save space
 	ATASector *nameSector = &(file.buffer);
-	if(file.ibindex >= FS_NAME_S1ENTRIES) {
-		// Read from second name sector
-		_ata_read_sector(mp->device, mp->offset + file.ib + 2, nameSector);
-		file.ibindex -= FS_NAME_S1ENTRIES;
-	} else {
-		// Read from first name sector
-		_ata_read_sector(mp->device, mp->offset + file.ib + 1, nameSector);
-	}
+
+	Uint32 nameSectNumber = file.ib;
+	nameSectNumber += (file.ibindex >= FS_NAME_S1ENTRIES) ? 2 : 1;
+
+	Uint32 index = file.ibindex;
+	index -= (file.ibindex >= FS_NAME_S1ENTRIES) ? FS_NAME_S1ENTRIES : 0;
+
+	// Read from the name sector
+	_ata_read_sector(mp->device, mp->offset + nameSectNumber, nameSector);
+	c_printf("Reading sector: %d | ", nameSectNumber);
 
 	// Write the name to the sector
 	Uint8 i;
 	for(i = 0; i < 8; i++) {
-		(*nameSector)[FS_NAME_OFFSET + (file.ibindex * FS_NAME_SIZE) + i] = filename[i];
+		(*nameSector)[FS_NAME_OFFSET + (index * FS_NAME_SIZE) + i] = filename[i];
 	}
 
-	// Write the sector back to th disk
-	if(file.ibindex >= FS_SECTOR_SIZE) {
-		// Write to second name sector
-		_ata_write_sector(mp->device, mp->offset + file.ib + 2, nameSector);
-		file.ibindex += FS_NAME_S1ENTRIES;
-	} else {
-		// Write to first name sector
-		_ata_write_sector(mp->device, mp->offset + file.ib + 1, nameSector);
-	}
+	// Write the sector back to the disk
+	_ata_write_sector(mp->device, mp->offset + nameSectNumber, nameSector);
+	c_printf("Writing sector: %d\n", nameSectNumber);
 
 	// Allocate 0th Sector of File -----------------------------------------
 	// Grab the sector that the file will start on
