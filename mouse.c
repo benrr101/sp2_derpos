@@ -7,6 +7,7 @@
 #include "startup.h"
 #include "ps2.h"
 #include "mouse.h"
+#include "win_man.h"
 
 // Globals
 short _init;
@@ -16,9 +17,9 @@ int _x_t_move;
 int _y_t_move;
 int _x_pos;
 int _y_pos;
-unsigned char _left_button;
-unsigned char _right_button;
-unsigned char _middle_button;
+char _left_button;
+char _right_button;
+char _middle_button;
 
 /**
  * Source for init steps taken from the following forum.  
@@ -114,6 +115,10 @@ void _ps2_mouse_isr( int vec, int code ){
 	static int byte_c = 0;
 	static char mouse_p = '+';
 	static char m_bytes[3];
+
+	// temp vars
+	char button_change = 0;
+
 	if(_init)
 		m_bytes[byte_c++] = __inb(PS2_PORT);
 
@@ -130,10 +135,12 @@ void _ps2_mouse_isr( int vec, int code ){
 				if( _left_button != 1)
 					//c_puts( "Left Button Pressed!\n" );
 				_left_button = 1;
+				button_change = 1;
 			}
 			else if( _left_button ){
 				//c_puts( "Left Button Released!\n" );
 				_left_button = 0;
+				button_change = 1;
 			}
 				
 			// check right-button status
@@ -141,10 +148,12 @@ void _ps2_mouse_isr( int vec, int code ){
 				if(_right_button != 1)
 					//c_puts( "Right Button Pressed!\n" );
 				_right_button = 1;
+				button_change = 1;
 			}
 			else if( _right_button ){
 				//c_puts( "Right Button Released!\n" );
 				_right_button = 0;
+				button_change = 1;
 			}
 
 			// check middle-button status
@@ -152,10 +161,12 @@ void _ps2_mouse_isr( int vec, int code ){
 				if(_middle_button != 1)
 					//c_puts( "Middle Button Pressed!\n" );
 				_middle_button = 1;
+				button_change = 1;
 			}
 			else if( _middle_button ){
 				//c_puts( "Middle Button Released!\n" );
 				_middle_button = 0;
+				button_change = 1;
 			}
 			
 			_x_move = m_bytes[1];
@@ -234,6 +245,10 @@ void _ps2_mouse_isr( int vec, int code ){
 		mouse_p = '+';
 
 	c_putchar_at( _x_pos, _y_pos, mouse_p );
+
+	update_cursor_pos( _x_pos, _y_pos );
+	if( button_change == 1 )
+		update_mouse_button( _left_button, _right_button, _middle_button );
 
 	// indicate that we have read the interrupt
 	__outb( 0x20, 0x20 );
