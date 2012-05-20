@@ -407,7 +407,7 @@ FILE _fs_find_file(MountPoint *mp, char filename[8]) {
 		// Iterate over the total number of files per index block
 		for(j = 0; j < FS_SECT_PER_IB; j++) {
 			// Calculate the offset to read and the sector to read it from
-			offset = (j > FS_NAME_S1ENTRIES) ? j - FS_NAME_S1ENTRIES : j;
+			offset = (j > FS_NAME_S1ENTRIES) ? j - FS_NAME_S1ENTRIES - 1 : j;
 			offset *= FS_NAME_SIZE;
 			offset += FS_NAME_OFFSET;
 
