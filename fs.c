@@ -425,6 +425,7 @@ FILE _fs_find_file(MountPoint *mp, char filename[8]) {
 			if(file.bufsect != sector) {
 				// Reading in a new sector
 				_ata_read_sector(mp->device, sector, &(file.buffer));
+				file.bufsect = sector;
 			}
 
 			// Are the names the same?

@@ -89,7 +89,7 @@ void _pci_probe_devices(){
 		c_puts("No DERP_FS Partitions Found!\n");
 		c_puts("... Creating test partition\n");
 
-		Uint8 code = _fs_create_partition(&ata_devices[1], 0x1, 2048, 0);
+		Uint8 code = _fs_create_partition(&ata_devices[1], 0x1, 1024, 0);
 		if(code != FS_SUCCESS) {
 			c_printf("*** Filesystem creation failed with code 0x%x\n", code);
 		}
