@@ -192,10 +192,11 @@ Uint32 _fs_find_empty_sector(MountPoint *mp) {
 		_ata_read_sector(mp->device, i, &s);
 		
 		// Start iterating over the bits in the bitfield
-		for(j = 0; j < FS_BT_SIZE * sizeof(char); j++) {
+		for(j = 0; j < FS_BT_SIZE; j++) {
 			// Which byte do we need 
 			byte = FS_BT_OFFSET + (FS_BT_END - (FS_BT_OFFSET + (j / 8)));
 			byte -= 1;
+			c_printf("Looking at byte %d %d\n", j, byte);
 
 			// Grab that byte and check if the bit we need is allocated
 			if(((s[byte] >> (j % 8)) & FS_BT_ALLOCATED) == 0) {
