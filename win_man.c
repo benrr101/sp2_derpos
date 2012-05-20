@@ -14,17 +14,20 @@ static screen_info* 	screen_info_arr;
  */
 void _win_man_init( void ) {
 	int i = 0;
+	int j = 0;
 	void* bPtrOffset = 0;
 	int dW, dH = 0;
 	
 	_vga_init();
-	_gl_init();	
 	
 	//setup the memory for the arrays and 
 	// this module
 	wm_memory = (void *)( _vga_get_end_mem() );
 	//array of screen_infos
 	screen_info_arr = (screen_info *)( wm_memory + WIN_MAN_MEM );
+	
+	_gl_init();
+	
 	//begining of buffers
 	bPtrOffset = (void *)(screen_info_arr + ( (DEFAULT_SCREENS+1) * sizeof( struct screen_info ) ) );
 	//TODO: give the VM_man_our addresses
@@ -41,7 +44,15 @@ void _win_man_init( void ) {
 		screen_info_arr[i].buf_num = i;
 		screen_info_arr[i].w = dW;
 		screen_info_arr[i].h = dH;
-		screen_info_arr[i].bPtr = (Uint32 *)(bPtrOffset + (( i * dH * dW )));
+		
+		// Height * Width * 4 bytes for pixel color 
+		screen_info_arr[i].bPtr = (Uint32 *)( bPtrOffset + ( i * dH * dW * 4 ) );
+		#ifdef WM_DEBUG
+		if(i%2 == 0)
+			c_printf("\n");
+		c_printf("bufs: %d -- %x=%x ", i, screen_info_arr[i].bPtr, (Uint32 *)( bPtrOffset + ( i * dH * dW * 4 ) ) );
+
+		#endif
 		
 		screen_info_arr[i].pid = 0;
 		screen_info_arr[i].active = 0;
@@ -51,7 +62,11 @@ void _win_man_init( void ) {
 		c_printf("%d  - %x || ", i, ( i * dH * dW) );
 		#endif
 	}
+	//clear buffer mem
+	_kmemclr(screen_info_arr[0].bPtr, ( DEFAULT_SCREENS * dH * dW * 4 ) );
+	
 	#ifdef WM_DEBUG
+	c_printf("\n-Total Memory(B): %d blocks(x64KB), %d\n", vga_vesa_info->TotalMemory, (vga_vesa_info->TotalMemory * 64)*1024);
 	for(i = 0; i < DEFAULT_SCREENS; i++) {
 		c_printf("%d - (%d, %d) - %x || ", 
 		screen_info_arr[i].buf_num, 
@@ -65,6 +80,18 @@ void _win_man_init( void ) {
 	wm_memory->screens[1] = 1;
 	wm_memory->screens[2] = 2;
 	wm_memory->screens[3] = 3;
+	
+	//test
+	for(i = 0; i < screen_info_arr[0].w; i++) {
+		for(j = 0; j < screen_info_arr[0].h; j++) {
+			screen_info_arr[0].bPtr[ ( j * screen_info_arr[0].w ) + i] = 0xee00ee00;
+		}
+	}
+	for(i = 0; i < screen_info_arr[2].w; i++) {
+		for(j = 0; j < screen_info_arr[2].h; j++) {
+			screen_info_arr[2].bPtr[ ( j * screen_info_arr[2].w ) + i] = 0xffffffff;
+		}
+	}
 }
 
 /**
@@ -91,7 +118,7 @@ Uint8 set_blocking( Uint32 buf_num, Uint8 quadrant) {
 	return screen_info_arr[buf_num].blocking;
 }
 
-/**
+/**bPtrOffset
  * Grabs the currently active quadrant.
  * 
  * @return	The quadrant number.
@@ -153,6 +180,7 @@ Uint32* get_current_bufs( void ) {
  * 
  * @param	buffer_num		The window (user process) to make active
  */
+
 Uint8 replace_active( Uint32 buffer_num ) {
 	return set_active( buffer_num, get_active() );
 }
@@ -169,12 +197,16 @@ Status get_screen_buffer( Pid pid ) {
 	Status ret = FAILURE;
 	
 	for( i = 0; i < DEFAULT_SCREENS; i++ ) {
-		if( screen_info_arr[i].pid == 0 ) {
+		if( screen_info_arr[i].pid == 0 && screen_info_arr[i].pid != pid ) {
 			screen_info_arr[i].pid = pid;
+			#ifdef WM_DEBUG
+			c_printf("PID: %d reserved buffer %d. \n", pid, i);
+			#endif
 			ret = SUCCESS;
+			return ret;
 		}
 	}
-
+	
 	return ret;
 }
 //returns the screen info for the pid provided

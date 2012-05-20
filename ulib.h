@@ -105,6 +105,8 @@ Status read_buf( char *buf, int size );
 
 Status write(char buf);
 
+Status write_x(Uint32 val);
+
 /*
 ** msleep - put the current process to sleep for some length of time
 **
