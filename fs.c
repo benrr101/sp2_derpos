@@ -197,6 +197,10 @@ Uint32 _fs_find_empty_sector(MountPoint *mp) {
 			byte = FS_BT_OFFSET + (FS_BT_END - (FS_BT_OFFSET + (j / 8)));
 			byte -= 1;
 
+			if(j > 109) {
+				c_printf("Checking sector= %d s[%d] = 0x%x shift=%d\n", j, byte, s[byte], j%8);
+			}
+
 			// Grab that byte and check if the bit we need is allocated
 			if(((s[byte] >> (j % 8)) & FS_BT_ALLOCATED) == 0) {
 				// Sector isn't allocated. This is our golden nugget
@@ -354,7 +358,6 @@ FILE _fs_create_file(MountPoint *mp, char filename[8]) {
 
 	// Read from the name sector
 	_ata_read_sector(mp->device, mp->offset + nameSectNumber, nameSector);
-	c_printf("Reading sector: %d | ", nameSectNumber);
 
 	// Write the name to the sector
 	Uint8 i;
@@ -364,7 +367,6 @@ FILE _fs_create_file(MountPoint *mp, char filename[8]) {
 
 	// Write the sector back to the disk
 	_ata_write_sector(mp->device, mp->offset + nameSectNumber, nameSector);
-	c_printf("Writing sector: %d\n", nameSectNumber);
 
 	// Allocate 0th Sector of File -----------------------------------------
 	// Grab the sector that the file will start on
@@ -529,13 +531,15 @@ void _fs_unallocate_sector(MountPoint *mp, Uint32 sector) {
  * @param	Uint32		sector	The sector to toggle
  */
 void _fs_toggle_sector(MountPoint *mp, Uint32 sector) {
+	// For our math we're zero indexing the sectors.
+	sector--;
+
 	// Read the ib sector for the bitfield
 	Uint32 ibAddr = mp->offset + ((sector / FS_SECT_PER_IB) * FS_SECT_PER_IB) + 1;
 	ATASector s;
 	_ata_read_sector(mp->device, ibAddr, &s);
 
 	// Toggle the appropriate sector bit
-	sector--;
 	Uint8 mask  = FS_BT_ALLOCATED << ((sector % FS_SECT_PER_IB) % 8);
 	Uint16 byte = FS_BT_END - ((sector % FS_SECT_PER_IB) / 8) - 1;
 	s[byte] ^= mask;
