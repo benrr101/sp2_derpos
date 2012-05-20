@@ -51,6 +51,12 @@ FILE *fopen(char filepath[10]) {
 	// See if we can find the file
 	f = _fs_find_file(mp, f.name);
 	if(f.code == FS_ERR_FILENOTFOUND) {
+		// Make sure there is a free filepointer first
+		if(!_fs_is_free_filepointer()) {
+			// No file pointers, so blow up.
+			return NULL;
+		}
+
 		// File not found -- so create it!
 		f = _fs_create_file(mp, f.name);
 		f.code = FS_SUCCESS_NEWFILE;
@@ -60,6 +66,7 @@ FILE *fopen(char filepath[10]) {
 			// File is in use, so we can't use it again
 			return NULL;
 		}
+
 		f.code = FS_SUCCESS;
 	}
 

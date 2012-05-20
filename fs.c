@@ -614,7 +614,18 @@ FS_STATUS _fs_file_inuse(FILE *file) {
 
 	return FS_AVAILABLE;
 }
-	
+
+int _fs_is_free_filepointer(void) {
+	// Iterate over the filepointers to find an available one
+	Uint8 i;
+	for(i = 0; i < FS_MAX_FILEPOINTERS; i++) {
+		if(file_pointers[i].code == FS_AVAILABLE) {
+			return 1;	// There is a free pointer
+		}
+	}
+
+	return 0;	// No free pointers here
+}	
 
 void _fs_copy_sector(const ATASector *source, ATASector *dest) {
 	// Start copying bytes
