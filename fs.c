@@ -197,10 +197,6 @@ Uint32 _fs_find_empty_sector(MountPoint *mp) {
 			byte = FS_BT_OFFSET + (FS_BT_END - (FS_BT_OFFSET + (j / 8)));
 			byte -= 1;
 
-			if(j > 109) {
-				c_printf("Checking sector= %d s[%d] = 0x%x shift=%d\n", j, byte, s[byte], j%8);
-			}
-
 			// Grab that byte and check if the bit we need is allocated
 			if(((s[byte] >> (j % 8)) & FS_BT_ALLOCATED) == 0) {
 				// Sector isn't allocated. This is our golden nugget
