@@ -73,6 +73,10 @@ Uint32* get_current_bufs( void );
 //reserves a screen
 Status get_screen_buffer( Pid pid );
 
+
+Uint8 switch_active( Uint8 quadrant );
+Uint8 replace_active( Uint32 buffer_num );
+
 // Mouse functions
 void update_cursor_pos( Uint8 x_pos, Uint8 y_pos );
 void update_mouse_button( char left, char right, char middle );
