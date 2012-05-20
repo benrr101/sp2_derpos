@@ -393,63 +393,59 @@ FILE _fs_create_file(MountPoint *mp, char filename[8]) {
 
 FILE _fs_find_file(MountPoint *mp, char filename[8]) {
 	// Start iterating over all the index blocks in the partition
-	Uint32 start = mp->offset + 1;
-	Uint32 end   = mp->offset + mp->bootRecord.size;
-	Uint32 i, j;
+	//Uint32 start = mp->offset + 1;
+	//Uint32 end   = mp->offset + mp->bootRecord.size;
+	Uint32 i, j, offset, sector;
 	FILE file;
+	file.bufsect = 0;
 	// We'll use the file's buffer for storing temp data
+
+	// Copy the name of the file
+	for(i = 0; i < FS_NAME_SIZE; i++) {
+		file.name[i] = filename[i];
+	}
 	
 	// Prebuild the file pointer to save code
 	file.mp = mp;
 
-	for(i = start; i <= end; i += FS_SECT_PER_IB) {
-		// Read the first name sector (ib + 1)
-		_ata_read_sector(mp->device, i + 1, &(file.buffer));
+	// Iterate over the index blocks
+	for(i = 0; i <= mp->bootRecord.size; i += FS_SECT_PER_IB) {
+		// Iterate over the total number of files per index block
+		for(j = 0; j < FS_SECT_PER_IB; j++) {
+			// Calculate the offset to read and the sector to read it from
+			offset = (j > FS_NAME_S1ENTRIES) ? j - FS_NAME_S1ENTRIES : j;
+			offset *= FS_NAME_SIZE;
+			offset += FS_NAME_OFFSET;
 
-		// Does the file exist in this name file
-		for(j = 0; j < FS_NAME_S1ENTRIES; j++) {
-			// Compare the file name
-			if(_fs_namecmp(&(file.buffer), j * FS_NAME_SIZE, filename) == 0) {
-				// Grab the ib of the file and get the file's first sector
-				_ata_read_sector(mp->device, mp->offset + i - 1, &(file.buffer));
-				Uint32 fsect = _sector_get_long(&(file.buffer), FS_FP_OFFSET + (j * FS_FP_LENGTH));
-				
-				// Grab the first sector of the file for buffering
-				_ata_read_sector(mp->device, mp->offset + fsect, &(file.buffer));
+			// Calculate the sector to read it from
+			sector = i + mp->offset + 1;
+			sector += (j > FS_NAME_S1ENTRIES) ? 2 : 1;
 
-				// Return the found file
-				file.ib       = i / FS_SECT_PER_IB +1;
-				file.ibindex  = j;
-				file.bufsect  = fsect;
-				file.bufindex = 0;
-				return file;
+			// Do we need to read it in?
+			if(file.bufsect != sector) {
+				// Reading in a new sector
+				_ata_read_sector(mp->device, sector, &(file.buffer));
 			}
-		}
 
-		// File wasn't in this sector of names. Maybe the next? (ib+2)
-		_ata_read_sector(mp->device, i+2, &(file.buffer));
-		
-		// Does the file exist in this name file
-		for(j = 0; j < FS_NAME_S2ENTRIES; j++) {
-			// Compare the filenames
-			if(_fs_namecmp(&(file.buffer), j * FS_NAME_SIZE, filename) == 0) {
-				// Grab the ib of the file and get the file's first sector
-				_ata_read_sector(mp->device, mp->offset + i - 1, &(file.buffer));
-				Uint32 fsect = _sector_get_long(&(file.buffer), FS_FP_OFFSET + (j * FS_FP_LENGTH) + FS_NAME_S1ENTRIES);
+			// Are the names the same?
+			if(_fs_namecmp(&(file.buffer), offset, filename) == 0) {
+				// We have a match!
+                _ata_read_sector(mp->device, mp->offset + i - 1, &(file.buffer));
+                Uint32 fsect = _sector_get_long(&(file.buffer), FS_FP_OFFSET + (j * FS_FP_LENGTH));
+                
+                // Grab the first sector of the file for buffering
+                _ata_read_sector(mp->device, mp->offset + fsect, &(file.buffer));
 
-				// Buffer the first sector
-				_ata_read_sector(mp->device, mp->offset + fsect, &(file.buffer));
-
-				// Return the found file
-				file.ib       = i / FS_SECT_PER_IB + 1;
-				file.ibindex  = j + 64;
-				file.bufsect  = fsect;
-				file.bufindex = 0;
-				return file;
+                // Return the found file
+                file.ib       = i / FS_SECT_PER_IB +1;
+                file.ibindex  = j;
+                file.bufsect  = fsect;
+                file.bufindex = 0;
+                return file;
 			}
 		}
 	}
-
+	
 	// We didn't find it
 	file.code = FS_ERR_FILENOTFOUND;
 	return file;
@@ -458,8 +454,8 @@ FILE _fs_find_file(MountPoint *mp, char filename[8]) {
 int _fs_namecmp(ATASector *sect, Uint16 index, char name[8]) {
 	// Iterate over the chars and see if they match
 	Uint8 i;
-	for(i = 0; i < 8; i++) {
-		if((*sect)[FS_NAME_OFFSET + index + i] != name[i]) {
+	for(i = 0; i < FS_NAME_SIZE; i++) {
+		if((*sect)[index + i] != name[i]) {
 			return -1;
 		}
 	}

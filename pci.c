@@ -99,55 +99,61 @@ void _pci_probe_devices(){
 		}
 	}
 
-	for(i = 0; i < mount_point_count; i++) {
-		// Create a file
-		FILE *file = fopen("A:FUCKSTI3");
-		Uint16 x;
-		for(x = 0; x < 36; x++) {
-			fwrite(file, "Worst case ontario", 18);
-		}
-		FILE *file2 = fopen("A:DICKSAPO");
-		for(x = 0; x < 14; x++) {
-			fwrite(file2, "2", 1);
-		}
-		// Read into a buffer
-		char buffer[20];
+	c_puts("Beginning tests...\n");
+	c_puts("Opening new file\n");
+	char buffer[21];
+	buffer[20] = 0x0;
+	FILE *f = fopen("A:BOOMSHIT");
+	if(f == NULL) { __panic("FAILED"); }
 
-		// Do some seeking
-		fseek(file, 0, FS_SEEK_ABS);
-		fread(file, buffer, 19);	// Should be "Sweet and sour chic"
-		buffer[20] = 0x0;
-		c_printf("%s\n", buffer);
+	c_puts("Reading 19b from file\n");
+	if(fread(f, buffer, 19)) { c_printf("*** read: %s\n", buffer); __panic("FAILED"); }
 
-		fseek(file, 19, FS_SEEK_REL_REV);
-		fread(file, buffer, 19);	// Should be same as before
-		buffer[20] = 0x0;
-		c_printf("%s\n", buffer);
+	c_puts("Writing 19b to the file\n");
+	Uint32 result = fwrite(f, "abcdefghijklmnopqrs", 19);
+	if(result != 19) { c_printf("*** got back: %d\n",  result); __panic("FAILED"); }
+	
+	c_puts("Reading 19b from file\n");
+	if(fread(f, buffer, 19)) { c_printf("*** read: %s\n", buffer); __panic("FAILED"); }
+	
+	c_puts("Seeking back 19b\n");
+	result = fseek(f, 19, FS_SEEK_REL_REV);
+	if(result != FS_SUCCESS) { c_printf("*** got back: 0x%x\n", result); __panic("FAILED"); }
 
-		fseek(file, 1, FS_SEEK_REL);
-		fread(file, buffer, 19);	// Should be "en ballsSweet and so"
-		buffer[20] = 0x0;
-		c_printf("%s\n", buffer);
+	c_puts("Reading 19b from file\n");
+	result = fread(f, buffer, 19);
+	if(result != result) { c_printf("*** got back: %d | %s\n", result, buffer); __panic("FAILED"); }
+	else { c_printf("... got back: %s\n", buffer); }
+	
+	c_puts("Seeking 10b ahead\n");
+	result = fseek(f, 10, FS_SEEK_REL);
+	if(result == FS_SUCCESS) { c_puts("*** successfule\n"); __panic("FAILED"); }
 
-		//fclose(file);
-		fclose(file2);
-		fdelete(file);
-
-		FILE *f3 = fopen("A:FUCKSTI3");
-		if(f3 == NULL) {
-			__panic("repoening failed :(");
-		}
-		fseek(f3, 2, FS_SEEK_ABS);
-		fread(f3, buffer, 19);
-		buffer[20] = 0x0;
-		c_printf("0x%x 0x%x 0x%x\n", file, file2, f3);
-		c_printf("%s\n", buffer);
-		fwrite(f3, "ayo, maggots!", 13);
-		fseek(f3, 200, FS_SEEK_ABS);
-		fread(f3, buffer, 19);
-		fclose(f3);
+	c_puts("writing to fill 2x sectors\n");
+	Uint16 j;
+	for(j = 0; j < 580; j++) {
+		fwrite(f, "1", 1);
 	}
+	c_printf("... file buffer is sector %d\n", f->bufsect);
+	
+	c_puts("Seeking to 0\n");
+	if(fseek(f, 0, FS_SEEK_ABS) != FS_SUCCESS) { __panic("FAILED"); }
 
+	c_puts("Seeking to 0x200 on sector 2\n");
+	if(fseek(f, 0, FS_SEEK_ABS) != FS_SUCCESS) { __panic("FAILED"); }
+
+	c_puts("Seeking to 0x3F1 on sector 3\n");
+	if(fseek(f, 0, FS_SEEK_ABS) != FS_SUCCESS) { __panic("FAILED"); }
+
+	c_puts("Closing the file\n");
+	if(fclose(f) != FS_SUCCESS) { __panic("FAILED"); }
+	c_printf("... file code is now 0x%x\n", f->code);
+	
+	c_puts("Reopening the file\n");
+	f = fopen("A:BOOMSHIT");
+	if(f->code != FS_SUCCESS) { c_printf("*** code is: 0x%x\n", f->code); __panic("FAILED"); }
+	if(f->offset != 0) { c_printf("*** offset is: 0x%x\n", f->offset); __panic("FAILED"); }
+	if(f->bufindex != 0) { c_printf("*** bufindex is: 0x%x\n", f->bufindex); __panic("FAILED"); }
 
 	// Print out the first sector of drive 0
 	__panic("HOLY FUCK.");
