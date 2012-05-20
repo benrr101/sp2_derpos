@@ -83,7 +83,6 @@ void _pci_probe_devices(){
 		// Probe it for partitions
 		_fs_probe(&ata_devices[i]);
 	}
-#ifdef FSTEST
 	// If there were no partitions found notify the user
 	if(mount_point_count == 0 || 1) {
 		c_puts("No DERP_FS Partitions Found!\n");
@@ -106,7 +105,7 @@ void _pci_probe_devices(){
 	char filename[10];
 	filename[0]='A'; filename[1]=':';filename[2]='F';filename[3]='U';filename[4]='C';filename[5]='K';filename[6]='Y';filename[7]='O';filename[8]='U';
 	Uint8 j; FILE *f;
-	for(j = 0; j < 26 * 2; j++) {
+	for(j = 0; j < 52 ; j++) {
 		filename[9] = 0x41 + j;
 		f = fopen(filename);
 		if(j > 50 && f->code == FS_SUCCESS_NEWFILE) {
@@ -117,7 +116,6 @@ void _pci_probe_devices(){
 
 	// Print out the first sector of drive 0
 	__panic("HOLY FUCK.");
-#endif
 }
 
 /**
