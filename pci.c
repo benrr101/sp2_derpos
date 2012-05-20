@@ -108,8 +108,7 @@ void _pci_probe_devices(){
 	for(j = 0; j < 52 ; j++) {
 		filename[9] = 0x41 + j;
 		f = fopen(filename);
-		if(j > 50 && f->code == FS_SUCCESS_NEWFILE) {
-			c_printf("*** Code was: 0x%x\n", f->code);
+		c_printf("*** Code was: 0x%x. Addr was: 0x%x\n", f->code, f);
 			__panic("WHITE.");
 		}
 	}

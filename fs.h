@@ -163,6 +163,7 @@ int _fs_namecmp(ATASector *sect, Uint16 index, char name[8]);
 Uint32 _fs_get_file_size(FILE *file);
 FS_STATUS _fs_allocate_filepointer(const FILE *source, FILE **dest);
 FS_STATUS _fs_unallocate_filepointer(FILE *file);
+int _fs_is_free_filepointer(void);
 FS_STATUS _fs_file_inuse(FILE *file);
 void _fs_copy_sector(const ATASector *source, ATASector *dest);
 
