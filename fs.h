@@ -50,8 +50,9 @@
 // FilePointer Table Definitions
 #define FS_FP_SIZE				0x1F0			// 496 bytes of pointers
 #define FS_FP_LENGTH			0x04			// 4 bytes per pointer
-#define FS_FP_OFFSET			0x10			// Starts at byte 16
-#define FS_FP_END				0x1D0			// Ends at byte 464
+#define FS_FP_FILES				0x010			// Number of files in this sect
+#define FS_FP_OFFSET			0x14			// Starts at byte 18
+#define FS_FP_END				0x1D0			// Ends at byte 468
 #define FS_FP_FREE				0x00
 
 // NameTable definitions
