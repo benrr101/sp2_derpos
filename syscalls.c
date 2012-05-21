@@ -454,7 +454,7 @@ static void _sys_get_pid( Pcb *pcb ) {
 
 	RET(pcb) = SUCCESS;
 	*((Uint32 *)(ARG(pcb)[1])) = pcb->pid;
-
+	
 }
 
 /*
