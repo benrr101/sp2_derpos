@@ -272,6 +272,7 @@ void _init( void ) {
 	Uint32* ptable=_vmeml2_create_page_table( pcb->pdt, ( STACK_ADDRESS / PAGE_TABLE_SIZE)  );
 	//Uint32* rpage = _vmeml2_create_page_reserved( ptable, 0 );
 	 _vmeml2_create_page_reserved( ptable, 0 );
+	 _vmeml2_create_page_reserved( ptable, 1 );
 	pcb->stack = (Stack*) ( STACK_ADDRESS);
 
 	_vmeml2_change_page( (Uint32) pcb->pdt );
