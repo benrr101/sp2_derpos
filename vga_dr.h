@@ -11,7 +11,6 @@
 ** General (C and/or assembly) definitions
 */
 
-#ifndef __ASM__20113__
 
 /*
 ** Start of C-only definitions
@@ -111,6 +110,5 @@ void _vga_print_info( void );
 Uint32* _vga_get_end_mem( void );
 Uint32* _vga_get_start_mem( void );
 
-#endif // ACM
 
 #endif // VGA
