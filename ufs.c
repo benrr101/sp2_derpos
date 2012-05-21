@@ -95,10 +95,10 @@ FS_STATUS fclose(FILE *file) {
 
 FS_STATUS fdelete(FILE *file) {
 	// Mark the file pointer as available
-	file->code = FS_AVAILABLE;
+
 	
 	// Tear apart the file and send it to the deleter
-	return _fs_delete_file(file->mp, file->name);
+	return _fs_delete_file(file);
 }
 
 /**

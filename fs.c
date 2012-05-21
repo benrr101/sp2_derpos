@@ -262,53 +262,56 @@ FILE _fs_find_empty_fspointer(MountPoint *mp) {
  * @return	FS_STATUS	FS_SUCCESS on successful deletion. Anything else on
  *						failure.
  */
-FS_STATUS _fs_delete_file(MountPoint *mp, char filename[8]) {
-	// Find the file
-	FILE file = _fs_find_file(mp, filename);
-
-	// Verify we found it
-	if(file.code == FS_ERR_FILENOTFOUND) {
-		return file.code;
+FS_STATUS _fs_delete_file(FILE *file) {
+	// Verify this is a valid file
+	if(file->code == FS_AVAILABLE) {
+		return FS_ERR_BADFILE;
 	}
 
 	// Remove the name of the file by loading and removing the name table
-	Uint32 sector = mp->offset + file.ib;
-	sector += (file.ibindex >= FS_NAME_S1ENTRIES) ? 2 : 1;
-	_ata_read_sector(mp->device, sector, &file.buffer);
+	Uint32 sector = file->mp->offset + file->ib;
+	sector += (file->ibindex >= FS_NAME_S1ENTRIES) ? 2 : 1;
+	_ata_read_sector(file->mp->device, sector, &(file->buffer));
 
-	Uint32 offset = file.ibindex;
-	offset -= (file.ibindex >= FS_NAME_S1ENTRIES) ? FS_NAME_S1ENTRIES : 0;
+	Uint32 offset = file->ibindex;
+	offset -= (file->ibindex >= FS_NAME_S1ENTRIES) ? FS_NAME_S1ENTRIES : 0;
 	offset = (offset * FS_NAME_SIZE) + FS_NAME_OFFSET;
-	_sector_put_long(&file.buffer, offset, 0x0);
-	_sector_put_long(&file.buffer, offset + 4, 0x0);
+	_sector_put_long(&(file->buffer), offset, 0x0);
+	_sector_put_long(&(file->buffer), offset + 4, 0x0);
 	// IF THE SIZE EVER CHANGES, THESE LINES ARE BORKED.
+
+	// Write the name table back to the disk
+	_ata_write_sector(file->mp->device, sector, &(file->buffer));
 
 	// Load the ib of the file
 	// Using the file's buffer for temp actions
-	_ata_read_sector(mp->device, mp->offset + file.ib, &file.buffer);
+	_ata_read_sector(file->mp->device, file->mp->offset + file->ib, &(file->buffer));
 
 	// @TODO: Verify it's an IB
 	// Get the sector value from the table
-	offset = (file.ibindex * FS_FP_LENGTH) + FS_FP_OFFSET;
-	sector = _sector_get_long(&file.buffer, offset);
+	offset = (file->ibindex * FS_FP_LENGTH) + FS_FP_OFFSET;
+	sector = _sector_get_long(&(file->buffer), offset);
 
 	// Mark the filepointer as available
-	_sector_put_long(&file.buffer, offset, FS_FP_FREE);
+	_sector_put_long(&(file->buffer), offset, FS_FP_FREE);
 
 	// Write it back to the disk
-	_ata_write_sector(mp->device, mp->offset + file.ib, &file.buffer);
+	_ata_write_sector(file->mp->device, file->mp->offset + file->ib, &(file->buffer));
 	
 	// Traverse the file chain's sector's and unallocate as we go
 	while(sector != FS_FILE_EOC) {
 		// Grab the sector
-		_ata_read_sector(mp->device, mp->offset + sector, &file.buffer);
+		_ata_read_sector(file->mp->device, file->mp->offset + sector, &(file->buffer));
 
 		// Unallocate the sector
-		_fs_unallocate_sector(mp, sector);
+		_fs_unallocate_sector(file->mp, sector);
 
 		// Go to next sector
-		sector = _sector_get_long(&file.buffer, FS_FILE_SECT_OFF);
+		sector = _sector_get_long(&(file->buffer), FS_FILE_SECT_OFF);
 	}
+
+	// Mark the file pointer as available
+	file->code = FS_AVAILABLE;
 
 	return FS_SUCCESS;
 }

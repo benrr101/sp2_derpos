@@ -79,6 +79,7 @@ typedef enum {
 	FS_ERR_TOOSMALL,
 	FS_ERR_BADINDEX,
 	FS_ERR_BADSECT,
+	FS_ERR_BADFILE,
 	FS_ERR_NOTDERP,
 	FS_ERR_FILENOTFOUND,
 	FS_ERR_FULL,
@@ -153,7 +154,7 @@ Uint32 _fs_find_empty_sector(MountPoint *mp);
 FILE _fs_find_empty_fspointer(MountPoint *mp);
 FILE _fs_find_file(MountPoint *mp, char filename[8]);
 FILE _fs_create_file(MountPoint *mp, char filename[8]);
-FS_STATUS _fs_delete_file(MountPoint *mp, char filename[8]);
+FS_STATUS _fs_delete_file(FILE *file);
 void _fs_probe(ATADevice *dev);
 void _fs_allocate_sector(MountPoint *mp, Uint32 sector);
 void _fs_unallocate_sector(MountPoint *mp, Uint32 sector);
