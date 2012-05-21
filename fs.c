@@ -18,6 +18,28 @@
 // FUNCTIONS ///////////////////////////////////////////////////////////////
 
 /**
+ * Initializes each of the ata devices in the hopes that there are derp fs on
+ * at least one of them. This initializes the global array of mountpoints.
+ */
+void _fs_init(void) {
+    c_puts("... Searching for Filesystems\n");
+    
+    if(ata_device_count == 0) {
+		c_puts("*** No ATA Devices Found!\n");
+    }
+
+    // Iterate over the devices and probe for filesystems
+	Uint8 i;
+	for(i = 0; i < ata_device_count; i++) {
+		_fs_probe(&ata_devices[i]);
+	}
+
+	if(mount_point_count == 0) {
+		c_puts("*** No DERP_FS Filesystems Found!\n");
+	}
+}
+
+/**
  * Probes the given ata device for any DERP_FS partitions. If a partition is
  * found, the partition is mounted to the mount_points global variable and the
  * value of mount_point_count is incremented.

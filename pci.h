@@ -21,7 +21,7 @@
 
 #define INVALID		0xFFFF
 
-void _pci_probe_devices( void );
+void _pci_init( void );
 
 // Config read functions
 Uint32 _pci_config_readl( Uint16 bus, Uint16 slot, Uint16 func, Uint16 offset );

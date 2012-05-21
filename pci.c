@@ -18,10 +18,10 @@
  * Scans for all PCI devices, and printing information about discovered devices
  * to the terminal.
  */
-void _pci_probe_devices(){
+void _pci_init(){
 	
 	// report that the PCI probe is starting
-	c_puts("Probing for PCI Devices...\n");
+	c_puts("\n... Initializing PCI Devices\n");
 
 	// Initialize the number of ATA devices to 0
 	ata_device_count = 0;
@@ -68,54 +68,6 @@ void _pci_probe_devices(){
 			}
 		}
 	}
-
-	// Print out all the ATA devices found
-	c_printf("%d ATA devices found:\n", ata_device_count);
-	//Uint8 i;
-	for(i = 0; i < ata_device_count; i++) {
-		c_printf("   %s Model: %s\n       Serial: %s\n       Sectors: %x\n", 
-			(ata_devices[i].type == ATA_TYPE_ATAPI) ? "ATAPI" : "ATA",
-			ata_devices[i].model,
-			ata_devices[i].serial,
-			ata_devices[i].size
-			);
-
-		// Probe it for partitions
-		_fs_probe(&ata_devices[i]);
-	}
-	// If there were no partitions found notify the user
-	if(mount_point_count == 0) {
-		c_puts("No DERP_FS Partitions Found!\n");
-		c_puts("... Creating test partition\n");
-
-		Uint8 code = _fs_create_partition(&ata_devices[1], 0x1, 2048, 0);
-		if(code != FS_SUCCESS) {
-			c_printf("*** Filesystem creation failed with code 0x%x\n", code);
-		}
-		code = _fs_format(&mount_points[mount_point_count], &ata_devices[1], 0);
-		if(code != FS_SUCCESS) {
-			c_printf("*** Filesystem format failed with code 0x%x\n", code);
-		}
-	}
-
-	c_puts("Beginning tests...\n");
-	c_puts("Opening existing file\n");
-	char buffer[21];
-	char buffer2[21];
-	buffer[20] = 0x0; buffer2[15] = 0x0;
-	char filename[10];
-	filename[0]='A'; filename[1]=':';filename[2]='P';filename[3]='I';filename[4]='S';filename[5]='S';filename[6]='O';filename[7]='F';filename[8]='F';filename[9]='!';
-	FILE *f = fopen(filename);
-		
-	c_printf("Filesize: %db\n", _fs_get_file_size(f));
-	c_printf("IB:       %d\n", f->ib);
-	c_printf("IBINDEX:  %d\n", f->ibindex);
-
-	c_puts("Deleting it\n");
-	fdelete(f);
-	
-	// Print out the first sector of drive 0
-	__panic("HOLY FUCK.");
 }
 
 /**

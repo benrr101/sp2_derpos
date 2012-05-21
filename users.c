@@ -32,8 +32,6 @@ void init( void ) {
 
 	c_puts( "Init started\n" );
 
-	_pci_probe_devices();
-
 	/*
 	** And now we start twiddling our thumbs
 	*/
