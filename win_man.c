@@ -27,7 +27,7 @@ void _win_man_init( void ) {
 	
 	//setup the memory for the arrays and 
 	// this module
-	wm_memory = (void *)(0x20000000 );
+	wm_memory = (void *)( 0x20000000 );
 	//array of screen_infos
 	screen_info_arr = (screen_info *)( wm_memory + WIN_MAN_MEM );
 	
@@ -53,6 +53,7 @@ void _win_man_init( void ) {
 		screen_info_arr[i].pid = 0;
 		screen_info_arr[i].active = 0;
 		screen_info_arr[i].blocking = 0;
+		screen_info_arr[i].dirty = 1; //default dirty
 		
 		#ifdef WM_DEBUG
 		c_printf("%d  - %x || ", i, ( i * dH * dW * 4) );
