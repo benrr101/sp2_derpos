@@ -20,6 +20,7 @@ typedef struct screen_info
 	Uint32*	bPtr;
 	Uint8	active;
 	Uint8	blocking;
+	Uint8	dirty;
 	mouse_handler	handler;
 }	screen_info;
 
