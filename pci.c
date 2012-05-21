@@ -99,31 +99,34 @@ void _pci_probe_devices(){
 	}
 
 	c_puts("Beginning tests...\n");
-	c_puts("Opening new file\n");
+	c_puts("Opening existing file\n");
 	char buffer[21];
-	buffer[20] = 0x0;
+	char buffer2[21];
+	buffer[20] = 0x0; buffer2[15] = 0x0;
 	char filename[10];
-	filename[0]='A'; filename[1]=':';filename[2]='F';filename[3]='U';filename[4]='C';filename[5]='K';filename[6]='Y';filename[7]='O';filename[8]='U';
-	Uint8 j; FILE *f;
-	for(j = 0; j < 52 ; j++) {
-		filename[9] = 0x41 + j;
-		f = fopen(filename);
-		c_printf("File %x=%x, %x Got back code: %x\n", filename[9], 0x80, j, f->code);
-		if(f->code != FS_SUCCESS) {  __panic("FAILED!"); }
-		if(j == 110) { fwrite(f, "FRIG OFF, BARB!", 15); fflush(f);}
-		fclose(f);
-	}
+	filename[0]='A'; filename[1]=':';filename[2]='F';filename[3]='U';filename[4]='C';filename[5]='K';filename[6]='Y';filename[7]='O';filename[8]='U';filename[9]='A';
+	FILE *f = fopen(filename);
+	if(f == NULL || f->code != FS_SUCCESS) { c_printf("F: 0x%x Code: 0x%x\n", f, f->code); __panic("FAILED"); }
+	c_printf("... File @0x%x Offset: %d\n", f, f->offset);
+	
+	c_puts("Writing some stuff to it\n");
+	Uint8 result = fwrite(f, "FRIG OFF, BARB!", 15);
+	if(result != 15) { c_printf("Wrote %d bytes...\n", result); __panic("FAILED"); }
 
-	filename[0]='A'; filename[1]=':';filename[2]='P';filename[3]='I';filename[4]='S';filename[5]='S';filename[6]='O';filename[7]='F';filename[8]='F';
-	for(j = 0; j < 52 ; j++) {
-		filename[9] = 0x41 + j;
-		f = fopen(filename);
-		c_printf("File %x=%x, %x Got back code: %x\n", filename[9], 0x80, j, f->code);
-		if(f->code != FS_SUCCESS) {  __panic("FAILED!"); }
-		if(j == 110) { fwrite(f, "FRIG OFF, BARB!", 15); fflush(f);}
-		fclose(f);
-	}
+	c_puts("Reading it back\n");
+	result = fseek(f, 0, FS_SEEK_ABS);
+	if(result != FS_SUCCESS) { c_printf("Result: 0x%x\n", result); __panic("FAILED"); }
+	result = fread(f, buffer2, 15);
+	if(result != 15) { c_printf("Read %d bytes. They say: %s\n", result, buffer2); __panic("FAILED"); }
 
+	c_puts("Closing the file\n");
+	result = fclose(f);
+	if(result != FS_SUCCESS) { c_printf("Result: 0x%x\n", result); __panic("FAILED"); }
+
+	c_puts("Reopening the file\n");
+	f = fopen(filename);
+	if(f == NULL || f->code != FS_SUCCESS) { c_printf("F: 0x%x Code: 0x%x\n", f, f->code); __panic("FAILED"); }
+	c_printf("... File @0x%x Offset: %d\n", f, f->offset);
 
 	// Print out the first sector of drive 0
 	__panic("HOLY FUCK.");
