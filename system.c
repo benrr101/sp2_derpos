@@ -25,6 +25,8 @@
 #include "vmemL2.h"
 #include "vmem_isr.h"
 #include "vmem_ref.h"
+#include "pci.h"
+#include "fs.h"
 
 // need init() address
 #include "users.h"
@@ -231,6 +233,8 @@ void _init( void ) {
 	_sio_init();
 	_syscall_init();
 	_sched_init();
+	_pci_init();
+	_fs_init();
 	_clock_init();
 
 	c_puts( "\n" );

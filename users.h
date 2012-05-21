@@ -14,6 +14,7 @@
 #define _USER_H
 
 #include "headers.h"
+#include "pci.h"
 
 /*
 ** General (C and/or assembly) definitions
@@ -43,6 +44,7 @@
 ** uncomment its entry in this list.
 */
 
+/*
 #define	SPAWN_A   // write, exit
 
 #define	SPAWN_B   // write, exit
@@ -66,6 +68,8 @@
 #define	SPAWN_T   // write, get_prio, set_priority, exit
 // no user U
 // no user V
+*/
+#define SPAWN_PCI
 
 /*
 ** Users W-Z are spawned from other processes; they
