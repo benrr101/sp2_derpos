@@ -88,7 +88,7 @@ void _pci_probe_devices(){
 		c_puts("No DERP_FS Partitions Found!\n");
 		c_puts("... Creating test partition\n");
 
-		Uint8 code = _fs_create_partition(&ata_devices[1], 0x1, 1024, 0);
+		Uint8 code = _fs_create_partition(&ata_devices[1], 0x1, 2048, 0);
 		if(code != FS_SUCCESS) {
 			c_printf("*** Filesystem creation failed with code 0x%x\n", code);
 		}
@@ -104,29 +104,29 @@ void _pci_probe_devices(){
 	char buffer2[21];
 	buffer[20] = 0x0; buffer2[15] = 0x0;
 	char filename[10];
-	filename[0]='A'; filename[1]=':';filename[2]='F';filename[3]='U';filename[4]='C';filename[5]='K';filename[6]='Y';filename[7]='O';filename[8]='U';filename[9]='A';
+	filename[0]='A'; filename[1]=':';filename[2]='B';filename[3]='U';filename[4]='C';filename[5]='K';filename[6]='Y';filename[7]='O';filename[8]='U';filename[9]='D';
 	FILE *f = fopen(filename);
-	if(f == NULL || f->code != FS_SUCCESS) { c_printf("F: 0x%x Code: 0x%x\n", f, f->code); __panic("FAILED"); }
-	c_printf("... File @0x%x Offset: %d\n", f, f->offset);
-	
-	c_puts("Writing some stuff to it\n");
-	Uint8 result = fwrite(f, "FRIG OFF, BARB!", 15);
-	if(result != 15) { c_printf("Wrote %d bytes...\n", result); __panic("FAILED"); }
+		
+	c_printf("Filesize: %db\n", _fs_get_file_size(f));
 
-	c_puts("Reading it back\n");
-	result = fseek(f, 0, FS_SEEK_ABS);
-	if(result != FS_SUCCESS) { c_printf("Result: 0x%x\n", result); __panic("FAILED"); }
-	result = fread(f, buffer2, 15);
-	if(result != 15) { c_printf("Read %d bytes. They say: %s\n", result, buffer2); __panic("FAILED"); }
+	c_puts("Writing and flushing it\n");
+	fwrite(f, "FRIG OFF, BARB!", 15);
+	fflush(f);
 
-	c_puts("Closing the file\n");
-	result = fclose(f);
-	if(result != FS_SUCCESS) { c_printf("Result: 0x%x\n", result); __panic("FAILED"); }
+	c_printf("Filesize: %db\n", _fs_get_file_size(f));
 
-	c_puts("Reopening the file\n");
-	f = fopen(filename);
-	if(f == NULL || f->code != FS_SUCCESS) { c_printf("F: 0x%x Code: 0x%x\n", f, f->code); __panic("FAILED"); }
-	c_printf("... File @0x%x Offset: %d\n", f, f->offset);
+	c_puts("Writing and flushing it\n");
+	fwrite(f, "FRIG OFF, BARB!", 15);
+	fflush(f);
+
+	c_printf("Filesize: %db\n", _fs_get_file_size(f));
+
+	c_puts("Rewinding writing and flushing it\n");
+	fseek(f, 0, FS_SEEK_ABS);
+	fwrite(f, "FRIG OFF, BARB!", 15);
+	fflush(f);
+
+	c_printf("Filesize: %db\n", _fs_get_file_size(f));
 
 	// Print out the first sector of drive 0
 	__panic("HOLY FUCK.");
