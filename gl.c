@@ -12,7 +12,7 @@ void _gl_init( void ) {
 	scrn_info_arr = get_screen_infos( );
 	video_mem_ptr = (Uint32 *)_vga_get_start_mem( );
 	#ifndef GL_DEBUG
-	//clear_display();
+	clear_display();
 	#endif
 	bytes_perline = vga_mode_info->LinbytesPerScanLine/4;
 	//buff_bytes_perline = bytes_perline/2;
@@ -172,6 +172,10 @@ void draw_pixel(Uint32 x, Uint32 y, pixel p) {
 
 	curr_si = ( get_screen_info( pid ) );
 	if(curr_si != NULL) {
+	
+		if( x > curr_si->w || y > curr_si->h )
+			return;
+			
 		#ifdef GL_DEBUG
 		if(x == 0)
 			c_printf(" (P:%d)0x%x(%d,%d) ", pid, curr_si, curr_si->w,curr_si->h);
@@ -185,6 +189,8 @@ void draw_pixel(Uint32 x, Uint32 y, pixel p) {
 }
 
 void set_pixel(Uint32 x, Uint32 y, pixel p, screen_info* curr_si) {
+	if( x > curr_si->w || y > curr_si->h )
+		return;
 	set_pixel_int(x, y, pix_to_color ( p ), curr_si);
 }
 
@@ -531,10 +537,10 @@ void draw_scr_9() {
 		p.a = 0xc0;
 
 		draw_rect(0,0,10,10, p);
-		draw_rect(502,0,512,10, p);
-		draw_rect(200,200,250,250, p);
-		draw_rect(0,630,10,640, p);
-		draw_rect(502,630,512,640, p);
+		
+		draw_rect(20,20,30,40, p);
+		draw_rect(50,50,80,80, p);
+		draw_rect(200,200,300,400, p);
 
 		msleep(3000);
 	}
