@@ -425,7 +425,7 @@ FILE _fs_find_file(MountPoint *mp, char filename[8]) {
 			// Are the names the same?
 			if(_fs_namecmp(&(file.buffer), offset, filename) == 0) {
 				// We have a match!
-                _ata_read_sector(mp->device, mp->offset + i - 1, &(file.buffer));
+                _ata_read_sector(mp->device, mp->offset + i + 1, &(file.buffer));
                 Uint32 fsect = _sector_get_long(&(file.buffer), FS_FP_OFFSET + (j * FS_FP_LENGTH));
                 
                 // Grab the first sector of the file for buffering
@@ -491,7 +491,11 @@ Uint32 _fs_get_file_size(FILE *file) {
 		_ata_read_sector(file->mp->device, file->mp->offset + sector, &sect);
 
 		// Add the bytes allocated
-		size += _sector_get_long(&sect, FS_FILE_BYTE_OFF);
+		if(sector == file->bufsect) {
+			size += _sector_get_long(&(file->buffer), FS_FILE_BYTE_OFF);
+		} else {
+			size += _sector_get_long(&sect, FS_FILE_BYTE_OFF);
+		}
 
 		// Get the next sector number
 		sector = _sector_get_long(&sect, FS_FILE_SECT_OFF);
