@@ -51,6 +51,12 @@ FILE *fopen(char filepath[10]) {
 	// See if we can find the file
 	f = _fs_find_file(mp, f.name);
 	if(f.code == FS_ERR_FILENOTFOUND) {
+		// Make sure there is a free filepointer first
+		if(!_fs_is_free_filepointer()) {
+			// No file pointers, so blow up.
+			return NULL;
+		}
+
 		// File not found -- so create it!
 		f = _fs_create_file(mp, f.name);
 		f.code = FS_SUCCESS_NEWFILE;
@@ -60,6 +66,7 @@ FILE *fopen(char filepath[10]) {
 			// File is in use, so we can't use it again
 			return NULL;
 		}
+
 		f.code = FS_SUCCESS;
 	}
 
@@ -87,8 +94,11 @@ FS_STATUS fclose(FILE *file) {
 }
 
 FS_STATUS fdelete(FILE *file) {
+	// Mark the file pointer as available
+
+	
 	// Tear apart the file and send it to the deleter
-	return _fs_delete_file(file->mp, file->name);
+	return _fs_delete_file(file);
 }
 
 /**
@@ -252,7 +262,11 @@ FS_STATUS fseek(FILE *file, Uint32 offset, FS_FILE_SEEK dir) {
  * @return	Uint32	The number of bytes read.
  */
 Uint32 fread(FILE *file, char *buffer, Uint32 size) { 
-	// @TODO Error check for dumb things
+	// Make sure the file is in a good state for reading
+	if(file->code == FS_AVAILABLE) {
+		// This is an uninitalized file pointer
+		return 0;
+	}
 
 	// Start copying bytes into the buffer
 	Uint32 bytes;
@@ -350,8 +364,10 @@ Uint32 fwrite(FILE *file, char *buffer, Uint32 size) {
 
 		// Increment number of bytes in this sector
 		Uint32 oldbytes = _sector_get_long(&(file->buffer), FS_FILE_BYTE_OFF);
-		oldbytes++;
-		_sector_put_long(&(file->buffer), FS_FILE_BYTE_OFF, oldbytes);
+		if(sectBytes >= oldbytes) {
+			oldbytes++;
+			_sector_put_long(&(file->buffer), FS_FILE_BYTE_OFF, oldbytes);
+		}
 	}
 	
 	// Done!

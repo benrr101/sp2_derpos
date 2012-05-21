@@ -50,9 +50,8 @@
 // FilePointer Table Definitions
 #define FS_FP_SIZE				0x1F0			// 496 bytes of pointers
 #define FS_FP_LENGTH			0x04			// 4 bytes per pointer
-#define FS_FP_FILES				0x010			// Number of files in this sect
-#define FS_FP_OFFSET			0x14			// Starts at byte 18
-#define FS_FP_END				0x1D0			// Ends at byte 468
+#define FS_FP_OFFSET			0x10			// Starts at byte 16
+#define FS_FP_END				0x1D0			// Ends at byte 464
 #define FS_FP_FREE				0x00
 
 // NameTable definitions
@@ -80,6 +79,7 @@ typedef enum {
 	FS_ERR_TOOSMALL,
 	FS_ERR_BADINDEX,
 	FS_ERR_BADSECT,
+	FS_ERR_BADFILE,
 	FS_ERR_NOTDERP,
 	FS_ERR_FILENOTFOUND,
 	FS_ERR_FULL,
@@ -148,14 +148,20 @@ Uint8 mount_point_count;
 FILE file_pointers[FS_MAX_FILEPOINTERS];
 
 // FUNCTIONS ///////////////////////////////////////////////////////////////
+// Initialization
+void _fs_init(void);
+void _fs_probe(ATADevice *dev);
 FS_STATUS _fs_create_partition(ATADevice *dev, Uint32 start, Uint32 size, Uint8 index);
 FS_STATUS _fs_format(MountPoint *mp, ATADevice *dev, Uint8 index);
+
+// File creation/deletion
+FILE _fs_create_file(MountPoint *mp, char filename[8]);
+FS_STATUS _fs_delete_file(FILE *file);
+
+// Helper functions
 Uint32 _fs_find_empty_sector(MountPoint *mp);
 FILE _fs_find_empty_fspointer(MountPoint *mp);
 FILE _fs_find_file(MountPoint *mp, char filename[8]);
-FILE _fs_create_file(MountPoint *mp, char filename[8]);
-FS_STATUS _fs_delete_file(MountPoint *mp, char filename[8]);
-void _fs_probe(ATADevice *dev);
 void _fs_allocate_sector(MountPoint *mp, Uint32 sector);
 void _fs_unallocate_sector(MountPoint *mp, Uint32 sector);
 void _fs_toggle_sector(MountPoint *mp, Uint32 sector);
@@ -163,6 +169,7 @@ int _fs_namecmp(ATASector *sect, Uint16 index, char name[8]);
 Uint32 _fs_get_file_size(FILE *file);
 FS_STATUS _fs_allocate_filepointer(const FILE *source, FILE **dest);
 FS_STATUS _fs_unallocate_filepointer(FILE *file);
+int _fs_is_free_filepointer(void);
 FS_STATUS _fs_file_inuse(FILE *file);
 void _fs_copy_sector(const ATASector *source, ATASector *dest);
 
