@@ -96,16 +96,20 @@ static void _sys_fork( Pcb *pcb ) {
 	new->pdt = _vmeml2_create_page_dir();
 	Uint32* ptable=_vmeml2_create_page_table( new->pdt, ( STACK_ADDRESS / PAGE_TABLE_SIZE)  );
 	Uint32* rpage = _vmeml2_create_page_reserved( ptable, 0 );
+	Uint32* rpage2 = _vmeml2_create_page_reserved( ptable, 1 );
 	new->stack = (Stack*) ( STACK_ADDRESS);
 
-
-	_kmemcpy( (void *)rpage, (void *)pcb->stack, sizeof(Stack));
+	c_printf("R1 address: %x  From:%x Page:%x\n", rpage, pcb->stack, PAGE_SIZE);
+	c_printf("Change: %x %x %x\n", rpage, (Uint32)pcb->stack, ((Uint32)( pcb->stack) + PAGE_SIZE));
+	_kmemcpy( (void *)rpage, (void *)pcb->stack, PAGE_SIZE);
+	c_printf("R1 address: %x  From:%x Page:%x\n", rpage2, ((Uint32)( pcb->stack) + PAGE_SIZE), PAGE_SIZE);
+	_kmemcpy( (void *)rpage2, (void *)((Uint32)( pcb->stack) + PAGE_SIZE), PAGE_SIZE);
 	// fix the pcb fields that should be unique to this process
 
 	new->pid = _next_pid++;
 	new->ppid = pcb->pid;
 	new->state = NEW;
-//	c_printf( "Forked address %x %x \n", new->pid, (Uint32)new->pdt, pcb->pid , (Uint32)pcb->pdt );
+	c_printf( "Forked address %x %x \n", new->pid, (Uint32)new->pdt, pcb->pid , (Uint32)pcb->pdt );
 
 	/*
         ** Next, we must fix the EBP chain in the child.  This is necessary
@@ -493,7 +497,9 @@ static void _sys_exec( Pcb *pcb ) {
 
 	// invoke the common code for process creation
 
+	c_printf("Hello 1");
 	status = _create_process( pcb, ARG(pcb)[1] );
+	c_printf("Hello 2");
 
 	// we only need to assign this if the creation failed
 	// for some reason - otherwise, this process never
