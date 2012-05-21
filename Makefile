@@ -9,10 +9,10 @@
 #
 # User supplied files
 #
-U_C_SRC = clock.c klibc.c pcbs.c queues.c scheduler.c sio.c stacks.c syscalls.c system.c ulibc.c users.c fs.c ata.c pci.c ufs.c
-U_C_OBJ = clock.o klibc.o pcbs.o queues.o scheduler.o sio.o stacks.o syscalls.o system.o ulibc.o users.o fs.o ata.o pci.o ufs.o
-U_S_SRC = klibs.S ulibs.S
-U_S_OBJ = klibs.o ulibs.o
+U_C_SRC = clock.c klibc.c pcbs.c queues.c scheduler.c sio.c stacks.c syscalls.c system.c ulibc.c users.c vmem.c vmemL2.c vmem_isr.c vmem_ref.c fs.c ata.c pci.c ufs.c
+U_C_OBJ = clock.o klibc.o pcbs.o queues.o scheduler.o sio.o stacks.o syscalls.o system.o ulibc.o users.o vmem.o vmemL2.o vmem_isr.o vmem_ref.o fs.o ata.o pci.o ufs.o
+U_S_SRC = klibs.S ulibs.S vmemA.S
+U_S_OBJ = klibs.o ulibs.o vmemA.o
 U_LIBS	=
 
 #
@@ -192,24 +192,46 @@ depend:
 
 bootstrap.o: bootstrap.h
 startup.o: bootstrap.h
-isr_stubs.o: bootstrap.h
-ulibs.o: syscalls.h headers.h queues.h /home/fac/wrc/include/x86arch.h
-c_io.o: c_io.h startup.h support.h /home/fac/wrc/include/x86arch.h
-support.o: startup.h support.h c_io.h /home/fac/wrc/include/x86arch.h
-support.o: bootstrap.h
-clock.o: headers.h /home/fac/wrc/include/x86arch.h startup.h clock.h pcbs.h
-clock.o: stacks.h queues.h scheduler.h sio.h syscalls.h
-klibc.o: headers.h
-pcbs.o: headers.h queues.h pcbs.h clock.h stacks.h
-queues.o: headers.h pcbs.h clock.h stacks.h queues.h
-scheduler.o: headers.h scheduler.h pcbs.h clock.h stacks.h queues.h
-sio.o: headers.h sio.h queues.h pcbs.h clock.h stacks.h scheduler.h system.h
-sio.o: startup.h /home/fac/wrc/include/uart.h /home/fac/wrc/include/x86arch.h
-stacks.o: headers.h queues.h stacks.h
-syscalls.o: headers.h pcbs.h clock.h stacks.h scheduler.h queues.h sio.h
-syscalls.o: syscalls.h /home/fac/wrc/include/x86arch.h system.h startup.h
-system.o: headers.h system.h pcbs.h clock.h stacks.h bootstrap.h syscalls.h
-system.o: queues.h /home/fac/wrc/include/x86arch.h sio.h scheduler.h users.h
-system.o: ulib.h types.h
-ulibc.o: headers.h
-users.o: headers.h users.h
+isr_stubs.o: bootstrap.h vmem.h headers.h defs.h types.h c_io.h support.h
+isr_stubs.o: ulib.h clock.h pcbs.h stacks.h
+ulibs.o: syscalls.h headers.h defs.h types.h c_io.h support.h ulib.h clock.h
+ulibs.o: pcbs.h stacks.h queues.h /home/fac/wrc/include/x86arch.h
+c_io.o: c_io.h startup.h headers.h defs.h types.h support.h ulib.h clock.h
+c_io.o: pcbs.h stacks.h /home/fac/wrc/include/x86arch.h
+support.o: startup.h headers.h defs.h types.h c_io.h support.h ulib.h clock.h
+support.o: pcbs.h stacks.h /home/fac/wrc/include/x86arch.h bootstrap.h
+clock.o: headers.h defs.h types.h c_io.h support.h ulib.h clock.h pcbs.h
+clock.o: stacks.h /home/fac/wrc/include/x86arch.h startup.h queues.h
+clock.o: scheduler.h sio.h syscalls.h
+klibc.o: headers.h defs.h types.h c_io.h support.h ulib.h clock.h pcbs.h
+klibc.o: stacks.h
+pcbs.o: headers.h defs.h types.h c_io.h support.h ulib.h clock.h pcbs.h
+pcbs.o: stacks.h queues.h
+queues.o: headers.h defs.h types.h c_io.h support.h ulib.h clock.h pcbs.h
+queues.o: stacks.h queues.h
+scheduler.o: headers.h defs.h types.h c_io.h support.h ulib.h clock.h pcbs.h
+scheduler.o: stacks.h scheduler.h queues.h
+sio.o: headers.h defs.h types.h c_io.h support.h ulib.h clock.h pcbs.h
+sio.o: stacks.h sio.h queues.h scheduler.h system.h startup.h
+sio.o: /home/fac/wrc/include/uart.h /home/fac/wrc/include/x86arch.h
+stacks.o: headers.h defs.h types.h c_io.h support.h ulib.h clock.h pcbs.h
+stacks.o: stacks.h queues.h
+syscalls.o: headers.h defs.h types.h c_io.h support.h ulib.h clock.h pcbs.h
+syscalls.o: stacks.h scheduler.h queues.h sio.h syscalls.h
+syscalls.o: /home/fac/wrc/include/x86arch.h system.h startup.h
+system.o: headers.h defs.h types.h c_io.h support.h ulib.h clock.h pcbs.h
+system.o: stacks.h system.h bootstrap.h syscalls.h queues.h
+system.o: /home/fac/wrc/include/x86arch.h sio.h scheduler.h vmem.h vmemL2.h
+system.o: vmem_isr.h vmem_ref.h users.h
+ulibc.o: headers.h defs.h types.h c_io.h support.h ulib.h clock.h pcbs.h
+ulibc.o: stacks.h
+users.o: headers.h defs.h types.h c_io.h support.h ulib.h clock.h pcbs.h
+users.o: stacks.h users.h
+vmem.o: startup.h headers.h defs.h types.h c_io.h support.h ulib.h clock.h
+vmem.o: pcbs.h stacks.h vmem.h
+vmemL2.o: vmem.h headers.h defs.h types.h c_io.h support.h ulib.h clock.h
+vmemL2.o: pcbs.h stacks.h vmemL2.h
+vmem_isr.o: vmem_isr.h headers.h defs.h types.h c_io.h support.h ulib.h
+vmem_isr.o: clock.h pcbs.h stacks.h
+vmem_ref.o: vmem_ref.h headers.h defs.h types.h c_io.h support.h ulib.h
+vmem_ref.o: clock.h pcbs.h stacks.h vmemL2.h
