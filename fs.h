@@ -148,14 +148,20 @@ Uint8 mount_point_count;
 FILE file_pointers[FS_MAX_FILEPOINTERS];
 
 // FUNCTIONS ///////////////////////////////////////////////////////////////
+// Initialization
+void _fs_init(void);
+void _fs_probe(ATADevice *dev);
 FS_STATUS _fs_create_partition(ATADevice *dev, Uint32 start, Uint32 size, Uint8 index);
 FS_STATUS _fs_format(MountPoint *mp, ATADevice *dev, Uint8 index);
+
+// File creation/deletion
+FILE _fs_create_file(MountPoint *mp, char filename[8]);
+FS_STATUS _fs_delete_file(FILE *file);
+
+// Helper functions
 Uint32 _fs_find_empty_sector(MountPoint *mp);
 FILE _fs_find_empty_fspointer(MountPoint *mp);
 FILE _fs_find_file(MountPoint *mp, char filename[8]);
-FILE _fs_create_file(MountPoint *mp, char filename[8]);
-FS_STATUS _fs_delete_file(FILE *file);
-void _fs_probe(ATADevice *dev);
 void _fs_allocate_sector(MountPoint *mp, Uint32 sector);
 void _fs_unallocate_sector(MountPoint *mp, Uint32 sector);
 void _fs_toggle_sector(MountPoint *mp, Uint32 sector);
