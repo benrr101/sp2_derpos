@@ -82,9 +82,6 @@ void draw_active_screens() {
 		for(y = 0; y <= 1024; y++) {
 			video_mem_ptr[(y * bytes_perline) + 640] = 0xffffffff;
 		}
-		write_x(video_mem_ptr);
-		write( '\n' );
-		write( '\r' );
 		msleep( 1 );
 	}
 }
@@ -116,7 +113,6 @@ void draw_scr_0() {
 		p.b = 0xff;
 		p.a = 0xff;
 		draw_string(str, 10, 10, p);
-		write( 'a' );
 		msleep(1500);
 	}
 }
@@ -144,7 +140,6 @@ void draw_scr_1() {
 		p.b = 0x00;
 		p.a = 0x00;
 		draw_string(str, 10, 10, p);
-				write( 'b' );
 		msleep(2000);
 	}
 }
@@ -171,7 +166,6 @@ void draw_scr_2() {
 		p.b = 0x00;
 		p.a = 0x00;
 		draw_character('A', 10, 20, p);
-				write( 'c' );
 		msleep(2500);
 	}
 }
@@ -193,11 +187,114 @@ void draw_scr_3() {
 				draw_pixel(x, y, p);
 			}
 		}
-				write( 'd' );
 		msleep(3000);
 	}
 }
 
+void draw_scr_4() {
+
+	int x = 0;
+	int y = 0;
+	pixel p;
+
+	while ( 1 ) {
+
+		for(x = 0; x < 180; x++) {
+			for(y = 0; y < 180; y++) {
+				p.r = 0xff;
+				p.b = 0x00;
+				p.g = 0x00;
+				p.a = 0x00;
+				draw_pixel(x, y, p);
+			}
+		}
+		msleep(3000);
+	}
+}
+
+void draw_scr_5() {
+
+	int x = 0;
+	int y = 0;
+	pixel p;
+
+	while ( 1 ) {
+
+		for(x = 0; x < 180; x++) {
+			for(y = 0; y < 180; y++) {
+				p.r = 0x00;
+				p.b = 0xff;
+				p.g = 0x00;
+				p.a = 0x00;
+				draw_pixel(x, y, p);
+			}
+		}
+		msleep(3000);
+	}
+}
+
+void draw_scr_6() {
+
+	int x = 0;
+	int y = 0;
+	pixel p;
+
+	while ( 1 ) {
+
+		for(x = 0; x < 180; x++) {
+			for(y = 0; y < 180; y++) {
+				p.r = 0x00;
+				p.b = 0x00;
+				p.g = 0xff;
+				p.a = 0x00;
+				draw_pixel(x, y, p);
+			}
+		}
+		msleep(3000);
+	}
+}
+
+void draw_scr_7() {
+
+	int x = 0;
+	int y = 0;
+	pixel p;
+
+	while ( 1 ) {
+
+		for(x = 0; x < 180; x++) {
+			for(y = 0; y < 180; y++) {
+				p.r = 0xff;
+				p.b = 0xff;
+				p.g = 0x00;
+				p.a = 0x00;
+				draw_pixel(x, y, p);
+			}
+		}
+		msleep(3000);
+	}
+}
+
+void draw_scr_8() {
+
+	int x = 0;
+	int y = 0;
+	pixel p;
+
+	while ( 1 ) {
+
+		for(x = 0; x < 180; x++) {
+			for(y = 0; y < 180; y++) {
+				p.r = 0x00;
+				p.b = 0xff;
+				p.g = 0xff;
+				p.a = 0x00;
+				draw_pixel(x, y, p);
+			}
+		}
+		msleep(3000);
+	}
+}
 
 void draw_pixel(Uint32 x, Uint32 y, pixel p) {
 	Uint32			pix = 0;
@@ -326,7 +423,6 @@ void draw_string(char* str, Uint32 x, Uint32 y, pixel p) {
     while(str[len] != '\0') {
         if(str[len] >= aa && str[len] <= 122)
             str[len] -= 32; // uppercase no lower case yet
-        write_x(str[len]);
         len++;
     }
     len++; // obo
@@ -355,8 +451,6 @@ void draw_string(char* str, Uint32 x, Uint32 y, pixel p) {
             }
         }
     }
-    		write( '\n' );
-		write( '\r' );
 }
 
 
