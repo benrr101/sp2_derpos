@@ -99,10 +99,7 @@ static void _sys_fork( Pcb *pcb ) {
 	Uint32* rpage2 = _vmeml2_create_page_reserved( ptable, 1 );
 	new->stack = (Stack*) ( STACK_ADDRESS);
 
-	c_printf("R1 address: %x  From:%x Page:%x\n", rpage, pcb->stack, PAGE_SIZE);
-	c_printf("Change: %x %x %x\n", rpage, (Uint32)pcb->stack, ((Uint32)( pcb->stack) + PAGE_SIZE));
 	_kmemcpy( (void *)rpage, (void *)pcb->stack, PAGE_SIZE);
-	c_printf("R1 address: %x  From:%x Page:%x\n", rpage2, ((Uint32)( pcb->stack) + PAGE_SIZE), PAGE_SIZE);
 	_kmemcpy( (void *)rpage2, (void *)((Uint32)( pcb->stack) + PAGE_SIZE), PAGE_SIZE);
 	// fix the pcb fields that should be unique to this process
 
