@@ -94,6 +94,9 @@ FS_STATUS fclose(FILE *file) {
 }
 
 FS_STATUS fdelete(FILE *file) {
+	// Mark the file pointer as available
+	file->code = FS_AVAILABLE;
+	
 	// Tear apart the file and send it to the deleter
 	return _fs_delete_file(file->mp, file->name);
 }
@@ -259,7 +262,11 @@ FS_STATUS fseek(FILE *file, Uint32 offset, FS_FILE_SEEK dir) {
  * @return	Uint32	The number of bytes read.
  */
 Uint32 fread(FILE *file, char *buffer, Uint32 size) { 
-	// @TODO Error check for dumb things
+	// Make sure the file is in a good state for reading
+	if(file->code == FS_AVAILABLE) {
+		// This is an uninitalized file pointer
+		return 0;
+	}
 
 	// Start copying bytes into the buffer
 	Uint32 bytes;
@@ -357,8 +364,10 @@ Uint32 fwrite(FILE *file, char *buffer, Uint32 size) {
 
 		// Increment number of bytes in this sector
 		Uint32 oldbytes = _sector_get_long(&(file->buffer), FS_FILE_BYTE_OFF);
-		oldbytes++;
-		_sector_put_long(&(file->buffer), FS_FILE_BYTE_OFF, oldbytes);
+		if(sectBytes >= oldbytes) {
+			oldbytes++;
+			_sector_put_long(&(file->buffer), FS_FILE_BYTE_OFF, oldbytes);
+		}
 	}
 	
 	// Done!
