@@ -74,7 +74,7 @@ void _cleanup( Pcb *pcb ) {
 		}
 	}*/
 
-	_vmeml2_change_page( _vmem_page_dir );
+	_vmeml2_change_page( (Uint32)_vmem_page_dir );
 	_vmeml2_release_page_dir( pcb->pdt );
 
 	pcb->state = FREE;
@@ -228,7 +228,6 @@ void _init( void ) {
 	_vmeml2_init();
 	_vmem_ref_init();
 	_pcb_init();
-	_stack_init();
 	_sio_init();
 	_syscall_init();
 	_sched_init();
@@ -267,11 +266,6 @@ void _init( void ) {
 	pcb = _pcb_alloc();
 	if( pcb == NULL  ) {
 		_kpanic( "_init", "first pcb alloc failed\n", FAILURE );
-	}
-
-	pcb->stack = _stack_alloc();
-	if( pcb->stack == NULL ) {
-		_kpanic( "_init", "first stack alloc failed\n", FAILURE );
 	}
 
 	pcb->pdt = _vmeml2_create_page_dir();
