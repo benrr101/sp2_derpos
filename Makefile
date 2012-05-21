@@ -9,8 +9,8 @@
 #
 # User supplied files
 #
-U_C_SRC = clock.c klibc.c pcbs.c queues.c scheduler.c sio.c stacks.c syscalls.c system.c ulibc.c users.c vmem.c vmemL2.c vmem_isr.c vmem_ref.c
-U_C_OBJ = clock.o klibc.o pcbs.o queues.o scheduler.o sio.o stacks.o syscalls.o system.o ulibc.o users.o vmem.o vmemL2.o vmem_isr.o vmem_ref.o
+U_C_SRC = clock.c klibc.c pcbs.c queues.c scheduler.c sio.c stacks.c syscalls.c system.c ulibc.c users.c vmem.c vmemL2.c vmem_isr.c vmem_ref.c fs.c ata.c pci.c ufs.c
+U_C_OBJ = clock.o klibc.o pcbs.o queues.o scheduler.o sio.o stacks.o syscalls.o system.o ulibc.o users.o vmem.o vmemL2.o vmem_isr.o vmem_ref.o fs.o ata.o pci.o ufs.o
 U_S_SRC = klibs.S ulibs.S vmemA.S
 U_S_OBJ = klibs.o ulibs.o vmemA.o
 U_LIBS	=
