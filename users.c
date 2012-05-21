@@ -13,6 +13,129 @@
 #include "headers.h"
 
 #include "users.h"
+#include "ufs.h"
+#include "string.h"
+
+void fileshell(void) {
+	// Build a temp list of commands
+	char *commandList[10];
+	commandList[0] = "touch A:testfile\0";
+	commandList[1] = "write A:testfile\0";
+	commandList[2] = "write -10 A:testfile\0";
+	commandList[3] = "cat A:testfile\0";
+	commandList[4] = "ls A";
+	commandList[5] = "rm A:testfile";
+	commandList[6] = "drives";
+	commandList[7] = "part 1 2 20480";
+	commandList[8] = "format 1 2";
+	commandList[9] = "mounts";
+	Uint8 count = 0;
+
+	char buffer[20];
+
+	// Loop indefinitely
+	while(1) {
+		// Print a prompt
+		c_puts("DERP_FS Shell> ");
+		
+		// Read a buffer from the user
+		//buf_read(buffer, 20);
+		//@TEST:
+		Uint8 i;
+		for(i = 0; i < 20 && commandList[count][i] != 0x0; i++) {
+			buffer[i] = commandList[count][i];
+		}
+		for(i=i; i < 20; i++) {
+			buffer[i] = 0x0;
+		}
+		c_printf("Executing: %s\n", buffer);
+
+		// Figure out which command to execute
+		char *command = strtok(buffer, " ");
+
+		// BIG ASS SWITCH ON THE COMMAND
+		if       (strncmp(command, "touch", 20) == 0) {
+			// TOUCH -------------------------------------------------------
+			// Figure out the name of the file
+			char *filename = strtok(NULL, " ");
+			if(strlen(filename) != 10 || filename[1] != ':') {
+				c_puts("*** Invalid filename. X:yyyyyyyy\n");
+				continue;
+			}
+
+			// Open the file (aka create it)
+			FILE *f = fopen(filename);
+			if(f == NULL) {
+				c_puts("*** Touch failed!\n");
+				continue;
+			} else if(f->code == FS_SUCCESS) {
+				c_puts("--- File already exists\n");
+			} else if(f->code != FS_SUCCESS_NEWFILE) {
+				c_printf("*** fopen failed with code 0x%x\n");
+				continue;
+			}
+
+			// Close the file to free the pointer
+			fclose(f);
+
+		} else if(strncmp(command, "rm", 20) == 0) {
+			// RM ----------------------------------------------------------
+			// Figure out the name of the file
+			char *filename = strtok(NULL, " ");
+			if(strlen(filename) != 10 || filename[1] != ':') {
+				c_puts("*** Invalid filename. X:yyyyyyyyy\n");
+				continue;
+			}
+
+			// Open the file (or create it, no big deal)
+			FILE *f = fopen(filename);
+			if(f == NULL) {
+				c_puts("*** RM Failed!\n");
+				continue;
+			} else if(f->code == FS_SUCCESS_NEWFILE) {
+				c_puts("*** File does not exist!\n");
+			}
+
+			// Delete the file (if it was created, we delete it as well!)
+			fdelete(f);
+			
+		} else if(strncmp(command, "ls", 20) == 0) {
+			// LS ----------------------------------------------------------
+			c_puts("*** Not implemented!\n");
+
+		} else if(strncmp(command, "cat", 20) == 0) {
+			// CAT ---------------------------------------------------------
+			c_puts("*** Not implemented!\n");
+
+		} else if(strncmp(command, "write", 20) == 0) {
+			// WRITE -------------------------------------------------------
+			c_puts("*** Not implemented!\n");
+
+		} else if(strncmp(command, "drives", 20) == 0) {
+			// DRIVES ------------------------------------------------------
+			c_puts("*** Not implemented!\n");
+
+		} else if(strncmp(command, "part", 20) == 0) {
+			// PART --------------------------------------------------------
+			c_puts("*** Not implemented!\n");
+
+		} else if(strncmp(command, "format", 20) == 0) {
+			// FORMAT ------------------------------------------------------
+			c_puts("*** Not implemented!\n");
+
+		} else if(strncmp(command, "mounts", 20) == 0) {
+			// MOUNTS ------------------------------------------------------
+			c_puts("*** Not implemented!\n");
+
+		} else {
+			// INVALID COMMAND ---------------------------------------------
+			c_puts("*** Invalid command!\n");
+		}
+
+		//@TEST:
+		count++;
+	}
+}
 
 /*
 ** USER PROCESSES
@@ -748,11 +871,13 @@ void init( void ) {
 
 	c_puts( "Init started\n" );
 
+	spawn(&pid, fileshell);
+
 	write( '$' );
 
 	// we'll start the first three "manually"
 	// by doing fork() and exec() ourselves
-
+/*
 #ifdef SPAWN_A
 	status = fork( &pid );
 	if( status != SUCCESS ) {
@@ -894,7 +1019,7 @@ void init( void ) {
 #endif
 
 	write( '!' );
-
+*/
 	/*
 	** And now we start twiddling our thumbs
 	*/
