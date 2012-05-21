@@ -939,7 +939,24 @@ void init( void ) {
 		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
 	}
 	
+	status = spawn( &pid, draw_scr_0);
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
+	}
 	status = spawn( &pid, draw_scr_1);
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
+	}
+	status = spawn( &pid, draw_scr_2);
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
+	}
+	status = spawn( &pid, draw_scr_3);
+	status = spawn( &pid, draw_scr_4);
+	status = spawn( &pid, draw_scr_5);
+	status = spawn( &pid, draw_scr_6);
+	status = spawn( &pid, draw_scr_7);
+	status = spawn( &pid, draw_scr_8);
 	if( status != SUCCESS ) {
 		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
 	}
@@ -973,7 +990,7 @@ void init( void ) {
 	/*
 	** SHOULD NEVER REACH HERE
 	*/
-
+	write( '#' );
 	c_printf( "*** IDLE IS EXITING???\n" );
 	exit();
 

@@ -222,6 +222,7 @@ void _init( void ) {
 	_pcb_init();
 	_stack_init();
 	_sio_init();	
+	_ps2_keyboard_init();
 	_win_man_init();	
 		//vga_init
 		//gl_init

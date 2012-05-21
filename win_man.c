@@ -27,7 +27,7 @@ void _win_man_init( void ) {
 	
 	//setup the memory for the arrays and 
 	// this module
-	wm_memory = (void *)( _vga_get_end_mem() );
+	wm_memory = (void *)(0x20000000 );
 	//array of screen_infos
 	screen_info_arr = (screen_info *)( wm_memory + WIN_MAN_MEM );
 	
@@ -49,8 +49,14 @@ void _win_man_init( void ) {
 		screen_info_arr[i].buf_num = i;
 		screen_info_arr[i].w = dW;
 		screen_info_arr[i].h = dH;
-		screen_info_arr[i].bPtr = (Uint32 *)(bPtrOffset + (( i * dH * dW )));
-		c_printf("%d  - %x || ", i, ( i * dH * dW) );
+		screen_info_arr[i].bPtr = (Uint32 *)(bPtrOffset + (( i * dH * dW * 4 )));
+		screen_info_arr[i].pid = 0;
+		screen_info_arr[i].active = 0;
+		screen_info_arr[i].blocking = 0;
+		
+		#ifdef WM_DEBUG
+		c_printf("%d  - %x || ", i, ( i * dH * dW * 4) );
+		#endif
 	}
 	//clear buffer mem
 	_kmemclr(screen_info_arr[0].bPtr, ( DEFAULT_SCREENS * dH * dW * 4 ) );
@@ -188,6 +194,16 @@ Status get_screen_buffer( Pid pid ) {
 	for( i = 0; i < DEFAULT_SCREENS; i++ ) {
 		if( screen_info_arr[i].pid == 0 && screen_info_arr[i].pid != pid ) {
 			screen_info_arr[i].pid = pid;
+			for(i = 0; i < 12; i++) { 
+				write('A'+i);
+				write(':');
+				write(' ');
+				write_x(screen_info_arr[i].pid);
+				write(' ');
+			}
+			write('\n');
+			write('\r');
+			
 			#ifdef WM_DEBUG
 			c_printf("PID: %d reserved buffer %d. \n", pid, i);
 			#endif
