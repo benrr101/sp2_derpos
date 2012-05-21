@@ -44,6 +44,7 @@
 */
 
 #define	SPAWN_A   // write, exit
+
 #define	SPAWN_B   // write, exit
 #define	SPAWN_C   // write, exit
 #define	SPAWN_D   // write, spawn, exit
