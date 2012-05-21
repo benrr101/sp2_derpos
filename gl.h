@@ -22,6 +22,11 @@ void draw_scr_0( void );
 void draw_scr_1( void );
 void draw_scr_2( void );
 void draw_scr_3( void );
+void draw_scr_4( void );
+void draw_scr_5( void );
+void draw_scr_6( void );
+void draw_scr_7( void );
+void draw_scr_8( void );
 
 void draw_pixel(Uint32 x, Uint32 y, pixel p);
 void draw_line(Uint32 x, Uint32 y, Uint32 x2, Uint32 y2, pixel p);
