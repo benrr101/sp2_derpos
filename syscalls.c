@@ -78,7 +78,6 @@ Queue *_sleeping;
 
 static void _sys_fork( Pcb *pcb ) {
 	Pcb *new;
-	int diff;
 	Uint32 *ptr;
 	Status status;
 

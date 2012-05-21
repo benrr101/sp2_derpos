@@ -5,7 +5,7 @@
 **
 ** Author:	4003-506 class of 20113
 **
-** Contributor:
+** Contributor: Sean McDermottt
 **
 ** Description:	Scheduler module
 */
@@ -140,7 +140,7 @@ void _dispatch( void ) {
 			_current->state = RUNNING;
 			_current->quantum = STD_QUANTUM;
 
-//			c_printf("Change table for pid:%x address:%x\n", _current->pid, _current->pdt);
+			//Changed to the page table of the running process before turning over to it
 			_vmeml2_change_page( (Uint32) _current->pdt );
 			return;
 		} else {
