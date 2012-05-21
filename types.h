@@ -67,6 +67,10 @@ typedef	Uint16		Pid;
 
 typedef	Uint32		Time;
 
+#define TRUE    1
+#define FALSE   0
+
+
 #endif
 
 #endif
