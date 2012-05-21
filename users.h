@@ -44,7 +44,7 @@
 ** uncomment its entry in this list.
 */
 
-/*
+
 #define	SPAWN_A   // write, exit
 
 #define	SPAWN_B   // write, exit
@@ -70,7 +70,7 @@
 // no user V
 
 #define SPAWN_PCI
-*/
+
 /*
 ** Users W-Z are spawned from other processes; they
 ** should never be spawned directly.
