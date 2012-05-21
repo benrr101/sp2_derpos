@@ -75,6 +75,6 @@ Pcb *_ps2_remove_from_queue( Uint8 index );
 
 // Open functions
 int buf_read( char* buf, int size, Pid pid );
-int char_read( Pid pid );
+int char_read( char *buf, Pid pid );
 
 #endif

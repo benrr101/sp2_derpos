@@ -472,7 +472,7 @@ void _ps2_delete_request( Uint8 index ){
  * queue, but the PCB may be 0 if the corresponding process could not be found.
  *
  * @param	index		The index in the requests array of the process to 
- *						remove
+ *						remove.
  * returns				The PCB of the process that was removed, or 0 if the
  *						index was too large. Note, the PCB returned may be 0
  *						if the corresponding process could not be found.
@@ -530,10 +530,13 @@ int buf_read( char* buf, int size, Pid pid ){
  * @param	pid		The process that made the request
  * @returns			1 if a proper IO-request was created, otherwise 0
  */
-int char_read( Pid pid ){
-	return buf_read( 0, 0, pid );
+int char_read( char *buf, Pid pid ){
+	return buf_read( buf, 0, pid );
 }
 
+//////////////////////////////////////////////////////////////
+////		The Below functions are not used...ever		//////
+//////////////////////////////////////////////////////////////
 void _ps2_keyboard_ready( void ){
 	while( (__inb(PS2_STAT) & 1) != 0 )
 		;
