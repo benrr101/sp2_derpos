@@ -3,6 +3,7 @@
 #include "vga_dr.h"
 #include "gl.h"
 #include "c_io.h"
+#include "vmemL2.h"
 
 //TODO: build a struct for the wm_memory
 static win_man_vars*	wm_memory;
@@ -31,14 +32,17 @@ void _win_man_init( void ) {
 	//array of screen_infos
 	screen_info_arr = (screen_info *)( wm_memory + WIN_MAN_MEM );
 	
-	_gl_init();
 	
 	//begining of buffers
 	bPtrOffset = (void *)(screen_info_arr + ( (DEFAULT_SCREENS+1) * sizeof( struct screen_info ) ) );
+	_vmeml2_static_address( (Uint32) _vga_get_start_mem(), (Uint32) _vga_get_end_mem(), TRUE );
+	_vmeml2_static_address( ( (Uint32) wm_memory ), (Uint32) ( (Uint32) wm_memory ) + ( DEFAULT_SCREENS * dH * dW * 4 ), TRUE ); 
 	//TODO: give the VM_man_our addresses
 	//
 	//
 	//
+
+	_gl_init();
 	
 	//get screen info
 	dW = vga_mode_info->XResolution / 2;
