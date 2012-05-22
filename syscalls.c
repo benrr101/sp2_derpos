@@ -261,7 +261,7 @@ static void _sys_read_char( Pcb *pcb ){
 	Status status;
 	Key key;
 	char *buf;
-	int size;
+	//int size;
 
 	// let the keyboard driver know we expect keystrokes for this process
 	buf = (char *) (ARG(pcb)[1]);

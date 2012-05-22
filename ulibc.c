@@ -157,10 +157,10 @@ Status spawn( Pid *pid, void (*entry)(void) ) {
 Status write_x(Uint32 val) {
 	
 	Uint32 t = val;
-	int p = 0;
+	int p;
 	write( '0' );
 	write( 'x' );
-	for(p; p <=32; p+=4) { 
+	for(p = 0; p <=32; p+=4) { 
 		t = val << p;
 		t = t >> 28;
 		switch(t) {
