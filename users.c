@@ -15,6 +15,7 @@
 #include "users.h"
 #include "ufs.h"
 #include "string.h"
+#include "sio.h"
 
 void fileshell(void) {
 	// Build a temp list of commands
@@ -31,7 +32,7 @@ void fileshell(void) {
 	commandList[9] = "mounts\0";
 	Uint8 count = 0;
 
-	char buffer[20];
+	char buffer[64];
 
 	// Loop indefinitely
 	while(1) {
@@ -42,10 +43,10 @@ void fileshell(void) {
 		//buf_read(buffer, 20);
 		//@TEST:
 		Uint8 i;
-		for(i = 0; i < 20 && commandList[count][i] != 0x0; i++) {
+		for(i = 0; i < 64 && commandList[count][i] != 0x0; i++) {
 			buffer[i] = commandList[count][i];
 		}
-		for(i=i; i < 20; i++) {
+		for(i=i; i < 64; i++) {
 			buffer[i] = 0x0;
 		}
 		c_printf("Executing: %d %s\n", count, buffer);
@@ -163,8 +164,65 @@ void fileshell(void) {
 			c_puts("\n");
 
 		} else if(strncmp(command, "write", 20) == 0) {
-			// WRITE -------------------------------------------------------
-			c_puts("*** Not implemented!\n");
+			// WRITE ------------------------------------------------------
+			// Figure out which file to open
+			char *filename = strtok(NULL, " ");
+			char *offsetc = "-0";
+			if(filename == NULL) {
+				c_puts("*** You must provide a file to write to!\n");
+				continue;
+			}
+			if(filename[0] == '-') {
+				// We're declaring an offset instead of a filename
+				offsetc = filename;
+				filename = strtok(NULL, " ");
+				if(filename == NULL) {
+					c_puts("*** You must provide a file to write to!\n");
+					continue;
+				}
+			}
+			if(strlen(filename) != 10 || filename[1] != ':') {
+				c_printf("*** Invalid filename. X:YYYYYYYY %d\n", strlen(filename));
+				continue;
+			}
+
+			// Process the offset
+			Uint32 offset = atoi(offsetc + 1);
+
+			// Load the file
+			FILE *file = fopen(filename);
+			if(file == NULL) {
+				c_puts("*** Could not open file!\n");
+				continue;
+			}
+
+			// Seek to the offset
+			if(fseek(file, offset, FS_SEEK_ABS) != FS_SUCCESS) {
+				c_puts("*** Invalid offset into file\n");
+				continue;
+			}
+
+			// Loop until the end of input
+			char c = 'q';
+			Uint32 bytes = 0;
+			while(1) {
+				// Get a character
+				Uint32 status = read(&c);
+				// readchar(&c);
+
+				// Will it terminate input?
+				if(c == '`') { 
+					break;
+				}
+
+				// It didn't terminate input so print dump it to the file
+				bytes += fwrite(file, &c, 1);
+				if(bytes > 20) { break; }
+				c_printf("%x ", bytes);
+			}
+
+			// Output the number of bytes we wrote
+			c_printf("Wrote %x bytes\n", bytes);
 
 		} else if(strncmp(command, "drives", 20) == 0) {
 			// DRIVES ------------------------------------------------------
@@ -266,6 +324,7 @@ void fileshell(void) {
 					mount_points[i].bootRecord.size
 					); 
 			}
+
 		} else if(strncmp(command, "exit", 20) == 0) {
 			// EXIT --------------------------------------------------------
 			c_puts("Shell is exiting!\n");
