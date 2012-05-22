@@ -219,3 +219,9 @@ __pause:
 	hlt
 	leave
 	ret
+
+	.globl __get_end
+__get_end:
+	movl	$_end, %eax
+	ret
+	

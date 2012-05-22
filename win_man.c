@@ -3,6 +3,7 @@
 #include "vga_dr.h"
 #include "gl.h"
 #include "c_io.h"
+#include "vmemL2.h"
 
 //TODO: build a struct for the wm_memory
 static win_man_vars*	wm_memory;
@@ -22,44 +23,51 @@ void _win_man_init( void ) {
 	int j = 0;
 	void* bPtrOffset = 0;
 	int dW, dH = 0;
+	Uint32 s_arr_size, buff_size;
 	
 	_vga_init();
 	
 	//setup the memory for the arrays and 
 	// this module
-	wm_memory = (void *)(0x20000000 );
+	wm_memory = (void *)( 0x20000000 );
 	//array of screen_infos
-	screen_info_arr = (screen_info *)( wm_memory + WIN_MAN_MEM );
-	
-	_gl_init();
-	
-	//begining of buffers
-	bPtrOffset = (void *)(screen_info_arr + ( (DEFAULT_SCREENS+1) * sizeof( struct screen_info ) ) );
-	//TODO: give the VM_man_our addresses
-	//
-	//
-	//
-	
+	screen_info_arr = (screen_info *)( ((Uint32)wm_memory) + WIN_MAN_MEM );
+
 	//get screen info
 	dW = vga_mode_info->XResolution / 2;
 	dH = vga_mode_info->YResolution / 2;
 	
+	//begining of buffers
+	s_arr_size = (DEFAULT_SCREENS) * sizeof( struct screen_info ); 
+	buff_size  = (DEFAULT_SCREENS) * dH * dW * 4;
+
+	bPtrOffset = (void *)((Uint32)screen_info_arr + s_arr_size );
+	_vmeml2_static_address( (Uint32) _vga_get_start_mem(), (Uint32) _vga_get_end_mem(), TRUE );
+	_vmeml2_static_address( ( (Uint32) wm_memory ), (Uint32) ( (Uint32) wm_memory ) + s_arr_size + buff_size + WIN_MAN_MEM , TRUE ); 
+
+	_gl_init();
+	
+	c_printf("\n%x %x\n", (Uint32) _vga_get_start_mem(), (Uint32) _vga_get_end_mem() );
+	c_printf("\n%x %x\n", ( (Uint32) wm_memory ), (Uint32) ( (Uint32) wm_memory ) + buff_size + s_arr_size + WIN_MAN_MEM);
+
+	c_printf("\nscrn: %x bOff: %x \n", screen_info_arr, bPtrOffset);
 	//fill out the default screens [[ * vga_mode_info->LinbytesPerScanLine)/8) ]]
 	for(i = 0; i < DEFAULT_SCREENS; i++) {
 		screen_info_arr[i].buf_num = i;
 		screen_info_arr[i].w = dW;
 		screen_info_arr[i].h = dH;
-		screen_info_arr[i].bPtr = (Uint32 *)(bPtrOffset + (( i * dH * dW * 4 )));
+		screen_info_arr[i].bPtr = (Uint32 *)(((Uint32)bPtrOffset) + (( i * dH * dW * 4 )));
 		screen_info_arr[i].pid = 0;
 		screen_info_arr[i].active = 0;
 		screen_info_arr[i].blocking = 0;
 		
-		#ifdef WM_DEBUG
-		c_printf("%d  - %x || ", i, ( i * dH * dW * 4) );
-		#endif
+		//#ifdef WM_DEBUG
+		c_printf("%d  - %x || ", i,  screen_info_arr[i].bPtr);
+		//#endif
 	}
+	c_printf("%x %x %x %x size_struct:%x \n",  screen_info_arr[0].bPtr, buff_size, s_arr_size, WIN_MAN_MEM, sizeof( struct screen_info ));
 	//clear buffer mem
-	_kmemclr(screen_info_arr[0].bPtr, ( DEFAULT_SCREENS * dH * dW * 4 ) );
+	_kmemclr(screen_info_arr[0].bPtr, buff_size );
 	
 	#ifdef WM_DEBUG
 	c_printf("\n-Total Memory(B): %d blocks(x64KB), %d\n", vga_vesa_info->TotalMemory, (vga_vesa_info->TotalMemory * 64)*1024);
@@ -194,6 +202,7 @@ Status get_screen_buffer( Pid pid ) {
 	for( i = 0; i < DEFAULT_SCREENS; i++ ) {
 		if( screen_info_arr[i].pid == 0 && screen_info_arr[i].pid != pid ) {
 			screen_info_arr[i].pid = pid;
+			/*
 			for(i = 0; i < 12; i++) { 
 				write('A'+i);
 				write(':');
@@ -203,7 +212,7 @@ Status get_screen_buffer( Pid pid ) {
 			}
 			write('\n');
 			write('\r');
-			
+			*/
 			#ifdef WM_DEBUG
 			c_printf("PID: %d reserved buffer %d. \n", pid, i);
 			#endif
