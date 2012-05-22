@@ -16,11 +16,18 @@ typedef struct screen_info
 	Uint32	buf_num;
 	Uint32 	w;
 	Uint32	h;
-	Pid		pid;
 	Uint32*	bPtr;
+	Pid		pid;
 	Uint8	active;
 	Uint8	blocking;
 	Uint8	dirty;
+	//gl_print info
+	Uint16 	x_max;
+	Uint16 	y_max;
+	Uint16 	curr_x;
+	Uint16 	curr_y;
+	char	lines[520][520];
+	//mouse
 	mouse_handler	handler;
 }	screen_info;
 
