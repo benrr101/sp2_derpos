@@ -172,18 +172,25 @@ FILE *fnamefile(const char mountpoint) {
 }
 
 FS_STATUS fclose(FILE *file) {
+	// Stupidity check
+	if(file == NULL || file->code == FS_AVAILABLE) {
+		return FS_ERR_BADFILE;
+	}
+
 	// Flush the file
 	fflush(file);
 
 	// Unallocate the pointer
 	_fs_unallocate_filepointer(file);
 
-	return 0x0;
+	return FS_SUCCESS;
 }
 
 FS_STATUS fdelete(FILE *file) {
-	// Mark the file pointer as available
-
+	// Stupidity checks
+	if(file == NULL || file->code == FS_AVAILABLE) {
+		return FS_ERR_BADFILE;
+	}
 	
 	// Tear apart the file and send it to the deleter
 	return _fs_delete_file(file);
@@ -195,6 +202,12 @@ FS_STATUS fdelete(FILE *file) {
  * @return	FS_STATUS	Success/failure code.
  */
 FS_STATUS fflush(FILE *file) {
+	// Stupidity checks
+	if(file == NULL || file->code == FS_AVAILABLE) {
+		return FS_ERR_BADFILE;
+	}
+	
+
 	// Calculate which sector to write
 	Uint32 sector = file->mp->offset + file->bufsect;
 	
@@ -217,6 +230,11 @@ FS_STATUS fflush(FILE *file) {
  * @return	FS_STATUS	status of the seek operation
  */
 FS_STATUS fseek(FILE *file, Uint32 offset, FS_FILE_SEEK dir) {
+	// Stupidity check
+	if(file == NULL || file->code == FS_AVAILABLE) {
+		return FS_ERR_BADFILE;
+	}
+
 	// We need the size of the file
 	Uint32 filesize = _fs_get_file_size(file);
 
@@ -351,7 +369,7 @@ FS_STATUS fseek(FILE *file, Uint32 offset, FS_FILE_SEEK dir) {
  */
 Uint32 fread(FILE *file, char *buffer, Uint32 size) { 
 	// Make sure the file is in a good state for reading
-	if(file->code == FS_AVAILABLE) {
+	if(file == NULL || file->code == FS_AVAILABLE) {
 		// This is an uninitalized file pointer
 		return 0;
 	}
@@ -413,7 +431,10 @@ Uint32 fread(FILE *file, char *buffer, Uint32 size) {
  * @return	Uint32	The number of bytes written.
  */
 Uint32 fwrite(FILE *file, char *buffer, Uint32 size) { 
-	// @TODO Error check for dumb things
+	// Stupidity check
+	if(file == NULL || file->code == FS_AVAILABLE) {
+		return 0;
+	}
 
 	// Start copying bytes into the buffer
 	Uint32 bytes;
