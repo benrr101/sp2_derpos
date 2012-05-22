@@ -34,7 +34,7 @@ void fileshell(void) {
 	char buffer[20];
 
 	// Loop indefinitely
-	while(1) {
+	while(1 && count <= 5) {
 		// Print a prompt
 		c_puts("DERP_FS Shell> ");
 		
@@ -75,6 +75,9 @@ void fileshell(void) {
 				continue;
 			}
 
+			//@DEBUG
+			fwrite(f, "FRIG OFF, BARB!", 15);
+
 			// Close the file to free the pointer
 			fclose(f);
 
@@ -101,11 +104,47 @@ void fileshell(void) {
 			
 		} else if(strncmp(command, "ls", 20) == 0) {
 			// LS ----------------------------------------------------------
-			c_puts("*** Not implemented!\n");
+			// Figure out which mountpoint we want to read
+			char *mountpoint = strtok(NULL, " ");
+			if(strlen(mountpoint) != 1 || mountpoint-0x41>mount_point_count){
+				c_puts("*** Invalid mountpoint.\n");
+				continue;
+			}
+			
+			c_printf("MountPoint '%c' Contents:\n", *mountpoint);
+
+			// Tell the filesystem to generate a name file
+			FILE *nameFile = fnamefile(*mountpoint);
+			char buffer[12];
+			while(fread(nameFile, buffer, 12) == 12) {
+				// NOTE: This will report files > 2^16 bytes as negative
+				c_printf("%c%c%c%c%c%c%c%c    %-db\n", 
+					buffer[0],buffer[1],buffer[2],buffer[3],buffer[4],
+					buffer[5],buffer[6],buffer[7],
+					buffer[8]|buffer[9]<<8|buffer[10]<<16|buffer[11]<<24);
+			}
+			
+			// Delete the filename
+			fdelete(nameFile);
 
 		} else if(strncmp(command, "cat", 20) == 0) {
 			// CAT ---------------------------------------------------------
-			c_puts("*** Not implemented!\n");
+			// Figure out which file to open
+			char *filename = strtok(NULL, " ");
+			if(strlen(filename) != 10 || filename[1] != ':') {
+				c_puts("*** Invalid Filename. X:yyyyyyyy\n");
+				continue;
+			}
+
+			// Load the file and print its characters
+			FILE *f = fopen(filename);
+			char buf[1];
+
+			while(fread(f, buf, 1) == 1) {
+				c_printf("%c", *buf);
+			}
+
+			c_puts("\n");
 
 		} else if(strncmp(command, "write", 20) == 0) {
 			// WRITE -------------------------------------------------------
@@ -133,6 +172,7 @@ void fileshell(void) {
 		}
 
 		//@TEST:
+		if(count > 10) { c_puts("Shell is exiting\n"); break;}
 		count++;
 	}
 }
