@@ -23,12 +23,12 @@ void fileshell(void) {
 	commandList[1] = "write A:testfile\0";
 	commandList[2] = "write -10 A:testfile\0";
 	commandList[3] = "cat A:testfile\0";
-	commandList[4] = "ls A";
-	commandList[5] = "rm A:testfile";
-	commandList[6] = "drives";
-	commandList[7] = "part 1 2 20480";
-	commandList[8] = "format 1 2";
-	commandList[9] = "mounts";
+	commandList[4] = "ls A\0";
+	commandList[5] = "rm A:testfile\0";
+	commandList[6] = "drives\0";
+	commandList[7] = "part 1 2 20480\0";
+	commandList[8] = "format 1 2\0";
+	commandList[9] = "mounts\0";
 	Uint8 count = 0;
 
 	char buffer[20];
@@ -48,7 +48,7 @@ void fileshell(void) {
 		for(i=i; i < 20; i++) {
 			buffer[i] = 0x0;
 		}
-		c_printf("Executing: %s\n", buffer);
+		c_printf("Executing: %d %s\n", count, buffer);
 
 		// Figure out which command to execute
 		char *command = strtok(buffer, " ");
@@ -106,7 +106,7 @@ void fileshell(void) {
 			// LS ----------------------------------------------------------
 			// Figure out which mountpoint we want to read
 			char *mountpoint = strtok(NULL, " ");
-			if(strlen(mountpoint) != 1 || mountpoint-0x41<mount_point_count){
+			if(strlen(mountpoint) != 1 ||((*mountpoint)-0x41)>mount_point_count){
 				c_puts("*** Invalid mountpoint.\n");
 				continue;
 			}
@@ -167,7 +167,27 @@ void fileshell(void) {
 
 		} else if(strncmp(command, "format", 20) == 0) {
 			// FORMAT ------------------------------------------------------
-			c_puts("*** Not implemented!\n");
+			// Grab the drive to format
+			char *drivec = strtok(NULL, " ");
+			Uint8 drive = atoi(drivec);
+			if(drive > ata_device_count) {
+				c_puts("*** Invalid drive id!\n");
+				continue;
+			}
+
+			// Grab the partition to format
+			char *partitionc = strtok(NULL, " ");
+			Uint8 index = atoi(partitionc);
+			if(index > 4) {
+				c_puts("*** Invalid partition index!\n");
+				continue;
+			}
+			
+			// Call the format function
+			if(_fs_format(&mount_points[mount_point_count], 
+					&ata_devices[drive], index) == FS_ERR_NOTDERP) {
+				c_puts("*** Could not format -- partition does not have a DERP_FS bootrecord");
+			}
 
 		} else if(strncmp(command, "mounts", 20) == 0) {
 			// MOUNTS ------------------------------------------------------
@@ -182,14 +202,17 @@ void fileshell(void) {
 					mount_points[i].bootRecord.size
 					); 
 			}
-
+		} else if(strncmp(command, "exit", 20) == 0) {
+			// EXIT --------------------------------------------------------
+			c_puts("Shell is exiting!\n");
+			return;
 		} else {
 			// INVALID COMMAND ---------------------------------------------
 			c_puts("*** Invalid command!\n");
 		}
 
 		//@TEST:
-		if(count > 10) { c_puts("Shell is exiting\n"); break;}
+		if(count > 9) { return; }
 		count++;
 	}
 }
