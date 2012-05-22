@@ -255,7 +255,33 @@ static void _sys_read_buf( Pcb *pcb ){
 	}
 }
 
+static void _sys_read_char( Pcb *pcb ){
+	
+	// temp vars
+	Status status;
+	Key key;
+	char *buf;
+	int size;
 
+	// let the keyboard driver know we expect keystrokes for this process
+	buf = (char *) (ARG(pcb)[1]);
+	if( char_read( buf, _current->pid ) ){
+
+		// move process to buffered-blocking queue
+		key.u = _current->pid;
+		status = _q_insert( _buf_block, (void *) _current, key );
+		if( status != SUCCESS ){
+			_kpanic( "sys_read_buf", "insert status %s\n", status );
+		}
+		_current->state = BLOCKED;
+
+		// Dispatch a new process for running
+		_dispatch();
+	}
+	else{
+		c_printf( "Unable to acquire a PS/2 IO Request.\n" );
+	}
+}
 
 /*
 ** _sys_write - write a single character to the SIO
@@ -586,6 +612,7 @@ void _syscall_init( void ) {
 	_syscall_tbl[ SYS_set_priority ]  = _sys_set_priority;
 	_syscall_tbl[ SYS_set_time ]      = _sys_set_time;
 	_syscall_tbl[ SYS_read_buf ]	  = _sys_read_buf;
+	_syscall_tbl[ SYS_read_char ]	  = _sys_read_char;
 
 //	these are syscalls we elected not to implement
 //	_syscall_tbl[ SYS_set_pid ]    = _sys_set_pid;
