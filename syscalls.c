@@ -19,6 +19,8 @@
 #include "sio.h"
 #include "syscalls.h"
 #include "system.h"
+#include "vmemL2.h"
+#include "vmem.h"
 
 #include "startup.h"
 #include "keyboard.h"
@@ -77,7 +79,6 @@ Queue *_sleeping;
 
 static void _sys_fork( Pcb *pcb ) {
 	Pcb *new;
-	int diff;
 	Uint32 *ptr;
 	Status status;
 
@@ -93,54 +94,20 @@ static void _sys_fork( Pcb *pcb ) {
 
 	_kmemcpy( (void *)new, (void *)pcb, sizeof(Pcb) );
 
-	// allocate a stack for the new process
+	new->pdt = _vmeml2_create_page_dir();
+	Uint32* ptable=_vmeml2_create_page_table( new->pdt, ( STACK_ADDRESS / PAGE_TABLE_SIZE)  );
+	Uint32* rpage = _vmeml2_create_page_reserved( ptable, 0 );
+	Uint32* rpage2 = _vmeml2_create_page_reserved( ptable, 1 );
+	new->stack = (Stack*) ( STACK_ADDRESS);
 
-	new->stack = _stack_alloc();
-	if( new->stack == NULL ) {
-		RET(pcb) = FAILURE;
-		_cleanup( new );
-		return;
-	}
-
-	// duplicate the parent's stack
-
-	_kmemcpy( (void *)new->stack, (void *)pcb->stack, sizeof(Stack));
-
+	_kmemcpy( (void *)rpage, (void *)pcb->stack, PAGE_SIZE);
+	_kmemcpy( (void *)rpage2, (void *)((Uint32)( pcb->stack) + PAGE_SIZE), PAGE_SIZE);
 	// fix the pcb fields that should be unique to this process
 
 	new->pid = _next_pid++;
 	new->ppid = pcb->pid;
 	new->state = NEW;
-
-	/*
-	** We duplicated the parent's stack contents, which means that
-	** the child's ESP and EBP are still pointing into the parent's
-	** stack.  Fix these, and also fix the child's context pointer.
-        **
-        ** We have to change EBP because that's how the compiled code for
-        ** the user process accesses its local variables.  If we didn't
-        ** change this, as soon as the child was dispatched, it would
-        ** start to stomp on the local variables in the parent's stack.
-	** We also have to fix the EBP chain in the child process.
-        **
-        ** None of this would be an issue if we were doing "real" virtual
-        ** memory, as we would be talking about virtual addresses here rather
-        ** than physical addresses, and all processes would share the same
-        ** virtual address space layout.
-	**
-	** First, determine the distance (in bytes) between the two
-	** stacks.  This is the adjustment value we must add to the
-	** three pointers to correct them.
-	*/
-
-	diff = (void *) new->stack - (void *) pcb->stack;
-
-	// adjust the context pointer, esp, and ebp
-
-	new->context = (Context *) ( (void *) new->context + diff );
-
-	new->context->esp += diff;
-	new->context->ebp += diff;
+	c_printf( "Forked address %x %x \n", new->pid, (Uint32)new->pdt, pcb->pid , (Uint32)pcb->pdt );
 
 	/*
         ** Next, we must fix the EBP chain in the child.  This is necessary
@@ -155,25 +122,15 @@ static void _sys_fork( Pcb *pcb ) {
 	** routine will push EBP, ensuring a NULL pointer in the chain.
         */
 
-	// start at the current frame
-
-	ptr = (Uint32 *) new->context->ebp;
-
-	// follow the chain of frame pointers to its end
-	while( *ptr != 0 ) {
-		// update the back link from this frame to the previous
-		*ptr = (Uint32) ((void *) *ptr + diff );
-		// follow the updated link
-		ptr = (Uint32 *) *ptr;
-	}
-
 	// assign the PID return values for the two processes
 
 	ptr = (Uint32 *) (ARG(pcb)[1]);
 	*ptr = new->pid;
 
-	ptr = (Uint32 *) ( ((void *)(ARG(new)[1])) + diff );
+	_vmeml2_change_page( (Uint32) new->pdt );
+	ptr = (Uint32 *) (ARG(new)[1]);
 	*ptr = 0;
+	_vmeml2_change_page((Uint32) pcb->pdt );
 
 	/*
 	** Philosophical issue:  should the child run immediately, or

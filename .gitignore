@@ -1,9 +1,11 @@
-*.o
 *.s
-*.image
 *.sw*
+*.o
 *.bak
+tags
+useful
 *.lst
-*.nl
 BuildImage
+*.image
+*.nl
 *.b
