@@ -3,6 +3,13 @@
 
 #include "headers.h"
 
+// Color Constants
+#define gl_BLACK		0
+#define gl_RED			1
+#define gl_GREEN		2
+#define gl_BLUE			3
+#define gl_WHITE		4
+
 //#define GL_DEBUG
 
 typedef struct pixel {
@@ -31,6 +38,8 @@ void draw_scr_9( void );
 void draw_scr_10( void );
 
 void clear_buf( Pid pid );
+pixel get_color( Uint8 color );
+void draw_box( Uint32 x1, Uint32 y1, Uint32 x2, Uint32 y2, pixel p );
 Uint32 pix_to_color( pixel p );
 void draw_rect( Uint32 x1, Uint32 y1, Uint32 x2, Uint32 y2, pixel p );
 void draw_line( Uint32 x, Uint32 y, Uint32 x2, Uint32 y2, pixel p );
@@ -41,6 +50,7 @@ void set_pixel( Uint32 x, Uint32 y, pixel p, screen_info* curr_si );
 
 //draw char, make the x component count down so that we can flip the characters.
 void draw_character( char c, Uint32 x, Uint32 y, pixel p );
+void r_mouse_listener( char h );
 
 //string is easy, make a loop that is the strlen and then draw one bit line at a
 //time using the outer loop for the character height and the inner loop as the

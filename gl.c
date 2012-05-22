@@ -130,6 +130,56 @@ void draw_rect(Uint32 x1, Uint32 y1, Uint32 x2, Uint32 y2, pixel p) {
 	}
 }
 
+/**
+ * Draws a box starting at the given coordinates and of the given length.
+ *
+ * @param	x		The start position of the box (top left corner), in pixels.
+ * @param	y		The start position of the box (top left corner), in pixels.
+ * @param	w		The width of the box, in pixels.
+ * @param	h		The height of the box, in pixels.
+ */
+void draw_box( Uint32 x, Uint32 y, Uint32 w, Uint32 h, pixel p ){
+	draw_line( x, y, x + w, y, p );
+	draw_line( x, y, x, y + h, p );
+	draw_line( x + w, y, x + w, y + h, p );
+	draw_line( x, y + h, x + w, y + h, p );
+}
+
+/**
+ * A convenience function for generating basic color values.
+ *
+ * @param	color		A color constant (ie. gl_BLACK) for the desired color.
+ * @returns				The corresponding color if found, otherwise black is
+ *						returned.
+ */
+pixel get_color( Uint8 color ){
+	pixel p;
+	switch( color ){
+		case gl_RED:
+			p.r = 0xFF;
+			p.g = 0;
+			p.b = 0;
+			break;
+		case gl_GREEN:
+			p.r = 0;
+			p.g = 0xFF;
+			p.b = 0;
+			break;
+		case gl_BLUE:
+			p.r = 0;
+			p.g = 0;
+			p.b = 0xFF;
+			break;
+		case gl_BLACK:
+		default:
+			p.r = 0;
+			p.g = 0;
+			p.b = 0;
+	}
+	p.a = 0;
+	return p;
+}
+
 void draw_line(Uint32 x, Uint32 y, Uint32 x2, Uint32 y2, pixel p) {
 	Uint32			pix = 0;
 	screen_info* 	curr_si;

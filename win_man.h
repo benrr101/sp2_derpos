@@ -8,8 +8,9 @@
 #define DEFAULT_SCREENS		12
 
 // Callback function definition for users
-typedef void (*mouse_handler)(Uint8 x_pos, Uint8 y_pos, char left, char right,
+/*typedef void (*mouse_handler)(Uint8 x_pos, Uint8 y_pos, char left, char right,
 		char middle);
+*/
 
 typedef struct screen_info
 {
@@ -20,7 +21,7 @@ typedef struct screen_info
 	Uint32*	bPtr;
 	Uint8	active;
 	Uint8	blocking;
-	mouse_handler	handler;
+	void (*mouse_handler)(Uint8, Uint8, char, char, char );
 }	screen_info;
 
 //to be 1024b
@@ -79,6 +80,8 @@ Uint8 switch_active( Uint8 quadrant );
 Uint8 replace_active( Uint32 buffer_num );
 
 // Mouse functions
+void register_mouse_listener( void (*mouse_handler)(Uint8, Uint8, char, char,
+		char ) );
 void update_cursor_pos( Uint8 x_pos, Uint8 y_pos );
 void update_mouse_button( char left, char right, char middle );
 

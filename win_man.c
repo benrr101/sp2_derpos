@@ -302,9 +302,24 @@ void update_mouse_button( char left, char right, char middle ){
 	// Note: the below callback is a huge security vulnerability, but not much
 	// we can do without signals or resorting to user programs polling for
 	// mouse data
-	mouse_handler mh = screen_info_arr[ wm_memory->active_quad ].handler;
-	if( mh != 0 )
-		mh( x, y, left, right, middle );
+	void (*mouse_handler)(Uint8, Uint8, char, char, char ) = 
+			screen_info_arr[ wm_memory->active_quad ].mouse_handler;
+	if( mouse_handler != 0 )
+		mouse_handler( x, y, left, right, middle );
+}
+
+/**
+ * Allows a user program to give the window manager a call-back function to
+ * process clicks in that user's window.
+ *
+ * @param	mh		The call-back function to call when a click is made in the
+ * 					user's window.
+ */
+void register_mouse_listener( void (*mouse_handler)(Uint8, Uint8, char, char,
+		char ) ){
+	Pid p = get_pid( &p );
+	screen_info* si = get_screen_info( p );
+	si->mouse_handler = mouse_handler;
 }
 
 

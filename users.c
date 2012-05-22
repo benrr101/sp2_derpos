@@ -13,6 +13,7 @@
 #include "headers.h"
 
 #include "users.h"
+#include "whakamole.h"
 
 /*
 ** USER PROCESSES
@@ -62,6 +63,7 @@ void user_p( void ); void user_q( void ); void user_r( void );
 void user_s( void ); void user_t( void ); void user_u( void );
 void user_v( void ); void user_w( void ); void user_x( void );
 void user_y( void ); void user_z( void ); void user_keyboard();
+void whakamole( void );
 
 /*
 ** Users A, B, and C are identical, except for the character they
@@ -756,6 +758,11 @@ void user_keyboard( void ) {
 	exit();
 }
 
+void whakamole( void ){
+	c_puts( "User WHAKAMOLE running\n" );
+	whakamole_start();
+}
+
 /*
 ** SYSTEM PROCESSES
 */
@@ -796,13 +803,22 @@ void init( void ) {
 	if( status != SUCCESS ) {
 		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
 	}
-	status = spawn( &pid, draw_scr_3);
-	status = spawn( &pid, draw_scr_4);
-	status = spawn( &pid, draw_scr_8);
+	//status = spawn( &pid, draw_scr_3);
+	//status = spawn( &pid, draw_scr_4);
+	//status = spawn( &pid, draw_scr_8);
 	if( status != SUCCESS ) {
 		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
 	}
 #endif
+
+#ifdef WHAKAMOLE
+	status = spawn( &pid, whakamole );
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user WHAKAMOLE, status %s\n", status );
+	}
+#endif
+
+
 #ifdef SPAWN_A
 	status = fork( &pid );
 	if( status != SUCCESS ) {

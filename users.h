@@ -46,6 +46,7 @@
 ** To spawn a specific user process from the initial process,
 ** uncomment its entry in this list.
 */
+/*
 #define	SPAWN_A   // write, exit
 
 #define	SPAWN_B   // write, exit
@@ -67,6 +68,7 @@
 #define	SPAWN_R   // write, read, sleep, exit
 #define	SPAWN_S   // write, sleep, forever
 #define	SPAWN_T   // write, get_prio, set_priority, exit
+*/
 // no user U
 // no user V
 //#define SPAWN_MOUSE	// initializes the mouse, resets it
@@ -74,6 +76,7 @@
 #define SPAWN_GRAPHICS
 
 #define SPAWN_PCI
+#define WHAKAMOLE
 
 /*
 ** Users W-Z are spawned from other processes; they

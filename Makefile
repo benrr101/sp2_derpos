@@ -9,8 +9,8 @@
 #
 # User supplied files
 #
-U_C_SRC = clock.c klibc.c pcbs.c queues.c scheduler.c sio.c stacks.c syscalls.c system.c ulibc.c users.c mouse.c keyboard.c vga_dr.c win_man.c gl.c vmem.c vmemL2.c vmem_isr.c vmem_ref.c fs.c ata.c pci.c ufs.c
-U_C_OBJ = clock.o klibc.o pcbs.o queues.o scheduler.o sio.o stacks.o syscalls.o system.o ulibc.o users.o mouse.o keyboard.o vga_dr.o win_man.o gl.o vmem.o vmemL2.o vmem_isr.o vmem_ref.o fs.o ata.o pci.o ufs.o
+U_C_SRC = clock.c klibc.c pcbs.c queues.c scheduler.c sio.c stacks.c syscalls.c system.c ulibc.c users.c mouse.c keyboard.c vga_dr.c win_man.c gl.c vmem.c vmemL2.c vmem_isr.c vmem_ref.c fs.c ata.c pci.c ufs.c whakamole.c
+U_C_OBJ = clock.o klibc.o pcbs.o queues.o scheduler.o sio.o stacks.o syscalls.o system.o ulibc.o users.o mouse.o keyboard.o vga_dr.o win_man.o gl.o vmem.o vmemL2.o vmem_isr.o vmem_ref.o fs.o ata.o pci.o ufs.o whakamole.o
 U_S_SRC = klibs.S ulibs.S vmemA.S
 U_S_OBJ = klibs.o ulibs.o vmemA.o
 U_LIBS	=
@@ -197,7 +197,7 @@ isr_stubs.o: bootstrap.h
 ulibs.o: syscalls.h headers.h queues.h /home/fac/wrc/include/x86arch.h
 c_io.o: c_io.h startup.h headers.h support.h /home/fac/wrc/include/x86arch.h
 support.o: startup.h headers.h support.h c_io.h
-support.o: /home/fac/wrc/include/x86arch.h bootstrap.h
+support.o: /home/fac/wrc/include/x86arch.h bootstrap.h sio.h queues.h
 clock.o: headers.h /home/fac/wrc/include/x86arch.h startup.h clock.h pcbs.h
 clock.o: stacks.h queues.h scheduler.h sio.h syscalls.h
 klibc.o: headers.h
@@ -215,7 +215,7 @@ system.o: queues.h /home/fac/wrc/include/x86arch.h sio.h scheduler.h vga_dr.h
 system.o: gl.h win_man.h vmem.h vmemL2.h vmem_isr.h vmem_ref.h pci.h fs.h
 system.o: ata.h users.h keyboard.h ulib.h types.h
 ulibc.o: headers.h
-users.o: headers.h users.h keyboard.h queues.h gl.h pci.h
+users.o: headers.h users.h keyboard.h queues.h gl.h pci.h whakamole.h
 mouse.o: headers.h startup.h ps2.h mouse.h win_man.h
 keyboard.o: headers.h ps2.h system.h pcbs.h clock.h stacks.h startup.h
 keyboard.o: queues.h scheduler.h ulib.h types.h win_man.h keyboard.h
@@ -230,3 +230,4 @@ fs.o: headers.h pci.h startup.h ata.h fs.h
 ata.o: headers.h pci.h startup.h ata.h
 pci.o: headers.h startup.h pci.h ata.h fs.h ufs.h
 ufs.o: ufs.h fs.h headers.h ata.h
+whakamole.o: win_man.h headers.h sio.h queues.h gl.h whakamole.h
