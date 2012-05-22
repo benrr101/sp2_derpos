@@ -84,8 +84,8 @@ clearbss:
 /*
 ** Initialize devices
 */
-	call	_init		// initialize the OS
 
+	call	_init		// initialize the OS
 /*
 ** Restore the first user process context
 **

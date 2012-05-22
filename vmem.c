@@ -151,11 +151,6 @@ void _vmem_set_address( Uint32 address )
 	Uint32 index[1];
 	Uint8 index2[1];
 	_vmem_address_calc( address, index, index2);
-	if( *index > BITMAP_MAX )
-	{
-		c_printf("Address: %x Index %d\n", address, *index);
-		__panic("Vmem: address out of range");
-	}
 	
 	if ( _vmem_read_bit( _vmem_bitmap_start, *index, *index2) == 0)
 	{
@@ -180,11 +175,6 @@ void _vmem_clear_address( Uint32 address )
 	Uint32 index[1];
 	Uint8 index2[1];
 	_vmem_address_calc( address, index, index2);
-	if( *index > BITMAP_MAX )
-	{
-		c_printf("Address: %x Index %d\n", address, *index);
-		__panic("Vmem: address out of range");
-	}
 	
 	if ( _vmem_read_bit( _vmem_bitmap_start, *index, *index2) == 1)
 	{

@@ -1,7 +1,7 @@
 #include "vmem.h"
 #include "vmemL2.h"
 
-static Uint32 _vmeml2_all_pages_tables[80];
+static Uint32 _vmeml2_all_pages_tables[100];
 static Uint8 _vmeml2_all_pages_tables_size = 0;
 
 Uint32* _vmeml2_create_page_dir( void )

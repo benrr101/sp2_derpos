@@ -61,7 +61,7 @@ void user_m( void ); void user_n( void ); void user_o( void );
 void user_p( void ); void user_q( void ); void user_r( void );
 void user_s( void ); void user_t( void ); void user_u( void );
 void user_v( void ); void user_w( void ); void user_x( void );
-void user_y( void ); void user_z( void );
+void user_y( void ); void user_z( void ); void user_keyboard();
 
 /*
 ** Users A, B, and C are identical, except for the character they
@@ -730,6 +730,31 @@ void user_z( void ) {
 
 }
 
+/*
+** User MOUSE launches the mouse module.
+*/
+
+void user_mouse( void ) {
+	c_puts( "User MOUSE running\n" );
+	_ps2_mouse_init();	
+	c_puts( "User MOUSE exiting\n" );
+	exit();
+}
+
+/*
+** User MOUSE launches the mouse module.
+*/
+
+void user_keyboard( void ) {
+	c_puts( "User KEYBOARD running\n" );
+	_ps2_keyboard_init();	
+	c_puts( "User KEYBOARD exiting\n" );
+	char buf[] = { 'H', 'e', 'l', 'l', 'o', ' ', 'W', 'o', 'r', 'l', 'd', '\0' };
+	c_printf( "CUR BUF CONTENTS: %s\n", buf );
+	read_buf( buf, 10 );
+	c_printf( "\nNew BUF CONTENTS: %s\n", buf );
+	exit();
+}
 
 /*
 ** SYSTEM PROCESSES
@@ -753,6 +778,31 @@ void init( void ) {
 	// we'll start the first three "manually"
 	// by doing fork() and exec() ourselves
 
+#ifdef SPAWN_GRAPHICS
+	status = spawn( &pid, draw_active_screens );
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
+	}
+	
+	status = spawn( &pid, draw_scr_0);
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
+	}
+	status = spawn( &pid, draw_scr_1);
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
+	}
+	status = spawn( &pid, draw_scr_2);
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
+	}
+	status = spawn( &pid, draw_scr_3);
+	status = spawn( &pid, draw_scr_4);
+	status = spawn( &pid, draw_scr_8);
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
+	}
+#endif
 #ifdef SPAWN_A
 	status = fork( &pid );
 	if( status != SUCCESS ) {
@@ -893,6 +943,31 @@ void init( void ) {
 	}
 #endif
 
+#ifdef SPAWN_MOUSE
+	status = spawn( &pid, user_mouse );
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user MOUSE, status %s\n", status );
+	}
+
+#endif
+
+#ifdef SPAWN_KEYBOARD
+	status = spawn( &pid, user_keyboard );
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user KEYBOARD, status %s\n", status );
+	}
+#endif
+
+#ifdef SPAWN_GRAPHICS
+	status = spawn( &pid, draw_scr_4);
+	status = spawn( &pid, draw_scr_5);
+	status = spawn( &pid, draw_scr_6);
+	status = spawn( &pid, draw_scr_7);
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
+	}
+#endif
+
 	write( '!' );
 
 	/*
@@ -921,7 +996,7 @@ void init( void ) {
 	/*
 	** SHOULD NEVER REACH HERE
 	*/
-
+	write( '#' );
 	c_printf( "*** IDLE IS EXITING???\n" );
 	exit();
 

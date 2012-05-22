@@ -167,23 +167,27 @@ __isr_restore:
 	** THE CONSTANT IN THIS movl INSTRUCTION MUST BE CHANGED
 	** IF THE LOCATION OF EITHER FIELD IN THE PCB CHANGES!
 	*/
-
+	/*
 	movl	16(%ebx), %eax	// get PID and PPID of this process
 	pushl	%eax
 	pushl	_system_time	// and the current system time
+	*/
 
 /*
 ** END MOD for 20113 SP2
 */
-
+/*
 	pushl	$fmt
 	pushl	$1
 	pushl	$0
 	call	c_printf_at
+	*/
 /*
 ** MOD for 20113 SP2
 */
+	/*
 	addl	$20, %esp	// now five things to remove
+	*/
 /*
 ** END MOD for 20113 SP2
 */
