@@ -71,17 +71,12 @@ void _cleanup( Pcb *pcb ) {
 		return;
 	}
 
-	/*
-	if( pcb->stack != NULL ) {
-		status = _stack_dealloc( pcb->stack );
-		if( status != SUCCESS ) {
-			_kpanic( "_cleanup", "stack dealloc status %s\n", status );
-		}
-	}*/
-
+	//change to defualt page 
 	_vmeml2_change_page( (Uint32)_vmem_page_dir );
+	//release the old page
 	_vmeml2_release_page_dir( pcb->pdt );
 
+	//deallocate the pcb
 	pcb->state = FREE;
 	status = _pcb_dealloc( pcb );
 	if( status != SUCCESS ) {
@@ -280,9 +275,9 @@ void _init( void ) {
 		_kpanic( "_init", "first pcb alloc failed\n", FAILURE );
 	}
 
+	//setup paging ans stack for idle process
 	pcb->pdt = _vmeml2_create_page_dir();
 	Uint32* ptable=_vmeml2_create_page_table( pcb->pdt, ( STACK_ADDRESS / PAGE_TABLE_SIZE)  );
-	//Uint32* rpage = _vmeml2_create_page_reserved( ptable, 0 );
 	 _vmeml2_create_page_reserved( ptable, 0 );
 	 _vmeml2_create_page_reserved( ptable, 1 );
 	pcb->stack = (Stack*) ( STACK_ADDRESS);
@@ -330,6 +325,10 @@ void _init( void ) {
 
 }
 
+
+/*
+** _isr_usb_pull - catches the usb being pull out and then ignores it
+*/
 void _isr_usb_pull( int vector, int code )
 {
 	__outb( PIC_MASTER_CMD_PORT, PIC_EOI );

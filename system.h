@@ -64,6 +64,11 @@ Status _create_process( Pcb *pcb, Uint32 entry );
 
 void _init( void );
 
+/*
+** _isr_usb_pull - catches the usb being pull out and then ignores it
+*/
+void _isr_usb_pull( int vector, int code );
+
 #endif
 
 #endif
