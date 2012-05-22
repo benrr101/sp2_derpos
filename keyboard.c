@@ -436,6 +436,7 @@ void _ps2_write_to_active( char c ){
 		
 		// stop reading if full, or newline
 		if( i == requests[ index ]->size || c == '\n' ){
+			buf[ i + 1 ] = '\0';
 			
 			// pull from IO-blocking queue
 			if( !_q_empty( _buf_block ) ){
