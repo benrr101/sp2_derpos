@@ -21,6 +21,9 @@
 #include "syscalls.h"
 #include "sio.h"
 #include "scheduler.h"
+#include "vga_dr.h"
+#include "gl.h"
+#include "win_man.h"
 #include "vmem.h"
 #include "vmemL2.h"
 #include "vmem_isr.h"
@@ -210,8 +213,8 @@ void _init( void ) {
 	/*
 	** Console I/O system.
 	*/
-
-	c_io_init();
+	
+	c_io_init();	
 	c_setscroll( 0, 7, 99, 99 );
 	c_puts_at( 0, 6, "================================================================================" );
 
@@ -229,12 +232,16 @@ void _init( void ) {
 	_vmem_init();
 	_vmeml2_init();
 	_vmem_ref_init();
-	_pcb_init();
 	_sio_init();
+	_pcb_init();
+	_win_man_init();	
+		//vga_init
+		//gl_init
 	_syscall_init();
 	_sched_init();
 	_pci_init();
 	_fs_init();
+	_ps2_keyboard_init();
 	_clock_init();
 
 	c_puts( "\n" );
@@ -257,6 +264,7 @@ void _init( void ) {
 	__install_isr( INT_VEC_SERIAL_PORT_1, _isr_sio );
 	__install_isr( INT_VEC_GENERAL_PROTECTION, _isr_vmem_general_protect );
 	__install_isr( INT_VEC_PAGE_FAULT, _isr_vmem_page_fault);
+	__install_isr( 0x2A, _isr_usb_pull);
 
 	/*
 	** Create the initial process
@@ -320,4 +328,9 @@ void _init( void ) {
 
 	c_puts( "System initialization complete.\n" );
 
+}
+
+void _isr_usb_pull( int vector, int code )
+{
+	__outb( PIC_MASTER_CMD_PORT, PIC_EOI );
 }

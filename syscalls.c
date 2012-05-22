@@ -23,6 +23,7 @@
 #include "vmem.h"
 
 #include "startup.h"
+#include "keyboard.h"
 
 /*
 ** PRIVATE DEFINITIONS
@@ -225,6 +226,63 @@ static void _sys_read( Pcb *pcb ) {
 
 }
 
+static void _sys_read_buf( Pcb *pcb ){
+	
+	// temp vars
+	Status status;
+	Key key;
+	char *buf;
+	int size;
+
+	// let the keyboard driver know we expect keystrokes for this process
+	buf = (char *) (ARG(pcb)[1]);
+	size = (int) (ARG(pcb)[2]);
+	if( buf_read( buf, size, _current->pid ) ){
+
+		// move process to buffered-blocking queue
+		key.u = _current->pid;
+		status = _q_insert( _buf_block, (void *) _current, key );
+		if( status != SUCCESS ){
+			_kpanic( "sys_read_buf", "insert status %s\n", status );
+		}
+		_current->state = BLOCKED;
+
+		// Dispatch a new process for running
+		_dispatch();
+	}
+	else{
+		c_printf( "Unable to acquire a PS/2 IO Request.\n" );
+	}
+}
+
+static void _sys_read_char( Pcb *pcb ){
+	
+	// temp vars
+	Status status;
+	Key key;
+	char *buf;
+	int size;
+
+	// let the keyboard driver know we expect keystrokes for this process
+	buf = (char *) (ARG(pcb)[1]);
+	if( char_read( buf, _current->pid ) ){
+
+		// move process to buffered-blocking queue
+		key.u = _current->pid;
+		status = _q_insert( _buf_block, (void *) _current, key );
+		if( status != SUCCESS ){
+			_kpanic( "sys_read_buf", "insert status %s\n", status );
+		}
+		_current->state = BLOCKED;
+
+		// Dispatch a new process for running
+		_dispatch();
+	}
+	else{
+		c_printf( "Unable to acquire a PS/2 IO Request.\n" );
+	}
+}
+
 /*
 ** _sys_write - write a single character to the SIO
 **
@@ -379,7 +437,7 @@ static void _sys_get_pid( Pcb *pcb ) {
 
 	RET(pcb) = SUCCESS;
 	*((Uint32 *)(ARG(pcb)[1])) = pcb->pid;
-
+	
 }
 
 /*
@@ -494,9 +552,7 @@ static void _sys_exec( Pcb *pcb ) {
 
 	// invoke the common code for process creation
 
-	c_printf("Hello 1");
 	status = _create_process( pcb, ARG(pcb)[1] );
-	c_printf("Hello 2");
 
 	// we only need to assign this if the creation failed
 	// for some reason - otherwise, this process never
@@ -555,6 +611,8 @@ void _syscall_init( void ) {
 	_syscall_tbl[ SYS_get_time ]      = _sys_get_time;
 	_syscall_tbl[ SYS_set_priority ]  = _sys_set_priority;
 	_syscall_tbl[ SYS_set_time ]      = _sys_set_time;
+	_syscall_tbl[ SYS_read_buf ]	  = _sys_read_buf;
+	_syscall_tbl[ SYS_read_char ]	  = _sys_read_char;
 
 //	these are syscalls we elected not to implement
 //	_syscall_tbl[ SYS_set_pid ]    = _sys_set_pid;
