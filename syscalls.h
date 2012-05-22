@@ -39,6 +39,7 @@
 #define	SYS_set_priority	12
 #define	SYS_set_time		13
 #define SYS_read_buf		14
+#define SYS_read_char		15
 
 // these are syscalls we elected not to implement
 // #define	SYS_set_pid		?
@@ -47,7 +48,7 @@
 
 // number of "real" system calls
 
-#define	N_SYSCALLS	15
+#define	N_SYSCALLS	16
 
 // dummy system call code to test the syscall ISR
 
