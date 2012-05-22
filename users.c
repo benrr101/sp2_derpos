@@ -26,7 +26,7 @@ void fileshell(void) {
 	commandList[4] = "ls A\0";
 	commandList[5] = "rm A:testfile\0";
 	commandList[6] = "drives\0";
-	commandList[7] = "part 1 2 20480\0";
+	commandList[7] = "part 1 2 5000 20480\0";
 	commandList[8] = "format 1 2\0";
 	commandList[9] = "mounts\0";
 	Uint8 count = 0;
@@ -54,10 +54,14 @@ void fileshell(void) {
 		char *command = strtok(buffer, " ");
 
 		// BIG ASS SWITCH ON THE COMMAND
-		if       (strncmp(command, "touch", 20) == 0) {
+		if(strncmp(command, "touch", 20) == 0) {
 			// TOUCH -------------------------------------------------------
 			// Figure out the name of the file
 			char *filename = strtok(NULL, " ");
+			if(filename == NULL) {
+				c_puts("*** You must provide a filename\n");
+				continue;
+			}
 			if(strlen(filename) != 10 || filename[1] != ':') {
 				c_puts("*** Invalid filename. X:yyyyyyyy\n");
 				continue;
@@ -85,6 +89,10 @@ void fileshell(void) {
 			// RM ----------------------------------------------------------
 			// Figure out the name of the file
 			char *filename = strtok(NULL, " ");
+			if(filename == NULL) {
+				c_puts("*** You must provide a filename!\n");
+				continue;
+			}
 			if(strlen(filename) != 10 || filename[1] != ':') {
 				c_puts("*** Invalid filename. X:yyyyyyyyy\n");
 				continue;
@@ -106,6 +114,10 @@ void fileshell(void) {
 			// LS ----------------------------------------------------------
 			// Figure out which mountpoint we want to read
 			char *mountpoint = strtok(NULL, " ");
+			if(mountpoint == NULL) {
+				c_puts("*** You must provide a MountPoint to print the files of\n");
+				continue;
+			}
 			if(strlen(mountpoint) != 1 ||((*mountpoint)-0x41)>mount_point_count){
 				c_puts("*** Invalid mountpoint.\n");
 				continue;
@@ -131,6 +143,10 @@ void fileshell(void) {
 			// CAT ---------------------------------------------------------
 			// Figure out which file to open
 			char *filename = strtok(NULL, " ");
+			if(filename == NULL) {
+				c_puts("*** You must provide a file to print\n");
+				continue;
+			}
 			if(strlen(filename) != 10 || filename[1] != ':') {
 				c_puts("*** Invalid Filename. X:yyyyyyyy\n");
 				continue;
@@ -163,7 +179,55 @@ void fileshell(void) {
 
 		} else if(strncmp(command, "part", 20) == 0) {
 			// PART --------------------------------------------------------
-			c_puts("*** Not implemented!\n");
+			// Grab the drive to partition
+			char *drivec = strtok(NULL, " ");
+			if(drivec == NULL) {
+				c_puts("*** You must include a drive id\n");
+			}
+			Uint8 drive = atoi(drivec);
+			if(drive > ata_device_count) {
+				c_puts("*** Invalid drive id!\n");
+				continue;
+			}
+
+			// Grab the partition number
+			char *partitionc = strtok(NULL, " ");
+			if(partitionc == NULL) {
+				c_puts("*** You must include a partition index 1-4\n");
+				continue;
+			}
+			Uint8 index = atoi(partitionc) - 1;
+			if(index > 4) {
+				c_puts("*** Invalid partition index!\n");
+				continue;
+			}
+
+			// Grab the starting sector of the partition
+			char *startc = strtok(NULL, " ");
+			if(startc == NULL) {
+				c_puts("*** You must include a starting sector for the partition\n");
+				continue;
+			}
+			Uint32 start = atoi(startc);
+			if(start == 0) {
+				c_puts("*** You cannot overwrite the master boot record!\n");
+				continue;
+			}
+
+			// Grab the size of the partition in sectors
+			char *sectc = strtok(NULL, " ");
+			if(sectc == NULL) {
+				c_puts("*** You must include a partition size in sectors\n");
+				continue;
+			}
+			Uint32 sect = atoi(sectc);
+			
+			// Call the partitioner
+			Uint8 result = _fs_create_partition(&ata_devices[drive], 
+				start, sect, index);
+			if(result != FS_SUCCESS) {
+				c_printf("*** Partition failed with code 0x%x\n");
+			}	
 
 		} else if(strncmp(command, "format", 20) == 0) {
 			// FORMAT ------------------------------------------------------
@@ -186,7 +250,7 @@ void fileshell(void) {
 			// Call the format function
 			if(_fs_format(&mount_points[mount_point_count], 
 					&ata_devices[drive], index) == FS_ERR_NOTDERP) {
-				c_puts("*** Could not format -- partition does not have a DERP_FS bootrecord");
+				c_puts("*** Could not format -- partition does not have a DERP_FS bootrecord\n");
 			}
 
 		} else if(strncmp(command, "mounts", 20) == 0) {
