@@ -242,8 +242,12 @@ void _ps2_keyboard_isr( int vec, int code ){
 			return;
 		}
 		else{
+
+			// Check if we are going to perform an active window switch
 			if( win_pressed ){
 				quad = get_active();
+
+				// Determine offset arrow-keys to change active window
 				switch( key ){
 					case PS2_KEY_UP_P:
 					case PS2_KEY_DOWN_P:
@@ -251,6 +255,7 @@ void _ps2_keyboard_isr( int vec, int code ){
 							quad -= 2;
 						else
 							quad += 2;
+						break;
 					case PS2_KEY_LEFT_P:
 					case PS2_KEY_RIGHT_P:
 						if( quad % 2 == 0 )
@@ -260,10 +265,24 @@ void _ps2_keyboard_isr( int vec, int code ){
 				}
 				switch_active( quad );
 			}
+
+			// resolve the extended key
 			switch( key ){
 				case PS2_KEY_LWIN_P:
 				case PS2_KEY_RWIN_P:
 					win_pressed = 1;
+					break;
+				case PS2_KEY_CTRL_P:
+					ctrl_pressed = 1;
+					break;
+				case PS2_KEY_CTRL_R:
+					ctrl_pressed = 0;
+					break;
+				case PS2_KEY_ALT_P:
+					alt_pressed = 1;
+					break;
+				case PS2_KEY_ALT_R:
+					alt_pressed = 0;
 					break;
 			}
 			await_next = 0;
@@ -286,6 +305,15 @@ void _ps2_keyboard_isr( int vec, int code ){
 		case PS2_KEY_CAPLCK_R:
 			caps_lock = 0;
 			return;
+		case PS2_KEY_CTRL_P:
+			ctrl_pressed = 1;
+			return;
+		case PS2_KEY_ALT_P:
+			alt_pressed = 1;
+			return;
+		case PS2_KEY_ALT_R:
+			alt_pressed = 0;
+			return;
 	}
 
 	// normal ASCII characters
@@ -301,7 +329,11 @@ void _ps2_keyboard_isr( int vec, int code ){
 		else{
 
 			// otherwise give the character to the waiting focused process
-			_ps2_write_to_active( _ps2_scan_code[ shift_pressed ][ key ] );
+			char letter = _ps2_scan_code[ shift_pressed ][ key ];
+			if( letter != '\377' && letter != '\033' && letter != '\b'
+					&& letter != '\t'){
+				_ps2_write_to_active( letter );
+			}
 		}
 	}
 
@@ -382,8 +414,9 @@ void _ps2_write_to_active( char c ){
 	//c_printf( "Index: %d    Size: %d\n", requests[ index ]->index, requests[ index ]->size);
 	char *buf = requests[ index ]->buf;
 	if( buf == 0 ){
+		buf[1] = c;
+		buf[0] = ( ( shift_pressed * 4 ) + ( alt_pressed * 2 ) + ctrl_pressed );
 		Pcb *pcb = _ps2_remove_from_queue( index );
-		//RET( pxb ) =   
 		_ps2_delete_request( index );
 		_sched( pcb );
 	}
@@ -392,12 +425,15 @@ void _ps2_write_to_active( char c ){
 		// We need to print the character for the user
 		c_printf( "%c", c );
 
+		// store the character
 		int i = requests[ index ]->index;
-		//c_printf( "Writing character: %c, Prev: %c\n", c, buf[ i ] );
-		buf[ i ] = c;
-		requests[ index ]->index = i + 1;
-		//c_printf( "Index: %d    Size: %d\n", i, requests[ index ]->size);
-		if( i == requests[ index ]->size ){
+		if( c != '\n'){
+			buf[ i ] = c;
+			requests[ index ]->index = i + 1;
+		}
+		
+		// stop reading if full, or newline
+		if( i == requests[ index ]->size || c == '\n' ){
 			
 			// pull from IO-blocking queue
 			if( !_q_empty( _buf_block ) ){
@@ -438,7 +474,7 @@ void _ps2_delete_request( Uint8 index ){
  * queue, but the PCB may be 0 if the corresponding process could not be found.
  *
  * @param	index		The index in the requests array of the process to 
- *						remove
+ *						remove.
  * returns				The PCB of the process that was removed, or 0 if the
  *						index was too large. Note, the PCB returned may be 0
  *						if the corresponding process could not be found.
@@ -496,10 +532,13 @@ int buf_read( char* buf, int size, Pid pid ){
  * @param	pid		The process that made the request
  * @returns			1 if a proper IO-request was created, otherwise 0
  */
-int char_read( Pid pid ){
-	return buf_read( 0, 0, pid );
+int char_read( char *buf, Pid pid ){
+	return buf_read( buf, 0, pid );
 }
 
+//////////////////////////////////////////////////////////////
+////		The Below functions are not used...ever		//////
+//////////////////////////////////////////////////////////////
 void _ps2_keyboard_ready( void ){
 	while( (__inb(PS2_STAT) & 1) != 0 )
 		;
