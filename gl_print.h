@@ -3,14 +3,12 @@
 
 #include "headers.h"
 
-// Private
+void gl_putchar( char c );
 
-static void _do_printf( int x, int y, char** f );
+void gl_putchar_at( unsigned int x, unsigned int y, char c );
 
+void gl_puts( char *str );
 
-////////////////
-//   Public
-////////////////
 void printf( char* fmt, ... );
 
 #endif //_WIN_MAN_H_

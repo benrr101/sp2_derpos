@@ -2,6 +2,7 @@
 #include "win_man.h"
 #include "vga_dr.h"
 #include "font.h"
+#include "gl_print.h"
 
 static screen_info* scrn_info_arr;
 static Uint32* video_mem_ptr;
@@ -114,8 +115,8 @@ void draw_rect(Uint32 x1, Uint32 y1, Uint32 x2, Uint32 y2, pixel p) {
 	if(curr_si != NULL) {
 		pix = pix_to_color( p );
 	
-		for(x = x1; x <= x2; x++) {
-			for(y = x1; y <= y2; y++) {
+		for(x = x1; x < x2; x++) {
+			for(y = x1; y < y2; y++) {
 				set_pixel_int(x, y, pix, curr_si);
 			}
 		}
@@ -211,6 +212,7 @@ void draw_character(char c, Uint32 x, Uint32 y, pixel p) {
     char a = 'A';
     char aa = 'a';
     char zz = 'z';
+    char num = '0';
     screen_info* 	curr_si;
     Pid pid = 0;
     unsigned char shift = 0x01;
@@ -224,8 +226,11 @@ void draw_character(char c, Uint32 x, Uint32 y, pixel p) {
     curr_si = ( get_screen_info( pid ) );
     if(c >= aa && c <= zz)
         c -= 6; // offset for the pos in the FONT arr
-
-    curr = FONT[c-a];
+    if(c >= num && c <= num+9)
+        curr = NUMS[c-num];
+    else
+    	curr = FONT[c-a];
+    	
     for(dy = 0; dy < FONT_HEIGHT; dy++) {
         shift = 0x01;
         for(dx = 7; dx >= 0; dx--) {
@@ -244,6 +249,7 @@ void draw_string_s(char* str, Uint32 x, Uint32 y, pixel p) {
     char a = 'A';
     char aa = 'a';
     char zz = 'z';
+    char num = '0';
     char c = 0;
     unsigned char shift = 0x01;
     unsigned char* curr = 0;
@@ -271,7 +277,10 @@ void draw_string_s(char* str, Uint32 x, Uint32 y, pixel p) {
             	continue;
             	
             c = str[i];
-            curr = FONT[c-a];
+            if(c >= num && c <= num+9)
+				curr = NUMS[c-num];
+			else
+				curr = FONT[c-a];
             
             //actual drawing of the current line from the current char
             shift = 0x01;
@@ -323,27 +332,30 @@ void draw_scr_0() {
 	char* str = "Holy Fuck StringS";
 
 	while ( 1 ) {
-
+		/*
 		for(x = 0; x < 180; x++) {
 			for(y = 0; y < 180; y++) {
-				p.r = 0x0c;
-				p.b = 0x0c;
-				p.g = 0x0c;
-				p.a = 0x0c;
+				p.r = 0xe0;
+				p.b = 0xe0;
+				p.g = 0xe0;
+				p.a = 0xe0;
 				draw_pixel(x, y, p);
 			}
-		}
+		}*/
 		p.r = 0xff;
 		p.g = 0xff;
 		p.b = 0xff;
 		p.a = 0xff;
-		draw_string(str, 10, 10, p);
-		
+		//draw_string(str, 10, 10, p);
+		gl_putchar( ('A' + (t%50)) );
+		gl_printf("OMG printf %d %x OMG\n", 15, str);
+		/*
 		for(t = 0; t < 26; t++) {
 			draw_character('A'+t, t*FONT_WIDTH, FONT_HEIGHT*2, p);
 			draw_character('a'+t, t*FONT_WIDTH, FONT_HEIGHT*3, p);
-		}
-		msleep(1500);
+		}*/
+		t++;
+		msleep(1);
 	}
 }
 
@@ -438,6 +450,7 @@ void draw_scr_4() {
 				draw_pixel(x, y, p);
 			}
 		}
+		draw_string("red", 10,10, FONT_COLOR);
 		msleep(3000);
 	}
 }

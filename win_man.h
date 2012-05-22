@@ -3,6 +3,7 @@
 
 #include "headers.h"
 
+
 // KB
 #define WIN_MAN_MEM 		1024
 #define DEFAULT_SCREENS		12
@@ -26,7 +27,7 @@ typedef struct screen_info
 	Uint16 	y_max;
 	Uint16 	curr_x;
 	Uint16 	curr_y;
-	char	lines[128][128];
+	char	lines[200][299];
 	//mouse
 	mouse_handler	handler;
 }	screen_info;

@@ -1,9 +1,11 @@
 #include "headers.h"
 #include "win_man.h"
 #include "vga_dr.h"
+#include "font_define.h"
 #include "gl.h"
 #include "c_io.h"
 #include "vmemL2.h"
+
 
 //TODO: build a struct for the wm_memory
 static win_man_vars*	wm_memory;
@@ -61,6 +63,12 @@ void _win_man_init( void ) {
 		screen_info_arr[i].active = 0;
 		screen_info_arr[i].blocking = 0;
 		screen_info_arr[i].dirty = 1; //default dirty
+		//gl_print stuff
+		screen_info_arr[i].x_max = dW / FONT_WIDTH;
+		screen_info_arr[i].y_max = (dH / FONT_HEIGHT)-1;
+		screen_info_arr[i].curr_x = 0;
+		screen_info_arr[i].curr_y = 0;
+		//screen_info_arr[i].lines[128][128];
 		
 		//#ifdef WM_DEBUG
 		c_printf("%d  - %x || ", i,  screen_info_arr[i].bPtr);
