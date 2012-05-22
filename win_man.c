@@ -122,6 +122,22 @@ Uint8 set_blocking( Uint32 buf_num, Uint8 quadrant) {
 	return screen_info_arr[buf_num].blocking;
 }
 
+/**
+ * Opens up a screen for use by another process.
+ * 
+ * @param	pid		The process that will have its screen freed.
+ */
+void free_screen( Pid pid ){
+	int i;	
+	for( i = 0; i < DEFAULT_SCREENS; i++ ) {
+		if( screen_info_arr[ i ].pid == pid ){
+			clear_buf( pid );
+			screen_info_arr[ i ].pid = 0;
+			break;
+		}
+	}
+}
+
 /**bPtrOffset
  * Grabs the currently active quadrant.
  * 

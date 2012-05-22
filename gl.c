@@ -97,9 +97,17 @@ Uint32 pix_to_color(pixel p) {
 	return pix;
 }
 
+void clear_buf( Pid pid ){
+	screen_info* curr_si = get_screen_info( pid );
+	if( curr_si == NULL )
+		return;
+	
+	_kmemclr( curr_si->bPtr, curr_si->w * curr_si->h * 4 );
+}
+
 void draw_rect(Uint32 x1, Uint32 y1, Uint32 x2, Uint32 y2, pixel p) {
-	Uint32			pix = 0;
-	screen_info* 	curr_si;
+	Uint32 pix = 0;
+	screen_info* curr_si;
 	Pid pid = 0;
 	int x, y;
 	Status s;

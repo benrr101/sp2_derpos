@@ -30,6 +30,7 @@ void draw_scr_8( void );
 void draw_scr_9( void );
 void draw_scr_10( void );
 
+void clear_buf( Pid pid );
 Uint32 pix_to_color( pixel p );
 void draw_rect( Uint32 x1, Uint32 y1, Uint32 x2, Uint32 y2, pixel p );
 void draw_line( Uint32 x, Uint32 y, Uint32 x2, Uint32 y2, pixel p );

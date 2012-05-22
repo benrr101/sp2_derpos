@@ -72,6 +72,7 @@ Uint32* get_current_bufs( void );
 
 //reserves a screen
 Status get_screen_buffer( Pid pid );
+void free_screen( Pid pid );
 
 
 Uint8 switch_active( Uint8 quadrant );

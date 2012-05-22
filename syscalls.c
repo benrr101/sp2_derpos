@@ -163,6 +163,10 @@ static void _sys_fork( Pcb *pcb ) {
 
 static void _sys_exit( Pcb *pcb ) {
 
+	// grab Pid to free the window this process is using
+	Pid p = pcb->pid;
+	free_screen( p );
+
 	// deallocate all the OS data structures
 
 	_cleanup( pcb );
