@@ -13,6 +13,344 @@
 #include "headers.h"
 
 #include "users.h"
+#include "ufs.h"
+#include "string.h"
+#include "sio.h"
+#include "mouse.h"
+
+void fileshell(void) {
+	write('q');
+	// Build a temp list of commands
+	char *commandList[10];
+	commandList[0] = "touch A:testfile\0";
+	commandList[1] = "write A:testfile\0";
+	commandList[2] = "write -10 A:testfile\0";
+	commandList[3] = "cat A:testfile\0";
+	commandList[4] = "ls A\0";
+	commandList[5] = "rm A:testfile\0";
+	commandList[6] = "drives\0";
+	commandList[7] = "part 1 2 5000 20480\0";
+	commandList[8] = "format 1 2\0";
+	commandList[9] = "mounts\0";
+	Uint8 count = 0;
+
+	char buffer[64];
+
+	// Loop indefinitely
+	while(1) {
+		// Print a prompt
+		c_puts("DERP_FS Shell> ");
+		
+		// Read a buffer from the user
+		//buf_read(buffer, 20);
+		//@TEST:
+		Uint8 i;
+		for(i = 0; i < 64 && commandList[count][i] != 0x0; i++) {
+			buffer[i] = commandList[count][i];
+		}
+		for(i=i; i < 64; i++) {
+			buffer[i] = 0x0;
+		}
+		c_printf("Executing: %d %s\n", count, buffer);
+
+		// Figure out which command to execute
+		char *command = strtok(buffer, " ");
+
+		// BIG ASS SWITCH ON THE COMMAND
+		if(strncmp(command, "touch", 20) == 0) {
+			write('t');
+			// TOUCH -------------------------------------------------------
+			// Figure out the name of the file
+			char *filename = strtok(NULL, " ");
+			if(filename == NULL) {
+				c_puts("*** You must provide a filename\n");
+				continue;
+			}
+			if(strlen(filename) != 10 || filename[1] != ':') {
+				c_puts("*** Invalid filename. X:yyyyyyyy\n");
+				continue;
+			}
+
+			// Open the file (aka create it)
+			FILE *f = fopen(filename);
+			if(f == NULL) {
+				c_puts("*** Touch failed!\n");
+				continue;
+			} else if(f->code == FS_SUCCESS) {
+				c_puts("--- File already exists\n");
+			} else if(f->code != FS_SUCCESS_NEWFILE) {
+				c_printf("*** fopen failed with code 0x%x\n");
+				continue;
+			}
+
+			//@DEBUG
+			fwrite(f, "FRIG OFF, BARB!", 15);
+
+			// Close the file to free the pointer
+			fclose(f);
+
+		} else if(strncmp(command, "rm", 20) == 0) {
+			write('r');
+			// RM ----------------------------------------------------------
+			// Figure out the name of the file
+			char *filename = strtok(NULL, " ");
+			if(filename == NULL) {
+				c_puts("*** You must provide a filename!\n");
+				continue;
+			}
+			if(strlen(filename) != 10 || filename[1] != ':') {
+				c_puts("*** Invalid filename. X:yyyyyyyyy\n");
+				continue;
+			}
+
+			// Open the file (or create it, no big deal)
+			FILE *f = fopen(filename);
+			if(f == NULL) {
+				c_puts("*** RM Failed!\n");
+				continue;
+			} else if(f->code == FS_SUCCESS_NEWFILE) {
+				c_puts("*** File does not exist!\n");
+			}
+
+			// Delete the file (if it was created, we delete it as well!)
+			fdelete(f);
+			
+		} else if(strncmp(command, "ls", 20) == 0) {
+			write('l');
+			// LS ----------------------------------------------------------
+			// Figure out which mountpoint we want to read
+			char *mountpoint = strtok(NULL, " ");
+			if(mountpoint == NULL) {
+				c_puts("*** You must provide a MountPoint to print the files of\n");
+				continue;
+			}
+			if(strlen(mountpoint) != 1 ||((*mountpoint)-0x41)>mount_point_count){
+				c_puts("*** Invalid mountpoint.\n");
+				continue;
+			}
+			
+			c_printf("MountPoint '%c' Contents:\n", *mountpoint);
+
+			// Tell the filesystem to generate a name file
+			FILE *nameFile = fnamefile(*mountpoint);
+			char buffer[12];
+			while(fread(nameFile, buffer, 12) == 12) {
+				// NOTE: This will report files > 2^16 bytes as negative
+				c_printf("%c%c%c%c%c%c%c%c    %-db\n", 
+					buffer[0],buffer[1],buffer[2],buffer[3],buffer[4],
+					buffer[5],buffer[6],buffer[7],
+					buffer[8]|buffer[9]<<8|buffer[10]<<16|buffer[11]<<24);
+			}
+			
+			// Delete the filename
+			fdelete(nameFile);
+
+		} else if(strncmp(command, "cat", 20) == 0) {
+			write('c');
+			// CAT ---------------------------------------------------------
+			// Figure out which file to open
+			char *filename = strtok(NULL, " ");
+			if(filename == NULL) {
+				c_puts("*** You must provide a file to print\n");
+				continue;
+			}
+			if(strlen(filename) != 10 || filename[1] != ':') {
+				c_puts("*** Invalid Filename. X:yyyyyyyy\n");
+				continue;
+			}
+
+			// Load the file and print its characters
+			FILE *f = fopen(filename);
+			char buf[1];
+
+			while(fread(f, buf, 1) == 1) {
+				c_printf("%c", *buf);
+			}
+
+			c_puts("\n");
+
+		} else if(strncmp(command, "write", 20) == 0) {
+			write('w');
+			// WRITE ------------------------------------------------------
+			// Figure out which file to open
+			char *filename = strtok(NULL, " ");
+			char *offsetc = "-0";
+			if(filename == NULL) {
+				c_puts("*** You must provide a file to write to!\n");
+				continue;
+			}
+			if(filename[0] == '-') {
+				// We're declaring an offset instead of a filename
+				offsetc = filename;
+				filename = strtok(NULL, " ");
+				if(filename == NULL) {
+					c_puts("*** You must provide a file to write to!\n");
+					continue;
+				}
+			}
+			if(strlen(filename) != 10 || filename[1] != ':') {
+				c_printf("*** Invalid filename. X:YYYYYYYY %d\n", strlen(filename));
+				continue;
+			}
+
+			// Process the offset
+			Uint32 offset = atoi(offsetc + 1);
+
+			// Load the file
+			FILE *file = fopen(filename);
+			if(file == NULL) {
+				c_puts("*** Could not open file!\n");
+				continue;
+			}
+
+			// Seek to the offset
+			if(fseek(file, offset, FS_SEEK_ABS) != FS_SUCCESS) {
+				c_puts("*** Invalid offset into file\n");
+				continue;
+			}
+
+			// Loop until the end of input
+			char c = 'q';
+			Uint32 bytes = 0;
+			while(1) {
+				// Get a character
+				//Uint32 status = read(&c);
+				// readchar(&c);
+
+				// Will it terminate input?
+				if(c == '`') { 
+					break;
+				}
+
+				// It didn't terminate input so print dump it to the file
+				bytes += fwrite(file, &c, 1);
+				if(bytes > 20) { break; }
+				c_printf("%x ", bytes);
+			}
+
+			// Output the number of bytes we wrote
+			c_printf("Wrote %x bytes\n", bytes);
+
+		} else if(strncmp(command, "drives", 20) == 0) {
+			write('d');
+			// DRIVES ------------------------------------------------------
+			// We're breaking all the rules. Iterate over the drives found
+			for(i = 0; i < ata_device_count; i++) {
+				c_printf("Drive %d: %s 0x%x sectors (512b)\n",
+					i, 
+					ata_devices[i].model,
+					ata_devices[i].size
+					);
+			}
+
+		} else if(strncmp(command, "part", 20) == 0) {
+			write('p');
+			// PART --------------------------------------------------------
+			// Grab the drive to partition
+			char *drivec = strtok(NULL, " ");
+			if(drivec == NULL) {
+				c_puts("*** You must include a drive id\n");
+			}
+			Uint8 drive = atoi(drivec);
+			if(drive > ata_device_count) {
+				c_puts("*** Invalid drive id!\n");
+				continue;
+			}
+
+			// Grab the partition number
+			char *partitionc = strtok(NULL, " ");
+			if(partitionc == NULL) {
+				c_puts("*** You must include a partition index 1-4\n");
+				continue;
+			}
+			Uint8 index = atoi(partitionc) - 1;
+			if(index > 4) {
+				c_puts("*** Invalid partition index!\n");
+				continue;
+			}
+
+			// Grab the starting sector of the partition
+			char *startc = strtok(NULL, " ");
+			if(startc == NULL) {
+				c_puts("*** You must include a starting sector for the partition\n");
+				continue;
+			}
+			Uint32 start = atoi(startc);
+			if(start == 0) {
+				c_puts("*** You cannot overwrite the master boot record!\n");
+				continue;
+			}
+
+			// Grab the size of the partition in sectors
+			char *sectc = strtok(NULL, " ");
+			if(sectc == NULL) {
+				c_puts("*** You must include a partition size in sectors\n");
+				continue;
+			}
+			Uint32 sect = atoi(sectc);
+			
+			// Call the partitioner
+			Uint8 result = _fs_create_partition(&ata_devices[drive], 
+				start, sect, index);
+			if(result != FS_SUCCESS) {
+				c_printf("*** Partition failed with code 0x%x\n");
+			}	
+
+		} else if(strncmp(command, "format", 20) == 0) {
+			write('f');
+			// FORMAT ------------------------------------------------------
+			// Grab the drive to format
+			char *drivec = strtok(NULL, " ");
+			Uint8 drive = atoi(drivec);
+			if(drive > ata_device_count) {
+				c_puts("*** Invalid drive id!\n");
+				continue;
+			}
+
+			// Grab the partition to format
+			char *partitionc = strtok(NULL, " ");
+			Uint8 index = atoi(partitionc);
+			if(index > 4) {
+				c_puts("*** Invalid partition index!\n");
+				continue;
+			}
+			
+			// Call the format function
+			if(_fs_format(&mount_points[mount_point_count], 
+					&ata_devices[drive], index) == FS_ERR_NOTDERP) {
+				c_puts("*** Could not format -- partition does not have a DERP_FS bootrecord\n");
+			}
+
+		} else if(strncmp(command, "mounts", 20) == 0) {
+			write('m');
+			// MOUNTS ------------------------------------------------------
+			// Breaking the rules again. Iterate over the mountpoints found
+			if(mount_point_count == 0) {
+				c_puts("*** No DERP_FS MountPoints found\n");
+			}
+
+			for(i = 0; i < mount_point_count; i++) {
+				c_printf("%c: 0x%x sectors (512b)\n",
+					mount_points[i].letter,
+					mount_points[i].bootRecord.size
+					); 
+			}
+
+		} else if(strncmp(command, "exit", 20) == 0) {
+			// EXIT --------------------------------------------------------
+			c_puts("Shell is exiting!\n");
+			return;
+		} else {
+			// INVALID COMMAND ---------------------------------------------
+			c_puts("*** Invalid command!\n");
+		}
+
+		//@TEST:
+		if(count > 9) { return; }
+		count++;
+	}
+	write('e');
+}
 
 /*
 ** USER PROCESSES
@@ -61,7 +399,7 @@ void user_m( void ); void user_n( void ); void user_o( void );
 void user_p( void ); void user_q( void ); void user_r( void );
 void user_s( void ); void user_t( void ); void user_u( void );
 void user_v( void ); void user_w( void ); void user_x( void );
-void user_y( void ); void user_z( void ); void user_keyboard();
+void user_y( void ); void user_z( void ); void user_keyboard(void);
 
 /*
 ** Users A, B, and C are identical, except for the character they
@@ -773,6 +1111,8 @@ void init( void ) {
 
 	c_puts( "Init started\n" );
 
+	spawn(&pid, fileshell);
+
 	write( '$' );
 
 	// we'll start the first three "manually"
@@ -803,6 +1143,8 @@ void init( void ) {
 		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
 	}
 #endif
+/*
+>>>>>>> sata_user
 #ifdef SPAWN_A
 	status = fork( &pid );
 	if( status != SUCCESS ) {
@@ -969,7 +1311,7 @@ void init( void ) {
 #endif
 
 	write( '!' );
-
+*/
 	/*
 	** And now we start twiddling our thumbs
 	*/

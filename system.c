@@ -14,6 +14,7 @@
 
 #include "headers.h"
 
+#include "startup.h"
 #include "system.h"
 #include "clock.h"
 #include "pcbs.h"

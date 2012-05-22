@@ -29,7 +29,7 @@ typedef struct ps2_io_req{
 
 // Array of IO Requests currently outstanding
 static ps2_io_req *requests [ TOTAL_IO_REQS ];
-static Pcb *pcb_reqs [ TOTAL_IO_REQS ];
+//static Pcb *pcb_reqs [ TOTAL_IO_REQS ];
 
 // Buffered-Blocking Queue
 Queue *_buf_block;
@@ -77,12 +77,12 @@ unsigned char _ps2_scan_code[ 2 ][ 128 ] = {
 };
 
 // Key Modifiers
-static char shift_pressed = 0;
+static Uint8 shift_pressed = 0;
 static char ctrl_pressed = 0;
 static char alt_pressed = 0;
-static char num_lock = 1;
+//static char num_lock = 1;
 static char caps_lock = 0;
-static char scroll_lock = 0;
+//static char scroll_lock = 0;
 static char win_pressed = 0;
 
 // Used to await another byte for an extended key

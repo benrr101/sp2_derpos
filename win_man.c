@@ -4,6 +4,7 @@
 #include "gl.h"
 #include "c_io.h"
 #include "vmemL2.h"
+#include "klib.h"
 
 //TODO: build a struct for the wm_memory
 static win_man_vars*	wm_memory;

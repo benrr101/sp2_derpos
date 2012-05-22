@@ -18,6 +18,7 @@
 #include "x86arch.h"
 #include "bootstrap.h"
 #include "sio.h"
+#include "string.h"
 
 /*
 ** Global variables and local data types.
@@ -215,24 +216,6 @@ void __panic( char *reason ){
 		;
 	}
 }
-
-
-//Taken from http://code.google.com/p/lpc1343codebase/source/browse/trunk/core/libc/string.c
-//should be used from ben's lib when comes availible
-//-----------------------------------------------------------------------------
-/// Return the length of a given string
-/// \param pString Pointer to the start of the string.
-//-----------------------------------------------------------------------------
-int strlen(const char *pString)
-{
-    unsigned int length = 0;
-
-    while(*pString++ != 0) {
-        length++;
-    }
-    return length;
-}
-
 
 
 /*
