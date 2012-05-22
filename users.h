@@ -17,6 +17,7 @@
 //#include "mouse.h"
 #include "keyboard.h"
 #include "gl.h"
+#include "pci.h"
 
 /*
 ** General (C and/or assembly) definitions
@@ -46,8 +47,8 @@
 ** uncomment its entry in this list.
 */
 
-/*
 #define	SPAWN_A   // write, exit
+
 #define	SPAWN_B   // write, exit
 #define	SPAWN_C   // write, exit
 #define	SPAWN_D   // write, spawn, exit
@@ -69,10 +70,11 @@
 #define	SPAWN_T   // write, get_prio, set_priority, exit
 // no user U
 // no user V
-*/
 //#define SPAWN_MOUSE	// initializes the mouse, resets it
 //#define SPAWN_KEYBOARD
 #define SPAWN_GRAPHICS
+
+#define SPAWN_PCI
 
 /*
 ** Users W-Z are spawned from other processes; they
