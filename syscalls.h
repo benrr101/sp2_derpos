@@ -100,6 +100,7 @@ void _isr_syscall( int vector, int code );
 
 void _syscall_init( void );
 
+void _isr_usb_pull( int vector, int code );
 #endif
 
 #endif

@@ -44,7 +44,7 @@ void _vga_init( void ) {
 	vga_mode_info = (MODE_INFO *)(VGA__INFO_ADDR << 4);
 	
 	#ifdef VGA_DEBUG
-	_vga_print_info();
+	//_vga_print_info();
 	#endif
 }
 

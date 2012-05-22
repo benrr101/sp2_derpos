@@ -25,7 +25,6 @@
 #include "win_man.h"
 #include "support.h"
 
-
 #ifdef __KERNEL__20113__
 
 // OS needs the kernel library headers and the system headers
