@@ -34,7 +34,7 @@ void fileshell(void) {
 	char buffer[20];
 
 	// Loop indefinitely
-	while(1 && count <= 5) {
+	while(1) {
 		// Print a prompt
 		c_puts("DERP_FS Shell> ");
 		
@@ -106,7 +106,7 @@ void fileshell(void) {
 			// LS ----------------------------------------------------------
 			// Figure out which mountpoint we want to read
 			char *mountpoint = strtok(NULL, " ");
-			if(strlen(mountpoint) != 1 || mountpoint-0x41>mount_point_count){
+			if(strlen(mountpoint) != 1 || mountpoint-0x41<mount_point_count){
 				c_puts("*** Invalid mountpoint.\n");
 				continue;
 			}
@@ -152,7 +152,14 @@ void fileshell(void) {
 
 		} else if(strncmp(command, "drives", 20) == 0) {
 			// DRIVES ------------------------------------------------------
-			c_puts("*** Not implemented!\n");
+			// We're breaking all the rules. Iterate over the drives found
+			for(i = 0; i < ata_device_count; i++) {
+				c_printf("Drive %d: %s 0x%x sectors (512b)\n",
+					i, 
+					ata_devices[i].model,
+					ata_devices[i].size
+					);
+			}
 
 		} else if(strncmp(command, "part", 20) == 0) {
 			// PART --------------------------------------------------------
@@ -164,7 +171,17 @@ void fileshell(void) {
 
 		} else if(strncmp(command, "mounts", 20) == 0) {
 			// MOUNTS ------------------------------------------------------
-			c_puts("*** Not implemented!\n");
+			// Breaking the rules again. Iterate over the mountpoints found
+			if(mount_point_count == 0) {
+				c_puts("*** No DERP_FS MountPoints found\n");
+			}
+
+			for(i = 0; i < mount_point_count; i++) {
+				c_printf("%c: 0x%x sectors (512b)\n",
+					mount_points[i].letter,
+					mount_points[i].bootRecord.size
+					); 
+			}
 
 		} else {
 			// INVALID COMMAND ---------------------------------------------
