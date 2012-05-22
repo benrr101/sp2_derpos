@@ -250,18 +250,20 @@ void _ps2_keyboard_isr( int vec, int code ){
 				// Determine offset arrow-keys to change active window
 				switch( key ){
 					case PS2_KEY_UP_P:
-					case PS2_KEY_DOWN_P:
 						if( quad > 1 )
 							quad -= 2;
-						else
+						break;
+					case PS2_KEY_DOWN_P:
+						if( quad < 2 )
 							quad += 2;
 						break;
 					case PS2_KEY_LEFT_P:
+						if( quad % 2 == 1 )
+							quad -= 1;
+						break;
 					case PS2_KEY_RIGHT_P:
 						if( quad % 2 == 0 )
 							quad += 1;
-						else
-							quad -= 1;
 				}
 				switch_active( quad );
 			}
