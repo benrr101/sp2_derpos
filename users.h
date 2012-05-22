@@ -46,7 +46,6 @@
 ** To spawn a specific user process from the initial process,
 ** uncomment its entry in this list.
 */
-
 #define	SPAWN_A   // write, exit
 
 #define	SPAWN_B   // write, exit

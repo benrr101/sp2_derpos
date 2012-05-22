@@ -526,9 +526,7 @@ static void _sys_exec( Pcb *pcb ) {
 
 	// invoke the common code for process creation
 
-	c_printf("Hello 1");
 	status = _create_process( pcb, ARG(pcb)[1] );
-	c_printf("Hello 2");
 
 	// we only need to assign this if the creation failed
 	// for some reason - otherwise, this process never
