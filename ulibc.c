@@ -113,8 +113,8 @@ Status spawnp( Pid *pid, Prio prio, void (*entry)(void) ) {
 		status2 = get_pid( &pid_to_pass );
 		status = get_screen_buffer( pid_to_pass );
 		if( status != SUCCESS ) {
-			c_printf( "Child pid %d", pid_to_pass );
-			prt_status( ", get_screen_buffer() status %s\n", status );
+			//c_printf( "Child pid %d", pid_to_pass );
+			//prt_status( ", get_screen_buffer() status %s\n", status );
 			exit();
 		}
 		

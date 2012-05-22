@@ -356,7 +356,9 @@ Uint8 _ps2_get_io_req( void ){
  * @param	c		The character to write
  */
 void _ps2_write_to_active( char c ){
-	
+
+	return;
+
 	// Grab focused process
 	Pid active_p = get_active_pid();
 

@@ -778,6 +778,31 @@ void init( void ) {
 	// we'll start the first three "manually"
 	// by doing fork() and exec() ourselves
 
+#ifdef SPAWN_GRAPHICS
+	status = spawn( &pid, draw_active_screens );
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
+	}
+	
+	status = spawn( &pid, draw_scr_0);
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
+	}
+	status = spawn( &pid, draw_scr_1);
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
+	}
+	status = spawn( &pid, draw_scr_2);
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
+	}
+	status = spawn( &pid, draw_scr_3);
+	status = spawn( &pid, draw_scr_4);
+	status = spawn( &pid, draw_scr_8);
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
+	}
+#endif
 #ifdef SPAWN_A
 	status = fork( &pid );
 	if( status != SUCCESS ) {
@@ -934,32 +959,10 @@ void init( void ) {
 #endif
 
 #ifdef SPAWN_GRAPHICS
-	status = spawn( &pid, draw_active_screens );
-	if( status != SUCCESS ) {
-		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
-	}
-	
-	status = spawn( &pid, draw_scr_0);
-	if( status != SUCCESS ) {
-		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
-	}
-	status = spawn( &pid, draw_scr_1);
-	if( status != SUCCESS ) {
-		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
-	}
-	status = spawn( &pid, draw_scr_2);
-	if( status != SUCCESS ) {
-		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
-	}
-	status = spawn( &pid, draw_scr_3);
 	status = spawn( &pid, draw_scr_4);
-	status = spawn( &pid, draw_scr_9);
-	status = spawn( &pid, draw_scr_10);
 	status = spawn( &pid, draw_scr_5);
 	status = spawn( &pid, draw_scr_6);
 	status = spawn( &pid, draw_scr_7);
-	status = spawn( &pid, draw_scr_8);
-
 	if( status != SUCCESS ) {
 		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
 	}
