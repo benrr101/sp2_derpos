@@ -20,7 +20,7 @@ void _gl_init( void ) {
 }
 
 void draw_active_screens() {
-
+	write('*');
 	//set_priority( PRIO_HIGH );
 	while ( 1 ) {
 		Uint32* 		displayed;
