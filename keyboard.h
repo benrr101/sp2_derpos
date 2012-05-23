@@ -56,6 +56,7 @@
 
 
 #include "queues.h"
+#include "pcbs.h"
 
 extern Queue *_buf_block;
 
@@ -74,7 +75,7 @@ void _ps2_ack_int( void );
 Pcb *_ps2_remove_from_queue( Uint8 index );
 
 // Open functions
-int buf_read( char* buf, int size, Pid pid );
+int buf_read( char* buf, int size, Pcb* cur );
 int char_read( char *buf, Pid pid );
 
 #endif

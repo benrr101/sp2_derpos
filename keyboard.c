@@ -18,13 +18,15 @@
 #include "ulib.h"
 #include "win_man.h"
 #include "keyboard.h"
+#include "vmemL2.h"
 
 // Struct to handle IO-Request information
 typedef struct ps2_io_req{
-	Pid pid;
+	Uint32 pdt;
 	char *buf;
 	int size;
 	int index;
+	Pid pid;
 } ps2_io_req;
 
 // Array of IO Requests currently outstanding
@@ -415,7 +417,10 @@ void _ps2_write_to_active( char c ){
 	// Check if we need to return a special character, or write to buf
 	//c_printf( "Index: %d    Size: %d\n", requests[ index ]->index, requests[ index ]->size);
 	char *buf = requests[ index ]->buf;
-	c_printf(" Writing Buf Addr: 0x%x\n", buf);
+	_vmeml2_change_page(requests[ index ]->pdt);
+	//c_printf("PatK: %x\n", _isr_vmem_getcr3() ); 
+	//c_printf("PatP: %x\n", _current->pdt );
+	//c_printf(" Writing Buf Addr: 0x%x 0x%x\n", buf, buf+sizeof(char));
 	if( buf == 0 ){
 		buf[1] = c;
 		buf[0] = ( ( shift_pressed * 4 ) + ( alt_pressed * 2 ) + ctrl_pressed );
@@ -453,6 +458,7 @@ void _ps2_write_to_active( char c ){
 			_ps2_delete_request( index );
 		}
 	}
+	_vmeml2_change_page(_current->pdt);
 }
 
 /**
@@ -509,7 +515,7 @@ Pcb *_ps2_remove_from_queue( Uint8 index ){
  * @param	buf		The buffer to fill with character input from the keyboard.
  * @param	size	The number of characters to read.
  */
-int buf_read( char* buf, int size, Pid pid ){
+int buf_read( char* buf, int size, Pcb* cur ){
 	
 	// Create an IO-Request block
 	int index = _ps2_get_io_req();
@@ -519,7 +525,8 @@ int buf_read( char* buf, int size, Pid pid ){
 	}
 
 	// Initialize IO-request
-	requests[index]->pid = pid;
+	requests[index]->pid = cur->pid;
+	requests[index]->pdt = cur->pdt;
 	requests[index]->buf = buf;
 	requests[index]->size = size;
 	requests[index]->index = 0;
