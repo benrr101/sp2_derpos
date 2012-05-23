@@ -1148,6 +1148,18 @@ void init( void ) {
 
 	// we'll start the first three "manually"
 	// by doing fork() and exec() ourselves
+	
+#ifdef SPAWN_SHELLS
+	status = spawn(&pid, fileshell);
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user FILESHELL, status %s\n", status );
+	}
+	/*
+	status = spawn(&pid, fileshell);
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user GRAPHICS, status %s\n", status );
+	}*/
+#endif
 
 #ifdef SPAWN_GRAPHICS
 	status = spawn( &pid, draw_active_screens );
@@ -1160,19 +1172,6 @@ void init( void ) {
 		prt_status( "init: can't spawn() user GRAPHICS, status %s\n", status );
 	}
 #endif
-
-#ifdef SPAWN_SHELLS
-	status = spawn(&pid, fileshell);
-	if( status != SUCCESS ) {
-		prt_status( "init: can't spawn() user GRAPHICS, status %s\n", status );
-	}
-	
-	status = spawn(&pid, fileshell);
-	if( status != SUCCESS ) {
-		prt_status( "init: can't spawn() user GRAPHICS, status %s\n", status );
-	}
-#endif
-	
 
 #ifdef SPAWN_A
 	status = fork( &pid );
