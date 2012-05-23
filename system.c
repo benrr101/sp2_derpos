@@ -38,6 +38,10 @@
 // need the exit() prototype
 #include "ulib.h"
 
+Uint32 stack_copy_reserve[ STACK_SIZE / 1024 ];
+Uint32 stack_copy_reserve_size = STACK_SIZE / 1024;
+
+
 /*
 ** PUBLIC FUNCTIONS
 */
@@ -277,13 +281,20 @@ void _init( void ) {
 		_kpanic( "_init", "first pcb alloc failed\n", FAILURE );
 	}
 
+	//create reserve address for copying
+	int r;
+	for ( r = 0; r < stack_copy_reserve_size; r++ )
+	{
+		stack_copy_reserve[r] = _vmem_get_next_reserve_address();
+	}
+
 	//setup paging ans stack for idle process
 	pcb->pdt = _vmeml2_create_page_dir();
 	Uint32* ptable=_vmeml2_create_page_table( pcb->pdt, ( STACK_ADDRESS / PAGE_TABLE_SIZE)  );
-	 _vmeml2_create_page_reserved( ptable, 0 );
-	 _vmeml2_create_page_reserved( ptable, 1 );
-	 _vmeml2_create_page_reserved( ptable, 2 );
-	 _vmeml2_create_page_reserved( ptable, 3 );
+	 _vmeml2_create_page( ptable, 0 );
+	 _vmeml2_create_page( ptable, 1 );
+	 _vmeml2_create_page( ptable, 2 );
+	 _vmeml2_create_page( ptable, 3 );
 	pcb->stack = (Stack*) ( STACK_ADDRESS);
 
 	_vmeml2_change_page( (Uint32) pcb->pdt );
