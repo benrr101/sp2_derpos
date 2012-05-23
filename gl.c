@@ -26,66 +26,70 @@ void draw_active_screens() {
 	write('*');
 	//set_priority( PRIO_HIGH );
 	while ( 1 ) {
-		Uint32* 		displayed;
-		Uint32*  		buffer_ptr;
-		screen_info* 	curr_si;
-		int i = 0;
-		int x = 0;
-		int y = 0;
-		int x_off = 0;
-		int y_off = 0;
+		draw_active_screens_once();
+		msleep( 1 );
+	}
+}
 
-		displayed = get_current_bufs( );
+void draw_active_screens_once() {
+	Uint32* 		displayed;
+	Uint32*  		buffer_ptr;
+	screen_info* 	curr_si;
+	int i = 0;
+	int x = 0;
+	int y = 0;
+	int x_off = 0;
+	int y_off = 0;
 
-		for(i = 0; i < 4; i++) {
-			curr_si = &(scrn_info_arr[displayed[i]]);
+	displayed = get_current_bufs( );
 
-			buffer_ptr = (Uint32 *) (curr_si->bPtr);
-			//#ifdef GL_DEBUG
-			//write( 'M' );
-			//c_printf("SI: %x - (%x=%x) ++ ", curr_si, curr_si->bPtr, buffer_ptr);
-			//#endif
+	for(i = 0; i < 4; i++) {
+		curr_si = &(scrn_info_arr[displayed[i]]);
 
-			//x_off = curr_si.w * (i % 2);
-			if( i == 1 || i == 3 )
-				x_off = curr_si->w+1;
-			else
-				x_off = 0;
+		buffer_ptr = (Uint32 *) (curr_si->bPtr);
+		//#ifdef GL_DEBUG
+		//write( 'M' );
+		//c_printf("SI: %x - (%x=%x) ++ ", curr_si, curr_si->bPtr, buffer_ptr);
+		//#endif
 
-			if( i == 2 || i == 3 )
-				y_off = curr_si->h+1;
-			else
-				y_off = 0;
+		//x_off = curr_si.w * (i % 2);
+		if( i == 1 || i == 3 )
+			x_off = curr_si->w+1;
+		else
+			x_off = 0;
 
-			//copy the buffer
-			for(x = 0; x < curr_si->w -1; x++) {
-				for(y = 0; y < curr_si->h-1; y++) {
-					int pos1 = ((y + y_off) * bytes_perline) + (x + x_off);
-					int pos2 = (y * curr_si->w) + x;
+		if( i == 2 || i == 3 )
+			y_off = curr_si->h+1;
+		else
+			y_off = 0;
 
-					#ifndef GL_DEBUG
-					video_mem_ptr[pos1] = buffer_ptr[pos2];
-					#endif
-				}
+		//copy the buffer
+		for(x = 0; x < curr_si->w -1; x++) {
+			for(y = 0; y < curr_si->h-1; y++) {
+				int pos1 = ((y + y_off) * bytes_perline) + (x + x_off);
+				int pos2 = (y * curr_si->w) + x;
+
+				#ifndef GL_DEBUG
+				video_mem_ptr[pos1] = buffer_ptr[pos2];
+				#endif
 			}
 		}
-		//draw system stuff mouse, screen seperators etc
-		/*
-		pixel p;
-		p.r = 0;
-		p.b = 0;
-		p.g = 0;
-		p.a = 0;
-		draw_line(640, 0, 640, 512, p);
-		draw_line(0, 512, 640, 512, p);
-		*/
-		for(x = 0; x <= 1280; x++) {
-			video_mem_ptr[(512 * bytes_perline) + x] = 0xffffffff;
-		}
-		for(y = 0; y <= 1024; y++) {
-			video_mem_ptr[(y * bytes_perline) + 640] = 0xffffffff;
-		}
-		msleep( 1 );
+	}
+	//draw system stuff mouse, screen seperators etc
+	/*
+	pixel p;
+	p.r = 0;
+	p.b = 0;
+	p.g = 0;
+	p.a = 0;
+	draw_line(640, 0, 640, 512, p);
+	draw_line(0, 512, 640, 512, p);
+	*/
+	for(x = 0; x <= 1280; x++) {
+		video_mem_ptr[(512 * bytes_perline) + x] = 0xffffffff;
+	}
+	for(y = 0; y <= 1024; y++) {
+		video_mem_ptr[(y * bytes_perline) + 640] = 0xffffffff;
 	}
 }
 

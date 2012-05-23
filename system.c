@@ -38,6 +38,9 @@
 // need the exit() prototype
 #include "ulib.h"
 
+Uint32 stack_copy_reserve[ STACK_SIZE / 1024 ];
+Uint32 stack_copy_reserve_size = STACK_SIZE / 1024;
+
 /*
 ** PUBLIC FUNCTIONS
 */
@@ -72,17 +75,12 @@ void _cleanup( Pcb *pcb ) {
 		return;
 	}
 
-	/*
-	if( pcb->stack != NULL ) {
-		status = _stack_dealloc( pcb->stack );
-		if( status != SUCCESS ) {
-			_kpanic( "_cleanup", "stack dealloc status %s\n", status );
-		}
-	}*/
-
+	//change to defualt page 
 	_vmeml2_change_page( (Uint32)_vmem_page_dir );
+	//release the old page
 	_vmeml2_release_page_dir( pcb->pdt );
 
+	//deallocate the pcb
 	pcb->state = FREE;
 	status = _pcb_dealloc( pcb );
 	if( status != SUCCESS ) {
@@ -282,17 +280,26 @@ void _init( void ) {
 		_kpanic( "_init", "first pcb alloc failed\n", FAILURE );
 	}
 
+	
+	//create reserve address for copying
+	int r;
+	for ( r = 0; r < stack_copy_reserve_size; r++ )
+	{	
+		Uint32 page =_vmem_get_next_reserve_address();
+		stack_copy_reserve[r] = page;
+		_vmem_set_address( stack_copy_reserve[r] );
+	}
+
+	//setup paging ans stack for idle process
 	pcb->pdt = _vmeml2_create_page_dir();
 	Uint32* ptable=_vmeml2_create_page_table( pcb->pdt, ( STACK_ADDRESS / PAGE_TABLE_SIZE)  );
-	//Uint32* rpage = _vmeml2_create_page_reserved( ptable, 0 );
-	 _vmeml2_create_page_reserved( ptable, 0 );
-	 _vmeml2_create_page_reserved( ptable, 1 );
-	 _vmeml2_create_page_reserved( ptable, 2 );
-	 _vmeml2_create_page_reserved( ptable, 3 );
+	 _vmeml2_create_page( ptable, 0 );
+	 _vmeml2_create_page( ptable, 1 );
+	 _vmeml2_create_page( ptable, 2 );
+	 _vmeml2_create_page( ptable, 3 );
 	pcb->stack = (Stack*) ( STACK_ADDRESS);
 
 	_vmeml2_change_page( (Uint32) pcb->pdt );
-	pcb->stack = (Stack*) ( STACK_ADDRESS);
 
 	/*
 	** Next, set up various PCB fields
@@ -334,6 +341,10 @@ void _init( void ) {
 
 }
 
+
+/*
+** _isr_usb_pull - catches the usb being pull out and then ignores it
+*/
 void _isr_usb_pull( int vector, int code )
 {
 	__outb( PIC_MASTER_CMD_PORT, PIC_EOI );
