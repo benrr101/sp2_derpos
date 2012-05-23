@@ -241,7 +241,7 @@ FS_STATUS fseek(FILE *file, Uint32 offset, FS_FILE_SEEK dir) {
 	// Which way are we seeking
 	if(dir == FS_SEEK_ABS) {
 		// Seeking to absolute position into the disk
-		if(offset >= filesize) {
+		if(offset > filesize) {
 			// We'd be going off the end of the file
 			return FS_INVALID_OFFSET;
 		}

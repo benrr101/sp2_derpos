@@ -77,7 +77,7 @@ unsigned char _ps2_scan_code[ 2 ][ 128 ] = {
 };
 
 // Key Modifiers
-static Uint8 shift_pressed = 0;
+static char shift_pressed = 0;
 static char ctrl_pressed = 0;
 static char alt_pressed = 0;
 //static char num_lock = 1;
@@ -415,10 +415,17 @@ void _ps2_write_to_active( char c ){
 	// Check if we need to return a special character, or write to buf
 	//c_printf( "Index: %d    Size: %d\n", requests[ index ]->index, requests[ index ]->size);
 	char *buf = requests[ index ]->buf;
-	c_printf(" Writing Buf Addr: 0x%x\n", buf);
-	if( buf == 0 ){
+	Uint8 flags = 0;
+	//c_printf(" Writing Buf Addr: 0x%x\n", buf);
+	if( requests[ index ]->size == 0 ){
 		buf[1] = c;
-		buf[0] = ( ( shift_pressed * 4 ) + ( alt_pressed * 2 ) + ctrl_pressed );
+		if( shift_pressed )
+			flags = flags | 4;
+		if( alt_pressed )
+			flags = flags | 2;
+		if( ctrl_pressed )
+			flags = flags | 1;
+		buf[0] = (char) flags;
 		Pcb *pcb = _ps2_remove_from_queue( index );
 		_ps2_delete_request( index );
 		_sched( pcb );

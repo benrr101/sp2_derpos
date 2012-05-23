@@ -22,26 +22,12 @@
 static char buffer[65];
 static char s_buf[2];
 void fileshell(void) {
+
 	draw_rect(0,0,100,100, ((pixel){0xff,0xff,0xff,0xff}));
 
 
-	write('q');
-	// Build a temp list of commands
-	/*char *commandList[10];
-	commandList[0] = "touch A:testfile\0";
-	commandList[1] = "write A:testfile\0";
-	commandList[2] = "write -10 A:testfile\0";
-	commandList[3] = "cat A:testfile\0";
-	commandList[4] = "ls A\0";
-	commandList[5] = "rm A:testfile\0";
-	commandList[6] = "drives\0";
-	commandList[7] = "part 1 2 5000 20480\0";
-	commandList[8] = "format 1 2\0";
-	commandList[9] = "mounts\0";*/
 	Uint8 count = 0;
 	Uint16 i;
-
-	c_printf("Address %x\n", buffer);
 
 	// Loop indefinitely
 	while(1) {
@@ -60,7 +46,6 @@ void fileshell(void) {
 
 		// BIG ASS SWITCH ON THE COMMAND
 		if(strncmp(command, "touch", 20) == 0) {
-			write('t');
 			// TOUCH -------------------------------------------------------
 			// Figure out the name of the file
 			char *filename = strtok(NULL, " ");
@@ -85,14 +70,10 @@ void fileshell(void) {
 				continue;
 			}
 
-			//@DEBUG
-			fwrite(f, "FRIG OFF, BARB!", 15);
-
 			// Close the file to free the pointer
 			fclose(f);
 
 		} else if(strncmp(command, "rm", 20) == 0) {
-			write('r');
 			// RM ----------------------------------------------------------
 			// Figure out the name of the file
 			char *filename = strtok(NULL, " ");
@@ -118,7 +99,6 @@ void fileshell(void) {
 			fdelete(f);
 			
 		} else if(strncmp(command, "ls", 20) == 0) {
-			write('l');
 			// LS ----------------------------------------------------------
 			// Figure out which mountpoint we want to read
 			char *mountpoint = strtok(NULL, " ");
@@ -148,7 +128,6 @@ void fileshell(void) {
 			fdelete(nameFile);
 
 		} else if(strncmp(command, "cat", 20) == 0) {
-			write('c');
 			// CAT ---------------------------------------------------------
 			// Figure out which file to open
 			char *filename = strtok(NULL, " ");
@@ -172,7 +151,6 @@ void fileshell(void) {
 			c_puts("\n");
 
 		} else if(strncmp(command, "write", 20) == 0) {
-			write('w');
 			// WRITE ------------------------------------------------------
 			// Figure out which file to open
 			char *filename = strtok(NULL, " ");
@@ -219,32 +197,28 @@ void fileshell(void) {
 			c_puts("\n");
 			while(1) {
 				// Get a character
-				//Uint32 status = read(&c);
-				// readchar(&c);
 				read_char( s_buf );
 				c = s_buf[ 1 ];
 				mod = s_buf[ 0 ];
 				
-				if( mod & 2 ){
-
-				}
-
 				// Will it terminate input?
-				if(c == '`') { 
+				if((mod & 1) && c == 'd') { 
 					break;
 				}
 
+				// Echo it to the terminal
+				c_printf("%c", c);
+
 				// It didn't terminate input so print dump it to the file
 				bytes += fwrite(file, &c, 1);
-				if(bytes > 20) { break; }
-				c_printf("%x ", bytes);
 			}
 
 			// Output the number of bytes we wrote
-			c_printf("Wrote %x bytes\n", bytes);
+			c_printf("Wrote %d bytes\n", bytes);
+
+			fclose(file);
 
 		} else if(strncmp(command, "drives", 20) == 0) {
-			write('d');
 			// DRIVES ------------------------------------------------------
 			// We're breaking all the rules. Iterate over the drives found
 			for(i = 0; i < ata_device_count; i++) {
@@ -256,7 +230,6 @@ void fileshell(void) {
 			}
 
 		} else if(strncmp(command, "part", 20) == 0) {
-			write('p');
 			// PART --------------------------------------------------------
 			// Grab the drive to partition
 			char *drivec = strtok(NULL, " ");
@@ -309,7 +282,6 @@ void fileshell(void) {
 			}	
 
 		} else if(strncmp(command, "format", 20) == 0) {
-			write('f');
 			// FORMAT ------------------------------------------------------
 			// Grab the drive to format
 			char *drivec = strtok(NULL, " ");
@@ -334,7 +306,6 @@ void fileshell(void) {
 			}
 
 		} else if(strncmp(command, "mounts", 20) == 0) {
-			write('m');
 			// MOUNTS ------------------------------------------------------
 			// Breaking the rules again. Iterate over the mountpoints found
 			if(mount_point_count == 0) {
@@ -354,15 +325,9 @@ void fileshell(void) {
 			return;
 		} else {
 			// INVALID COMMAND ---------------------------------------------
-			write('I');
 			c_puts("*** Invalid command!\n");
 		}
-
-		//@TEST:
-		if(count > 9) { return; }
-		count++;
 	}
-	write('e');
 }
 
 /*
