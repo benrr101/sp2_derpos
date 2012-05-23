@@ -95,8 +95,6 @@ static void _sys_fork( Pcb *pcb ) {
 	_kmemcpy( (void *)new, (void *)pcb, sizeof(Pcb) );
 
 
-	Uint32* scr = _get_stack_copy_reserve();
-
 	//create a new stack for the new process
 	//this entails a new directory and pages
 	new->pdt = _vmeml2_create_page_dir();
@@ -112,7 +110,7 @@ static void _sys_fork( Pcb *pcb ) {
 	int s;
 	for( s= 0; s < stack_copy_reserve_size; s++ )
 	{
-		_kmemcpy( (void *)scr[s], (void *)((Uint32)( pcb->stack) + (PAGE_SIZE * s)), PAGE_SIZE);
+		_kmemcpy( (void *)stack_copy_reserve[s], (void *)((Uint32)( pcb->stack) + (PAGE_SIZE * s)), PAGE_SIZE);
 	}
 
 	
@@ -134,7 +132,7 @@ static void _sys_fork( Pcb *pcb ) {
 	//move from intermeditary to new stack
 	for( s= 0; s < stack_copy_reserve_size; s++ )
 	{
-		_kmemcpy( (void *)((Uint32)( new->stack) + (PAGE_SIZE * s)), (void *)scr[s], PAGE_SIZE);
+		_kmemcpy( (void *)((Uint32)( new->stack) + (PAGE_SIZE * s)), (void *)stack_copy_reserve[s], PAGE_SIZE);
 	}
 
 	ptr = (Uint32 *) (ARG(new)[1]);
