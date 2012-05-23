@@ -375,11 +375,11 @@ void fileshell(void) {
 			__panic("This is fun");
 		} else {
 			// INVALID COMMAND ---------------------------------------------
-			write('I');
+			//write('I');
 			gl_puts("*** Invalid command!\n");
 		}
 	}
-	write('e');
+	//write('e');
 }
 
 /*
@@ -1152,31 +1152,28 @@ void init( void ) {
 #ifdef SPAWN_GRAPHICS
 	status = spawn( &pid, draw_active_screens );
 	if( status != SUCCESS ) {
-		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
+		prt_status( "init: can't spawn() user GRAPHICS, status %s\n", status );
 	}
 	
 	status = spawn( &pid, draw_scr_0);
 	if( status != SUCCESS ) {
-		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
-	}
-	status = spawn( &pid, draw_scr_1);
-	if( status != SUCCESS ) {
-		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
-	}
-	status = spawn( &pid, draw_scr_2);
-	if( status != SUCCESS ) {
-		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
-	}
-	status = spawn( &pid, draw_scr_3);
-	status = spawn( &pid, draw_scr_4);
-	status = spawn( &pid, draw_scr_8);
-	if( status != SUCCESS ) {
-		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
+		prt_status( "init: can't spawn() user GRAPHICS, status %s\n", status );
 	}
 #endif
-	spawn(&pid, fileshell);
-/*
->>>>>>> sata_user
+
+#ifdef SPAWN_SHELLS
+	status = spawn(&pid, fileshell);
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user GRAPHICS, status %s\n", status );
+	}
+	
+	status = spawn(&pid, fileshell);
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user GRAPHICS, status %s\n", status );
+	}
+#endif
+	
+
 #ifdef SPAWN_A
 	status = fork( &pid );
 	if( status != SUCCESS ) {
@@ -1332,18 +1329,20 @@ void init( void ) {
 	}
 #endif
 
-#ifdef SPAWN_GRAPHICS
-	status = spawn( &pid, draw_scr_4);
-	status = spawn( &pid, draw_scr_5);
-	status = spawn( &pid, draw_scr_6);
-	status = spawn( &pid, draw_scr_7);
+	#ifdef SPAWN_GRAPHICS
+	status = spawn( &pid, draw_scr_1);
 	if( status != SUCCESS ) {
-		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
+		prt_status( "init: can't spawn() user GRAPHICS, status %s\n", status );
 	}
-#endif
-
-	write( '!' );
-*/
+	status = spawn( &pid, draw_scr_2);
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user GRAPHICS, status %s\n", status );
+	}
+	status = spawn( &pid, draw_scr_3);
+	if( status != SUCCESS ) {
+		prt_status( "init: can't spawn() user GRAPHICS, status %s\n", status );
+	}
+	#endif
 	/*
 	** And now we start twiddling our thumbs
 	*/
@@ -1359,7 +1358,7 @@ void init( void ) {
 		prt_status( "idle: priority change status %s\n", status );
 	}
 
-	write( '.' );
+	write( '!' );
 
 	for(;;) {
 		for( i = 0; i < DELAY_LONG; ++i )
