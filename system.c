@@ -38,12 +38,8 @@
 // need the exit() prototype
 #include "ulib.h"
 
-Uint32 stack_copy_reserve[ 4 ];
+Uint32 stack_copy_reserve[ STACK_SIZE / 1024 ];
 Uint32 stack_copy_reserve_size = STACK_SIZE / 1024;
-
-Uint32* _get_stack_copy_reserve(){
-	return stack_copy_reserve;
-}
 
 /*
 ** PUBLIC FUNCTIONS
