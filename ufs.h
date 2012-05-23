@@ -35,4 +35,7 @@ Uint32 fread(FILE *file, char *buffer, Uint32 size);
 Uint32 fwrite(FILE *file, char *buffer, Uint32 size);
 FS_STATUS fflush(FILE *file);
 
+// OH GOD.
+FILE *fnamefile(const char mountpoint);
+
 #endif

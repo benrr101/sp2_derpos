@@ -14,6 +14,7 @@
 
 #include "headers.h"
 
+#include "startup.h"
 #include "system.h"
 #include "clock.h"
 #include "pcbs.h"
@@ -232,6 +233,7 @@ void _init( void ) {
 	_win_man_init();	
 		//vga_init
 		//gl_init
+
 	_syscall_init();
 	_sched_init();
 	_pci_init();
@@ -280,6 +282,8 @@ void _init( void ) {
 	Uint32* ptable=_vmeml2_create_page_table( pcb->pdt, ( STACK_ADDRESS / PAGE_TABLE_SIZE)  );
 	 _vmeml2_create_page_reserved( ptable, 0 );
 	 _vmeml2_create_page_reserved( ptable, 1 );
+	 _vmeml2_create_page_reserved( ptable, 2 );
+	 _vmeml2_create_page_reserved( ptable, 3 );
 	pcb->stack = (Stack*) ( STACK_ADDRESS);
 
 	_vmeml2_change_page( (Uint32) pcb->pdt );

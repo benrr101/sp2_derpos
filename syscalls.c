@@ -100,13 +100,17 @@ static void _sys_fork( Pcb *pcb ) {
 	Uint32* ptable=_vmeml2_create_page_table( new->pdt, ( STACK_ADDRESS / PAGE_TABLE_SIZE)  );
 	Uint32* rpage = _vmeml2_create_page_reserved( ptable, 0 );
 	Uint32* rpage2 = _vmeml2_create_page_reserved( ptable, 1 );
+	Uint32* rpage3 = _vmeml2_create_page_reserved( ptable, 2 );
+	Uint32* rpage4 = _vmeml2_create_page_reserved( ptable, 3 );
 	new->stack = (Stack*) ( STACK_ADDRESS);
 
 	//copy over the old stack to the new one
 	_kmemcpy( (void *)rpage, (void *)pcb->stack, PAGE_SIZE);
 	_kmemcpy( (void *)rpage2, (void *)((Uint32)( pcb->stack) + PAGE_SIZE), PAGE_SIZE);
-
+	_kmemcpy( (void *)rpage3, (void *)((Uint32)( pcb->stack) + PAGE_SIZE *2 ), PAGE_SIZE);
+	_kmemcpy( (void *)rpage4, (void *)((Uint32)( pcb->stack) + PAGE_SIZE *3), PAGE_SIZE);
 	// fix the pcb fields that should be unique to this process
+
 	new->pid = _next_pid++;
 	new->ppid = pcb->pid;
 	new->state = NEW;
@@ -117,7 +121,7 @@ static void _sys_fork( Pcb *pcb ) {
 	ptr = (Uint32 *) (ARG(pcb)[1]);
 	*ptr = new->pid;
 
-	//to get in the ccorrect adfress space switch to the new process page directort
+	//to get in the ccorrect address space switch to the new process page directort
 	_vmeml2_change_page( (Uint32) new->pdt );
 	ptr = (Uint32 *) (ARG(new)[1]);
 	*ptr = 0;
@@ -229,7 +233,8 @@ static void _sys_read_buf( Pcb *pcb ){
 	// let the keyboard driver know we expect keystrokes for this process
 	buf = (char *) (ARG(pcb)[1]);
 	size = (int) (ARG(pcb)[2]);
-	if( buf_read( buf, size, _current->pid ) ){
+
+	if( buf_read( buf, size, _current ) ){
 
 		// move process to buffered-blocking queue
 		key.u = _current->pid;
@@ -253,11 +258,11 @@ static void _sys_read_char( Pcb *pcb ){
 	Status status;
 	Key key;
 	char *buf;
-	int size;
+	//int size;
 
 	// let the keyboard driver know we expect keystrokes for this process
 	buf = (char *) (ARG(pcb)[1]);
-	if( char_read( buf, _current->pid ) ){
+	if( char_read( buf, _current ) ){
 
 		// move process to buffered-blocking queue
 		key.u = _current->pid;
@@ -643,6 +648,9 @@ void _isr_syscall( int vector, int code ) {
 	if( _current->context == NULL ) {
 		_kpanic( "_isr_syscall", "null _current context", FAILURE );
 	}
+
+	
+//	c_printf("PatS: %x\n", _current->pdt );
 
 	// retrieve the syscall code from the process
 

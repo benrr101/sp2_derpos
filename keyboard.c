@@ -18,18 +18,21 @@
 #include "ulib.h"
 #include "win_man.h"
 #include "keyboard.h"
+#include "vmemL2.h"
+#include "gl_print.h"
 
 // Struct to handle IO-Request information
 typedef struct ps2_io_req{
-	Pid pid;
+	Uint32 pdt;
 	char *buf;
 	int size;
 	int index;
+	Pid pid;
 } ps2_io_req;
 
 // Array of IO Requests currently outstanding
 static ps2_io_req *requests [ TOTAL_IO_REQS ];
-static Pcb *pcb_reqs [ TOTAL_IO_REQS ];
+//static Pcb *pcb_reqs [ TOTAL_IO_REQS ];
 
 // Buffered-Blocking Queue
 Queue *_buf_block;
@@ -77,12 +80,12 @@ unsigned char _ps2_scan_code[ 2 ][ 128 ] = {
 };
 
 // Key Modifiers
-static char shift_pressed = 0;
+static Uint8 shift_pressed = 0;
 static char ctrl_pressed = 0;
 static char alt_pressed = 0;
-static char num_lock = 1;
+//static char num_lock = 1;
 static char caps_lock = 0;
-static char scroll_lock = 0;
+//static char scroll_lock = 0;
 static char win_pressed = 0;
 
 // Used to await another byte for an extended key
@@ -250,18 +253,20 @@ void _ps2_keyboard_isr( int vec, int code ){
 				// Determine offset arrow-keys to change active window
 				switch( key ){
 					case PS2_KEY_UP_P:
-					case PS2_KEY_DOWN_P:
 						if( quad > 1 )
 							quad -= 2;
-						else
+						break;
+					case PS2_KEY_DOWN_P:
+						if( quad < 2 )
 							quad += 2;
 						break;
 					case PS2_KEY_LEFT_P:
+						if( quad % 2 == 1 )
+							quad -= 1;
+						break;
 					case PS2_KEY_RIGHT_P:
 						if( quad % 2 == 0 )
 							quad += 1;
-						else
-							quad -= 1;
 				}
 				switch_active( quad );
 			}
@@ -389,8 +394,6 @@ Uint8 _ps2_get_io_req( void ){
  */
 void _ps2_write_to_active( char c ){
 
-	return;
-
 	// Grab focused process
 	Pid active_p = get_active_pid();
 
@@ -398,6 +401,7 @@ void _ps2_write_to_active( char c ){
 	if( active_p == 0 ){
 		return;
 	}
+
 
 	// Find the IO-request for this process
 	int index = 0;
@@ -413,17 +417,27 @@ void _ps2_write_to_active( char c ){
 	// Check if we need to return a special character, or write to buf
 	//c_printf( "Index: %d    Size: %d\n", requests[ index ]->index, requests[ index ]->size);
 	char *buf = requests[ index ]->buf;
-	if( buf == 0 ){
+	Uint8 flags = 0;
+	//c_printf(" Writing Buf Addr: 0x%x\n", buf);
+	_vmeml2_change_page(requests[ index ]->pdt);
+	//c_printf(" Writing Buf Addr: 0x%x 0x%x\n", buf, buf+sizeof(char));
+	if( requests[ index ]->size == 0 ){
 		buf[1] = c;
-		buf[0] = ( ( shift_pressed * 4 ) + ( alt_pressed * 2 ) + ctrl_pressed );
+		if( shift_pressed )
+			flags = flags | 4;
+		if( alt_pressed )
+			flags = flags | 2;
+		if( ctrl_pressed )
+			flags = flags | 1;
+		buf[0] = (char) flags;
 		Pcb *pcb = _ps2_remove_from_queue( index );
 		_ps2_delete_request( index );
 		_sched( pcb );
 	}
 	else{
-	
 		// We need to print the character for the user
-		c_printf( "%c", c );
+        screen_info* si = get_screen_info( active_p );
+        gl_putchar_s( c, si );
 
 		// store the character
 		int i = requests[ index ]->index;
@@ -434,6 +448,7 @@ void _ps2_write_to_active( char c ){
 		
 		// stop reading if full, or newline
 		if( i == requests[ index ]->size || c == '\n' ){
+			buf[ i ] = '\0';
 			
 			// pull from IO-blocking queue
 			if( !_q_empty( _buf_block ) ){
@@ -441,7 +456,6 @@ void _ps2_write_to_active( char c ){
 				_sched( pcb );
 			}
 			else{
-		
 				// did someone forcefully remove it!?!
 				c_printf( "keyboard, write active: buffered block queue is"
 							" empty???\n" );
@@ -451,6 +465,7 @@ void _ps2_write_to_active( char c ){
 			_ps2_delete_request( index );
 		}
 	}
+	_vmeml2_change_page( (Uint32)_current->pdt);
 }
 
 /**
@@ -507,7 +522,7 @@ Pcb *_ps2_remove_from_queue( Uint8 index ){
  * @param	buf		The buffer to fill with character input from the keyboard.
  * @param	size	The number of characters to read.
  */
-int buf_read( char* buf, int size, Pid pid ){
+int buf_read( char* buf, int size, Pcb* cur ){
 	
 	// Create an IO-Request block
 	int index = _ps2_get_io_req();
@@ -517,7 +532,8 @@ int buf_read( char* buf, int size, Pid pid ){
 	}
 
 	// Initialize IO-request
-	requests[index]->pid = pid;
+	requests[index]->pid = cur->pid;
+	requests[index]->pdt = (Uint32)cur->pdt;
 	requests[index]->buf = buf;
 	requests[index]->size = size;
 	requests[index]->index = 0;
@@ -532,8 +548,8 @@ int buf_read( char* buf, int size, Pid pid ){
  * @param	pid		The process that made the request
  * @returns			1 if a proper IO-request was created, otherwise 0
  */
-int char_read( char *buf, Pid pid ){
-	return buf_read( buf, 0, pid );
+int char_read( char *buf, Pcb* pc ){
+	return buf_read( buf, 0, pc );
 }
 
 //////////////////////////////////////////////////////////////
