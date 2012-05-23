@@ -17,11 +17,17 @@
 #include "string.h"
 #include "sio.h"
 #include "mouse.h"
+#include "gl.h"
 
+static char buffer[65];
+static char s_buf[2];
 void fileshell(void) {
+	draw_rect(0,0,100,100, ((pixel){0xff,0xff,0xff,0xff}));
+
+
 	write('q');
 	// Build a temp list of commands
-	char *commandList[10];
+	/*char *commandList[10];
 	commandList[0] = "touch A:testfile\0";
 	commandList[1] = "write A:testfile\0";
 	commandList[2] = "write -10 A:testfile\0";
@@ -31,27 +37,23 @@ void fileshell(void) {
 	commandList[6] = "drives\0";
 	commandList[7] = "part 1 2 5000 20480\0";
 	commandList[8] = "format 1 2\0";
-	commandList[9] = "mounts\0";
+	commandList[9] = "mounts\0";*/
 	Uint8 count = 0;
+	Uint16 i;
 
-	char buffer[64];
+	c_printf("Address %x\n", buffer);
 
 	// Loop indefinitely
 	while(1) {
 		// Print a prompt
 		c_puts("DERP_FS Shell> ");
-		
+		Pid p;
+		get_pid( &p );
+		c_printf("\n%d\n", p);
 		// Read a buffer from the user
-		//buf_read(buffer, 20);
-		//@TEST:
-		Uint8 i;
-		for(i = 0; i < 64 && commandList[count][i] != 0x0; i++) {
-			buffer[i] = commandList[count][i];
-		}
-		for(i=i; i < 64; i++) {
-			buffer[i] = 0x0;
-		}
-		c_printf("Executing: %d %s\n", count, buffer);
+		read_buf(buffer, 64);
+
+		c_printf("Command='%s'\n", buffer);
 
 		// Figure out which command to execute
 		char *command = strtok(buffer, " ");
@@ -210,12 +212,22 @@ void fileshell(void) {
 			}
 
 			// Loop until the end of input
+			
 			char c = 'q';
+			char mod = 0;
 			Uint32 bytes = 0;
+			c_puts("\n");
 			while(1) {
 				// Get a character
 				//Uint32 status = read(&c);
 				// readchar(&c);
+				read_char( s_buf );
+				c = s_buf[ 1 ];
+				mod = s_buf[ 0 ];
+				
+				if( mod & 2 ){
+
+				}
 
 				// Will it terminate input?
 				if(c == '`') { 
@@ -342,6 +354,7 @@ void fileshell(void) {
 			return;
 		} else {
 			// INVALID COMMAND ---------------------------------------------
+			write('I');
 			c_puts("*** Invalid command!\n");
 		}
 
@@ -1111,7 +1124,6 @@ void init( void ) {
 
 	c_puts( "Init started\n" );
 
-	spawn(&pid, fileshell);
 
 	write( '$' );
 
@@ -1143,6 +1155,7 @@ void init( void ) {
 		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
 	}
 #endif
+	spawn(&pid, fileshell);
 /*
 >>>>>>> sata_user
 #ifdef SPAWN_A
