@@ -286,6 +286,8 @@ void _init( void ) {
 	//Uint32* rpage = _vmeml2_create_page_reserved( ptable, 0 );
 	 _vmeml2_create_page_reserved( ptable, 0 );
 	 _vmeml2_create_page_reserved( ptable, 1 );
+	 _vmeml2_create_page_reserved( ptable, 2 );
+	 _vmeml2_create_page_reserved( ptable, 3 );
 	pcb->stack = (Stack*) ( STACK_ADDRESS);
 
 	_vmeml2_change_page( (Uint32) pcb->pdt );

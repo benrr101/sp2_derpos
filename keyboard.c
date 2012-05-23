@@ -391,15 +391,15 @@ Uint8 _ps2_get_io_req( void ){
  */
 void _ps2_write_to_active( char c ){
 
-	return;
-
 	// Grab focused process
-	Pid active_p = get_active_pid();
+	//Pid active_p = get_active_pid();
+	Pid active_p = 2;
 
 	// Throw away the character if there is no focused process
 	if( active_p == 0 ){
 		return;
 	}
+
 
 	// Find the IO-request for this process
 	int index = 0;
@@ -415,6 +415,7 @@ void _ps2_write_to_active( char c ){
 	// Check if we need to return a special character, or write to buf
 	//c_printf( "Index: %d    Size: %d\n", requests[ index ]->index, requests[ index ]->size);
 	char *buf = requests[ index ]->buf;
+	c_printf(" Writing Buf Addr: 0x%x\n", buf);
 	if( buf == 0 ){
 		buf[1] = c;
 		buf[0] = ( ( shift_pressed * 4 ) + ( alt_pressed * 2 ) + ctrl_pressed );
@@ -423,7 +424,6 @@ void _ps2_write_to_active( char c ){
 		_sched( pcb );
 	}
 	else{
-	
 		// We need to print the character for the user
 		c_printf( "%c", c );
 
@@ -436,7 +436,7 @@ void _ps2_write_to_active( char c ){
 		
 		// stop reading if full, or newline
 		if( i == requests[ index ]->size || c == '\n' ){
-			buf[ i + 1 ] = '\0';
+			buf[ i ] = '\0';
 			
 			// pull from IO-blocking queue
 			if( !_q_empty( _buf_block ) ){
@@ -444,7 +444,6 @@ void _ps2_write_to_active( char c ){
 				_sched( pcb );
 			}
 			else{
-		
 				// did someone forcefully remove it!?!
 				c_printf( "keyboard, write active: buffered block queue is"
 							" empty???\n" );

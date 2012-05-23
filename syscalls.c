@@ -98,16 +98,20 @@ static void _sys_fork( Pcb *pcb ) {
 	Uint32* ptable=_vmeml2_create_page_table( new->pdt, ( STACK_ADDRESS / PAGE_TABLE_SIZE)  );
 	Uint32* rpage = _vmeml2_create_page_reserved( ptable, 0 );
 	Uint32* rpage2 = _vmeml2_create_page_reserved( ptable, 1 );
+	Uint32* rpage3 = _vmeml2_create_page_reserved( ptable, 2 );
+	Uint32* rpage4 = _vmeml2_create_page_reserved( ptable, 3 );
 	new->stack = (Stack*) ( STACK_ADDRESS);
 
 	_kmemcpy( (void *)rpage, (void *)pcb->stack, PAGE_SIZE);
 	_kmemcpy( (void *)rpage2, (void *)((Uint32)( pcb->stack) + PAGE_SIZE), PAGE_SIZE);
+	_kmemcpy( (void *)rpage3, (void *)((Uint32)( pcb->stack) + PAGE_SIZE *2 ), PAGE_SIZE);
+	_kmemcpy( (void *)rpage4, (void *)((Uint32)( pcb->stack) + PAGE_SIZE *3), PAGE_SIZE);
 	// fix the pcb fields that should be unique to this process
 
 	new->pid = _next_pid++;
 	new->ppid = pcb->pid;
 	new->state = NEW;
-	c_printf( "Forked address %x %x \n", new->pid, (Uint32)new->pdt, pcb->pid , (Uint32)pcb->pdt );
+	//c_printf( "Forked address %x %x \n", new->pid, (Uint32)new->pdt, pcb->pid , (Uint32)pcb->pdt );
 
 	/*
         ** Next, we must fix the EBP chain in the child.  This is necessary
@@ -237,6 +241,7 @@ static void _sys_read_buf( Pcb *pcb ){
 	// let the keyboard driver know we expect keystrokes for this process
 	buf = (char *) (ARG(pcb)[1]);
 	size = (int) (ARG(pcb)[2]);
+
 	if( buf_read( buf, size, _current->pid ) ){
 
 		// move process to buffered-blocking queue
