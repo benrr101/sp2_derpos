@@ -1,6 +1,7 @@
 #ifndef _FONT_H_H_
 #define _FONT_H_H_
 
+#define FONT_BASE		' '
 #define FONT_HEIGHT 	13
 #define FONT_WIDTH 		8
 #define FONT_SPACE		8
