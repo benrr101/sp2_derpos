@@ -48,10 +48,10 @@ void _win_man_init( void ) {
 
 	_gl_init();
 	
-	c_printf("\n%x %x\n", (Uint32) _vga_get_start_mem(), (Uint32) _vga_get_end_mem() );
-	c_printf("\n%x %x\n", ( (Uint32) wm_memory ), (Uint32) ( (Uint32) wm_memory ) + buff_size + s_arr_size + WIN_MAN_MEM);
+//	c_printf("\n%x %x\n", (Uint32) _vga_get_start_mem(), (Uint32) _vga_get_end_mem() );
+//	c_printf("\n%x %x\n", ( (Uint32) wm_memory ), (Uint32) ( (Uint32) wm_memory ) + buff_size + s_arr_size + WIN_MAN_MEM);
 
-	c_printf("\nscrn: %x bOff: %x \n", screen_info_arr, bPtrOffset);
+//	c_printf("\nscrn: %x bOff: %x \n", screen_info_arr, bPtrOffset);
 	//fill out the default screens [[ * vga_mode_info->LinbytesPerScanLine)/8) ]]
 	for(i = 0; i < DEFAULT_SCREENS; i++) {
 		screen_info_arr[i].buf_num = i;
@@ -62,11 +62,11 @@ void _win_man_init( void ) {
 		screen_info_arr[i].active = 0;
 		screen_info_arr[i].blocking = 0;
 		
-		//#ifdef WM_DEBUG
+		#ifdef WM_DEBUG
 		c_printf("%d  - %x || ", i,  screen_info_arr[i].bPtr);
-		//#endif
+		#endif
 	}
-	c_printf("%x %x %x %x size_struct:%x \n",  screen_info_arr[0].bPtr, buff_size, s_arr_size, WIN_MAN_MEM, sizeof( struct screen_info ));
+//	c_printf("%x %x %x %x size_struct:%x \n",  screen_info_arr[0].bPtr, buff_size, s_arr_size, WIN_MAN_MEM, sizeof( struct screen_info ));
 	//clear buffer mem
 	_kmemclr(screen_info_arr[0].bPtr, buff_size );
 	

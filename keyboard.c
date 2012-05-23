@@ -458,7 +458,7 @@ void _ps2_write_to_active( char c ){
 			_ps2_delete_request( index );
 		}
 	}
-	_vmeml2_change_page(_current->pdt);
+	_vmeml2_change_page( (Uint32)_current->pdt);
 }
 
 /**
@@ -526,7 +526,7 @@ int buf_read( char* buf, int size, Pcb* cur ){
 
 	// Initialize IO-request
 	requests[index]->pid = cur->pid;
-	requests[index]->pdt = cur->pdt;
+	requests[index]->pdt = (Uint32)cur->pdt;
 	requests[index]->buf = buf;
 	requests[index]->size = size;
 	requests[index]->index = 0;
@@ -541,8 +541,8 @@ int buf_read( char* buf, int size, Pcb* cur ){
  * @param	pid		The process that made the request
  * @returns			1 if a proper IO-request was created, otherwise 0
  */
-int char_read( char *buf, Pid pid ){
-	return buf_read( buf, 0, pid );
+int char_read( char *buf, Pcb* pc ){
+	return buf_read( buf, 0, pc );
 }
 
 //////////////////////////////////////////////////////////////

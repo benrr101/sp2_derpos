@@ -19,7 +19,6 @@
 #include "mouse.h"
 #include "gl.h"
 
-static char s_buf[2];
 void fileshell(void) {
 	draw_rect(0,0,100,100, ((pixel){0xff,0xff,0xff,0xff}));
 
@@ -41,10 +40,8 @@ void fileshell(void) {
 	Uint16 i;
 	
 	char buffer[65];
-	char buffer2[65];
+	char s_buf[2];
 
-//	c_printf("Address %x %x %x\n", buffer, buffer + sizeof(char), buffer + sizeof(char)*65);
-//	c_printf("Address %x %x %x\n", buffer2, buffer2 + sizeof(char), buffer2 +sizeof(char)*65);
 
 	// Loop indefinitely
 	while(1) {
@@ -52,8 +49,6 @@ void fileshell(void) {
 		c_puts("DERP_FS Shell> ");
 		Pid p;
 		get_pid( &p );
-		c_printf("\n%d\n", p);
-		c_printf("PatL: %x\n", _isr_vmem_getcr3() ); 
 		// Read a buffer from the user
 		read_buf(buffer, 64);
 
