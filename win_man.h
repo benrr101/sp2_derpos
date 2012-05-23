@@ -27,7 +27,8 @@ typedef struct screen_info
 	Uint16 	y_max;
 	Uint16 	curr_x;
 	Uint16 	curr_y;
-	char	lines[200][299];
+	Uint16	buf_x;
+	char	lines[200][200];
 	//mouse
 	mouse_handler	handler;
 }	screen_info;
