@@ -9,6 +9,15 @@ void gl_putchar_at( unsigned int x, unsigned int y, char c );
 
 void gl_puts( char *str );
 
-void printf( char* fmt, ... );
+void gl_puts_at(  unsigned int x, unsigned int y, char *str );
+
+void gl_printf( char* fmt, ... );
+
+char * gl_cvtdec0( char *buf, int value );
+int gl_cvtdec( char *buf, int value );
+
+int gl_cvthex( char *buf, int value );
+
+int gl_cvtoct( char *buf, int value );
 
 #endif //_WIN_MAN_H_

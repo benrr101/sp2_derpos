@@ -41,7 +41,6 @@ static void gl_scroll( unsigned int l, screen_info* curr_si ) {
 		to[cpy] = '\0';
 		draw_string(to, 0, (c_line-1)*FONT_HEIGHT, FONT_COLOR);
 	}
-
 	//TODO: set cursor also mark dirty if we do that
 }
 
@@ -78,6 +77,9 @@ static void _gl_do_putchar( char c, screen_info* curr_si ) {
 		case '\r':
 			curr_si->curr_x = 0;
 			break;
+		case '\t':
+			curr_si->curr_x +=4;
+			break;
 		default:
 			curr_si->lines[curr_si->curr_y][curr_si->curr_x] = c;
 			draw_character(c, curr_si->curr_x*FONT_WIDTH, curr_si->curr_y*FONT_HEIGHT, FONT_COLOR);
@@ -88,6 +90,7 @@ static void _gl_do_putchar( char c, screen_info* curr_si ) {
 			}
 			break;
 	}
+	
 	//TODO: set cursor
 }
 
@@ -111,6 +114,14 @@ static void _gl_do_putchar_at( unsigned int x, unsigned int y, char c, screen_in
 	}
 }
 
+void gl_puts_at(  unsigned int x, unsigned int y, char *str ){
+	unsigned int	ch;
+
+	while( (ch = *str++) != '\0' ){
+		gl_putchar_at( x, y, ch );
+	}
+}
+
 void gl_puts( char *str ){
 	unsigned int	ch;
 
@@ -119,6 +130,7 @@ void gl_puts( char *str ){
 	}
 }
 
+/*
 ///////////
 // PRINTF
 ///////////
@@ -139,20 +151,20 @@ static void _gl_do_printf( int x, int y, char **f ){
 	s = get_pid( &pid );
 	curr_si = ( get_screen_info( pid ) );
 
-	/*
+	*
 	** Get characters from the format string and process them
-	*/
+	*
 	ap = (int *)( f + 1 );
 	while( (ch = *fmt++) != '\0' ){
-		/*
+		*
 		** Is it the start of a format code?
-		*/
+		*
 		if( ch == '%' ){
-			/*
+			*
 			** Yes, get the padding and width options (if there).
 			** Alignment must come at the beginning, then fill,
 			** then width.
-			*/
+			*
 			leftadjust = 0;
 			padchar = ' ';
 			width = 0;
@@ -171,9 +183,9 @@ static void _gl_do_printf( int x, int y, char **f ){
 				ch = *fmt++;
 			}
 
-			/*
+			*
 			** What data type do we have?
-			*/
+			*
 			switch( ch ){
 			case 'c':
 				// ch = *( (int *)ap )++;
@@ -184,8 +196,8 @@ static void _gl_do_printf( int x, int y, char **f ){
 				break;
 
 			case 'd':
-				// len = cvtdec( buf, *( (int *)ap )++ );
-				len = cvtdec( buf, *ap++ );
+				// len = gl_cvtdec( buf, *( (int *)ap )++ );
+				len = gl_cvtdec( buf, *ap++ );
 				x = gl_padstr( x, y, buf, len, width, leftadjust, padchar );
 				break;
 
@@ -196,14 +208,14 @@ static void _gl_do_printf( int x, int y, char **f ){
 				break;
 
 			case 'x':
-				// len = cvthex( buf, *( (int *)ap )++ );
-				len = cvthex( buf, *ap++ );
+				// len = gl_cvthex( buf, *( (int *)ap )++ );
+				len = gl_cvthex( buf, *ap++ );
 				x = gl_padstr( x, y, buf, len, width, leftadjust, padchar );
 				break;
 
 			case 'o':
-				// len = cvtoct( buf, *( (int *)ap )++ );
-				len = cvtoct( buf, *ap++ );
+				// len = gl_cvtoct( buf, *( (int *)ap )++ );
+				len = gl_cvtoct( buf, *ap++ );
 				x = gl_padstr( x, y, buf, len, width, leftadjust, padchar );
 				break;
 
@@ -215,7 +227,7 @@ static void _gl_do_printf( int x, int y, char **f ){
 				switch( ch ){
 				case '\n':
 					y += 1;
-					/* FALL THRU */
+					* FALL THRU *
 
 				case '\r':
 					x = 0;
@@ -236,8 +248,8 @@ void gl_printf( char *fmt, ... ){
 	_gl_do_printf( -1, -1, &fmt );
 }
 
-/*
-char * cvtdec0( char *buf, int value ){
+
+char * gl_cvtdec0( char *buf, int value ){
 	int	quotient;
 
 	quotient = value / 10;
@@ -246,28 +258,28 @@ char * cvtdec0( char *buf, int value ){
 		value = 8;
 	}
 	if( quotient != 0 ){
-		buf = cvtdec0( buf, quotient );
+		buf = gl_cvtdec0( buf, quotient );
 	}
 	*buf++ = value % 10 + '0';
 	return buf;
 }
 
-int cvtdec( char *buf, int value ){
+int gl_cvtdec( char *buf, int value ){
 	char	*bp = buf;
 
 	if( value < 0 ){
 		*bp++ = '-';
 		value = -value;
 	}
-	bp = cvtdec0( bp, value );
+	bp = gl_cvtdec0( bp, value );
 	*bp = '\0';
 
 	return bp - buf;
 }
 
-char hexdigits[] = "0123456789ABCDEF";
+char gl_hexdigits[] = "0123456789ABCDEF";
 
-int cvthex( char *buf, int value ){
+int gl_cvthex( char *buf, int value ){
 	int	i;
 	int	chars_stored = 0;
 	char	*bp = buf;
@@ -280,7 +292,7 @@ int cvthex( char *buf, int value ){
 			chars_stored = 1;
 			val >>= 28;
 			val &= 0xf;
-			*bp++ = hexdigits[ val ];
+			*bp++ = gl_hexdigits[ val ];
 		}
 		value <<= 4;
 	}
@@ -289,7 +301,7 @@ int cvthex( char *buf, int value ){
 	return bp - buf;
 }
 
-int cvtoct( char *buf, int value ){
+int gl_cvtoct( char *buf, int value ){
 	int	i;
 	int	chars_stored = 0;
 	char	*bp = buf;
@@ -302,7 +314,7 @@ int cvtoct( char *buf, int value ){
 		if( i == 10 || val != 0 || chars_stored ){
 			chars_stored = 1;
 			val &= 0x7;
-			*bp++ = hexdigits[ val ];
+			*bp++ = gl_hexdigits[ val ];
 		}
 		value <<= 3;
 		val = ( value & 0xe0000000 );
@@ -311,7 +323,7 @@ int cvtoct( char *buf, int value ){
 	*bp = '\0';
 
 	return bp - buf;
-}*/
+}
 
 static int gl_pad( int x, int y, int extra, int padchar ){
 	while( extra > 0 ){
@@ -350,5 +362,5 @@ static int gl_padstr( int x, int y, char *str, int len, int width, int leftadjus
 	}
 	return x;
 }
-
+*/
 

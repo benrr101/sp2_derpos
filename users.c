@@ -770,7 +770,9 @@ void init( void ) {
 	Pid pid;
 	Time time;
 	Status status;
-
+	#ifndef VIDEO_TEXT
+	//c_set_device( 1 );
+	#endif
 	c_puts( "Init started\n" );
 
 	write( '$' );

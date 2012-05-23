@@ -3,6 +3,8 @@
 #include "vga_dr.h"
 #include "font.h"
 #include "gl_print.h"
+#include "printf.h"
+#include "c_io.h"
 
 static screen_info* scrn_info_arr;
 static Uint32* video_mem_ptr;
@@ -221,8 +223,11 @@ void draw_character(char c, Uint32 x, Uint32 y, pixel p) {
     int dx = 0;
     int dy = 0;
 
-    s = get_pid( &pid );
+	if(c == '\n' || c == '\r' || c == '\t' || c == '\0')
+		return;
 
+    s = get_pid( &pid );
+    
     curr_si = ( get_screen_info( pid ) );
     if(c >= aa && c <= zz)
         c -= 6; // offset for the pos in the FONT arr
@@ -300,6 +305,7 @@ void draw_string( char* str, Uint32 x, Uint32 y, pixel p) {
     char c = 0;
     int i = 0;
     int len = 0;
+    int tab = 0;
 
     //find the length
     while(str[len] != '\0') {
@@ -308,12 +314,19 @@ void draw_string( char* str, Uint32 x, Uint32 y, pixel p) {
 
     //length or changing between the characters
     for(i = 0; i < len; i++) {
-        if(str[i] == ' ')
+    	c = str[i];
+        if(c == ' ')
         	continue;
-        	
-        c = str[i];
-        
-        draw_character(c, x+(i * FONT_SPACE), y, p);
+        else if(c == '\n') {
+        	//if(i+1 < len && str[i+1] == '\r')
+        	//	i++;
+        	tab = 0;
+        	y+=FONT_HEIGHT;
+        	continue;
+        } else if(str[i] == '\t') {
+        	tab += 4;        	
+        }
+        draw_character(c, x+tab+(i * FONT_SPACE), y, p);
     }
 }
 
@@ -348,14 +361,18 @@ void draw_scr_0() {
 		p.a = 0xff;
 		//draw_string(str, 10, 10, p);
 		gl_putchar( ('A' + (t%50)) );
-		gl_printf("OMG printf %d %x OMG\n", 15, str);
+		printf(" printf %d %x %s \n", 15, str, str);
+
+		//printf("\n1\ttabbed\n2\t\ttab2\n3\n4\n5");
+		
+		//c_printf("c_printf %d %x %s \n\n", 15, str, str);
 		/*
 		for(t = 0; t < 26; t++) {
 			draw_character('A'+t, t*FONT_WIDTH, FONT_HEIGHT*2, p);
 			draw_character('a'+t, t*FONT_WIDTH, FONT_HEIGHT*3, p);
 		}*/
 		t++;
-		msleep(1);
+		msleep(1000);
 	}
 }
 
