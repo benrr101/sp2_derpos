@@ -40,6 +40,7 @@ void set_pixel( Uint32 x, Uint32 y, pixel p, screen_info* curr_si );
 
 //draw char, make the x component count down so that we can flip the characters.
 void draw_character( char c, Uint32 x, Uint32 y, pixel p );
+void do_draw_character( char c, Uint32 x, Uint32 y, pixel p, screen_info* curr_si);
 
 //draw chars for loop
 void draw_string( char* str, Uint32 x, Uint32 y, pixel p );
