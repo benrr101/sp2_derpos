@@ -94,18 +94,26 @@ static void _sys_fork( Pcb *pcb ) {
 
 	_kmemcpy( (void *)new, (void *)pcb, sizeof(Pcb) );
 
+
+	//create a new stack for the new process
+	//this entails a new directory and pages
 	new->pdt = _vmeml2_create_page_dir();
 	Uint32* ptable=_vmeml2_create_page_table( new->pdt, ( STACK_ADDRESS / PAGE_TABLE_SIZE)  );
-	Uint32* rpage = _vmeml2_create_page_reserved( ptable, 0 );
-	Uint32* rpage2 = _vmeml2_create_page_reserved( ptable, 1 );
-	Uint32* rpage3 = _vmeml2_create_page_reserved( ptable, 2 );
-	Uint32* rpage4 = _vmeml2_create_page_reserved( ptable, 3 );
+	_vmeml2_create_page( ptable, 0 );
+	_vmeml2_create_page( ptable, 1 );
+	_vmeml2_create_page( ptable, 2 );
+	_vmeml2_create_page( ptable, 3 );
 	new->stack = (Stack*) ( STACK_ADDRESS);
 
-	_kmemcpy( (void *)rpage, (void *)pcb->stack, PAGE_SIZE);
-	_kmemcpy( (void *)rpage2, (void *)((Uint32)( pcb->stack) + PAGE_SIZE), PAGE_SIZE);
-	_kmemcpy( (void *)rpage3, (void *)((Uint32)( pcb->stack) + PAGE_SIZE *2 ), PAGE_SIZE);
-	_kmemcpy( (void *)rpage4, (void *)((Uint32)( pcb->stack) + PAGE_SIZE *3), PAGE_SIZE);
+	//copy over the old stack to the intermediatry 
+	//we will move later to avoid unnesscary switching of page table directories
+	int s;
+	for( s= 0; s < stack_copy_reserve_size; s++ )
+	{
+		_kmemcpy( (void *)stack_copy_reserve[s], (void *)((Uint32)( pcb->stack) + (PAGE_SIZE * s)), PAGE_SIZE);
+	}
+
+	
 	// fix the pcb fields that should be unique to this process
 
 	new->pid = _next_pid++;
@@ -113,27 +121,24 @@ static void _sys_fork( Pcb *pcb ) {
 	new->state = NEW;
 	//c_printf( "Forked address %x %x \n", new->pid, (Uint32)new->pdt, pcb->pid , (Uint32)pcb->pdt );
 
-	/*
-        ** Next, we must fix the EBP chain in the child.  This is necessary
-        ** in the situation where the fork() occurred in a nested function
-	** call sequence; we fixed EBP, but the "saved" EBP in the stack
-	** frame is pointing to the calling function's frame in the parent's
-	** stack, not the child's stack.
-	**
-	** We are guaranteed that the chain of frames ends at the user
-	** process' main routine, because exec() will initialize EBP for
-	** the process to 0, and the entry prologue code in the main
-	** routine will push EBP, ensuring a NULL pointer in the chain.
-        */
-
 	// assign the PID return values for the two processes
 
 	ptr = (Uint32 *) (ARG(pcb)[1]);
 	*ptr = new->pid;
 
+	//to get in the ccorrect address space switch to the new process page directories
 	_vmeml2_change_page( (Uint32) new->pdt );
+
+	//move from intermeditary to new stack
+	for( s= 0; s < stack_copy_reserve_size; s++ )
+	{
+		_kmemcpy( (void *)((Uint32)( new->stack) + (PAGE_SIZE * s)), (void *)stack_copy_reserve[s], PAGE_SIZE);
+	}
+
 	ptr = (Uint32 *) (ARG(new)[1]);
 	*ptr = 0;
+
+	//after change switch back
 	_vmeml2_change_page((Uint32) pcb->pdt );
 
 	/*

@@ -134,3 +134,10 @@ void gl_puts( char *str ){
 	}
 }
 
+void gl_puts_s( char *str, screen_info* curr_si ){
+	unsigned int	c;
+
+	while( (c = *str++) != '\0' ){
+		gl_putchar_s( c, curr_si );
+	}
+}
