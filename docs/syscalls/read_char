@@ -44,3 +44,7 @@ Errors -----------------
 
 Providing a bad buffer has undefined behavior.
 
+If the maximum number of IO-requests is already being made when called, this
+function will return immediately, the buffer will be unmodified, and the user
+process rescheduled.
+
