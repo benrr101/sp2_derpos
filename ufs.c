@@ -83,19 +83,114 @@ FILE *fopen(char filepath[10]) {
 	return file;
 }
 
+FILE *fnamefile(const char mountpoint) {
+	// Find the mountpoint
+	MountPoint *mp = &mount_points[mountpoint - 0x41];
+
+	// Allocate some space for sectors
+	ATASector ib, name;
+	Uint32 sector, index, secttoload, ibentry, nameentry, size;
+	Uint32 bufferedsector = 0;
+
+	// Open a file for storing the names
+	char filename[10] = {mountpoint, ':', '\001','\001','\001','\001','\001',
+	                                   '\001','\001','\001'};
+	char testfilename[8] = {'\001','\001','\001','\001','\001','\001','\001',
+						'\001'};
+	char fname[10], sizec[4];
+	FILE *result = fopen(filename);
+	FILE *temp;
+
+	// Read all the filepointers
+	for(sector = mp->offset + 1; sector < mp->offset + mp->bootRecord.size; 
+		sector += FS_SECT_PER_IB) {
+		// Load up the ib
+		_ata_read_sector(mp->device, sector, &ib);
+
+		// Iterate over each pointer in the ib
+		for(index = 0; index < FS_SECT_PER_IB; index++) {
+			// Do we need to load a new name sector
+			secttoload = (index > FS_NAME_S1ENTRIES) ? sector + 2 : sector + 1;
+
+			if(secttoload != bufferedsector) {
+				_ata_read_sector(mp->device, secttoload, &name);
+				bufferedsector = secttoload;
+			}
+
+			// Grab the name of the file
+			nameentry = (index > FS_NAME_S1ENTRIES) ? index - FS_NAME_S1ENTRIES : index;
+			nameentry *= FS_NAME_SIZE;
+			fname[0] = name[FS_NAME_OFFSET + nameentry];
+			fname[1] = name[FS_NAME_OFFSET + nameentry + 1];
+			fname[2] = name[FS_NAME_OFFSET + nameentry + 2];
+			fname[3] = name[FS_NAME_OFFSET + nameentry + 3];
+			fname[4] = name[FS_NAME_OFFSET + nameentry + 4];
+			fname[5] = name[FS_NAME_OFFSET + nameentry + 5];
+			fname[6] = name[FS_NAME_OFFSET + nameentry + 6];
+			fname[7] = name[FS_NAME_OFFSET + nameentry + 7];
+
+			// Add the file to the file only if the file exists and the file
+			// is not our name file
+			ibentry = FS_FP_OFFSET + (index * FS_FP_LENGTH);
+			if(_sector_get_long(&ib, ibentry) != 0x0 
+			&& _fs_namecmp(&name, FS_NAME_OFFSET+nameentry, testfilename)!=0){
+
+				// Write the filename
+				fwrite(result, fname, 8);
+			
+				fname[9] = fname[7];
+				fname[8] = fname[6];
+				fname[7] = fname[5];
+				fname[6] = fname[4];
+				fname[5] = fname[3];
+				fname[4] = fname[2];
+				fname[3] = fname[1];
+				fname[2] = fname[0];
+				fname[1] = ':';
+				fname[0] = mountpoint;
+
+				// Get the size of the file
+				temp = fopen(fname);
+				size = _fs_get_file_size(temp);
+				
+				// Make it into a set of characters
+				sizec[0] = size & 0xFF;
+				sizec[1] = (size & 0xFF00) >> 8;
+				sizec[2] = (size & 0xFF0000) >> 16;
+				sizec[3] = (size & 0xFF000000) >> 24;
+				
+				// Write the size
+				fwrite(result, sizec, 4);
+			}
+		}
+	}
+
+	fflush(result);
+	fseek(result, 0, FS_SEEK_ABS);
+
+	return result;
+}
+
 FS_STATUS fclose(FILE *file) {
+	// Stupidity check
+	if(file == NULL || file->code == FS_AVAILABLE) {
+		return FS_ERR_BADFILE;
+	}
+
 	// Flush the file
 	fflush(file);
 
 	// Unallocate the pointer
 	_fs_unallocate_filepointer(file);
 
-	return 0x0;
+	return FS_SUCCESS;
 }
 
 FS_STATUS fdelete(FILE *file) {
-	// Mark the file pointer as available
-
+	// Stupidity checks
+	if(file == NULL || file->code == FS_AVAILABLE) {
+		return FS_ERR_BADFILE;
+	}
 	
 	// Tear apart the file and send it to the deleter
 	return _fs_delete_file(file);
@@ -107,6 +202,12 @@ FS_STATUS fdelete(FILE *file) {
  * @return	FS_STATUS	Success/failure code.
  */
 FS_STATUS fflush(FILE *file) {
+	// Stupidity checks
+	if(file == NULL || file->code == FS_AVAILABLE) {
+		return FS_ERR_BADFILE;
+	}
+	
+
 	// Calculate which sector to write
 	Uint32 sector = file->mp->offset + file->bufsect;
 	
@@ -129,13 +230,18 @@ FS_STATUS fflush(FILE *file) {
  * @return	FS_STATUS	status of the seek operation
  */
 FS_STATUS fseek(FILE *file, Uint32 offset, FS_FILE_SEEK dir) {
+	// Stupidity check
+	if(file == NULL || file->code == FS_AVAILABLE) {
+		return FS_ERR_BADFILE;
+	}
+
 	// We need the size of the file
 	Uint32 filesize = _fs_get_file_size(file);
 
 	// Which way are we seeking
 	if(dir == FS_SEEK_ABS) {
 		// Seeking to absolute position into the disk
-		if(offset >= filesize) {
+		if(offset > filesize) {
 			// We'd be going off the end of the file
 			return FS_INVALID_OFFSET;
 		}
@@ -263,7 +369,7 @@ FS_STATUS fseek(FILE *file, Uint32 offset, FS_FILE_SEEK dir) {
  */
 Uint32 fread(FILE *file, char *buffer, Uint32 size) { 
 	// Make sure the file is in a good state for reading
-	if(file->code == FS_AVAILABLE) {
+	if(file == NULL || file->code == FS_AVAILABLE) {
 		// This is an uninitalized file pointer
 		return 0;
 	}
@@ -325,7 +431,10 @@ Uint32 fread(FILE *file, char *buffer, Uint32 size) {
  * @return	Uint32	The number of bytes written.
  */
 Uint32 fwrite(FILE *file, char *buffer, Uint32 size) { 
-	// @TODO Error check for dumb things
+	// Stupidity check
+	if(file == NULL || file->code == FS_AVAILABLE) {
+		return 0;
+	}
 
 	// Start copying bytes into the buffer
 	Uint32 bytes;

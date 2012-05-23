@@ -2,6 +2,9 @@
 #include "win_man.h"
 #include "vga_dr.h"
 #include "font.h"
+#include "gl_print.h"
+//#include "printf.h"
+#include "c_io.h"
 
 static screen_info* scrn_info_arr;
 static Uint32* video_mem_ptr;
@@ -12,7 +15,7 @@ void _gl_init( void ) {
 	scrn_info_arr = get_screen_infos( );
 	video_mem_ptr = (Uint32 *)_vga_get_start_mem( );
 	#ifndef GL_DEBUG
-	//clear_display();
+	clear_display();
 	#endif
 	bytes_perline = vga_mode_info->LinbytesPerScanLine/4;
 	//buff_bytes_perline = bytes_perline/2;
@@ -100,11 +103,13 @@ Uint32 pix_to_color(pixel p) {
 void draw_rect(Uint32 x1, Uint32 y1, Uint32 x2, Uint32 y2, pixel p) {
 	Uint32			pix = 0;
 	screen_info* 	curr_si;
-	Pid pid = 0;
+	Pid pid = 2;
 	int x, y;
 	Status s;
 	
 	s = get_pid( &pid );
+	if(s != SUCCESS)
+    	pid = 2;
 	#ifdef GL_DEBUG
 	if(x == 0)
 		c_printf(" S:%d P:%d ", s, pid);
@@ -114,8 +119,8 @@ void draw_rect(Uint32 x1, Uint32 y1, Uint32 x2, Uint32 y2, pixel p) {
 	if(curr_si != NULL) {
 		pix = pix_to_color( p );
 	
-		for(x = x1; x <= x2; x++) {
-			for(y = x1; y <= y2; y++) {
+		for(x = x1; x < x2; x++) {
+			for(y = x1; y < y2; y++) {
 				set_pixel_int(x, y, pix, curr_si);
 			}
 		}
@@ -125,13 +130,15 @@ void draw_rect(Uint32 x1, Uint32 y1, Uint32 x2, Uint32 y2, pixel p) {
 void draw_line(Uint32 x, Uint32 y, Uint32 x2, Uint32 y2, pixel p) {
 	Uint32			pix = 0;
 	screen_info* 	curr_si;
-	Pid pid = 0;
+	Pid pid = 2;
 	Status s;
 	int dx = 0;
 	int dy = 0;
 
 
 	s = get_pid( &pid );
+	if(s != SUCCESS)
+    	pid = 2;
 
 	curr_si = ( get_screen_info( pid ) );
 	if(curr_si != NULL) {
@@ -161,7 +168,7 @@ void draw_pixel(Uint32 x, Uint32 y, pixel p) {
 	Uint32			pix = 0;
 	Uint32*  			buffer_ptr;
 	screen_info* 	curr_si;
-	Pid pid = 0;
+	Pid pid = 2;
 	Status s;
 
 	s = get_pid( &pid );
@@ -169,9 +176,15 @@ void draw_pixel(Uint32 x, Uint32 y, pixel p) {
 	if(x == 0)
 		c_printf(" S:%d P:%d ", s, pid);
 	#endif
+	if(s != SUCCESS)
+    	pid = 2;
 
 	curr_si = ( get_screen_info( pid ) );
 	if(curr_si != NULL) {
+	
+		if( x > curr_si->w || y > curr_si->h )
+			return;
+			
 		#ifdef GL_DEBUG
 		if(x == 0)
 			c_printf(" (P:%d)0x%x(%d,%d) ", pid, curr_si, curr_si->w,curr_si->h);
@@ -185,6 +198,8 @@ void draw_pixel(Uint32 x, Uint32 y, pixel p) {
 }
 
 void set_pixel(Uint32 x, Uint32 y, pixel p, screen_info* curr_si) {
+	if( x > curr_si->w || y > curr_si->h )
+		return;
 	set_pixel_int(x, y, pix_to_color ( p ), curr_si);
 }
 
@@ -202,24 +217,29 @@ void set_pixel_int(Uint32 x, Uint32 y, Uint32 p, screen_info* curr_si) {
 
 void draw_character(char c, Uint32 x, Uint32 y, pixel p) {
     int i = 0;
-    char a = 'A';
-    char aa = 'a';
-    char zz = 'z';
-    screen_info* 	curr_si;
-    Pid pid = 0;
+    Status s;
+    Pid pid;
+    screen_info* curr_si;
+
+	if(c == '\n' || c == '\r' || c == '\t' || c == '\0')
+		return;
+
+    s = get_pid( &pid );
+    	
+    curr_si = ( get_screen_info( pid ) );
+	do_draw_character(c, x, y, p, curr_si);
+}
+
+void do_draw_character(char c, Uint32 x, Uint32 y, pixel p, screen_info* curr_si) {
     unsigned char shift = 0x01;
     unsigned char* curr = 0;
-    Status s;
     int dx = 0;
     int dy = 0;
 
-    s = get_pid( &pid );
+	if(c == '\n' || c == '\r' || c == '\t' || c == '\0')
+		return;
 
-    curr_si = ( get_screen_info( pid ) );
-    if(c >= aa && c <= zz)
-        c -= 6; // offset for the pos in the FONT arr
-
-    curr = FONT[c-a];
+    curr = FONT[c-FONT_BASE];
     for(dy = 0; dy < FONT_HEIGHT; dy++) {
         shift = 0x01;
         for(dx = 7; dx >= 0; dx--) {
@@ -231,60 +251,11 @@ void draw_character(char c, Uint32 x, Uint32 y, pixel p) {
     }
 }
 
-void draw_string_s(char* str, Uint32 x, Uint32 y, pixel p) {
-	screen_info* curr_si;
-    Status s;
-    Pid pid = 0;
-    char a = 'A';
-    char aa = 'a';
-    char zz = 'z';
-    char c = 0;
-    unsigned char shift = 0x01;
-    unsigned char* curr = 0;
-    int i = 0;
-    int dx = 0;
-    int dy = 0;
-    int len = 0;
-
-    //find the length
-    while(str[len] != '\0') {
-        if(str[len] >= aa && str[len] <= zz)
-            str[len] -= 6; //offset for the pos in FONT arr
-        len++;
-    }
-    
-    //setup the pid and curr_si for drawing
-    s = get_pid( &pid );
-    curr_si = ( get_screen_info( pid ) );
-
-    //height
-    for(dy = 0; dy < FONT_HEIGHT; dy++) {
-        //length or changing between the characters
-        for(i = 0; i < len; i++) {
-            if(str[i] == ' ')
-            	continue;
-            	
-            c = str[i];
-            curr = FONT[c-a];
-            
-            //actual drawing of the current line from the current char
-            shift = 0x01;
-            for(dx = 7; dx >= 0; dx--) {
-                if( ( (curr[dy]) & shift) == shift) {
-                    //x == the start position plus the offset for the backwards character
-                    //PLUS the offset for the current character
-                    set_pixel(x+dx+(i * FONT_SPACE), y+dy, p, curr_si);
-                }
-                shift = shift << 1;
-            }
-        }
-    }
-}
-
 void draw_string( char* str, Uint32 x, Uint32 y, pixel p) {
     char c = 0;
     int i = 0;
     int len = 0;
+    int tab = 0;
 
     //find the length
     while(str[len] != '\0') {
@@ -293,12 +264,17 @@ void draw_string( char* str, Uint32 x, Uint32 y, pixel p) {
 
     //length or changing between the characters
     for(i = 0; i < len; i++) {
-        if(str[i] == ' ')
+    	c = str[i];
+    	if(c == '\n') {
+        	//if(i+1 < len && str[i+1] == '\r')
+        	//	i++;
+        	tab = 0;
+        	y+=FONT_HEIGHT;
         	continue;
-        	
-        c = str[i];
-        
-        draw_character(c, x+(i * FONT_SPACE), y, p);
+        } else if(str[i] == '\t') {
+        	tab += 4;        	
+        }
+        draw_character(c, x+tab+(i * FONT_SPACE), y, p);
     }
 }
 
@@ -314,30 +290,36 @@ void draw_scr_0() {
 	int y = 0;
 	int t = 0;
 	pixel p;
-	char* str = "Holy Fuck StringS";
+	char* str = "Holy Fuck StringS : > *";
 
 	while ( 1 ) {
-
+		/*
 		for(x = 0; x < 180; x++) {
 			for(y = 0; y < 180; y++) {
-				p.r = 0x0c;
-				p.b = 0x0c;
-				p.g = 0x0c;
-				p.a = 0x0c;
+				p.r = 0xe0;
+				p.b = 0xe0;
+				p.g = 0xe0;
+				p.a = 0xe0;
 				draw_pixel(x, y, p);
 			}
-		}
+		}*/
 		p.r = 0xff;
 		p.g = 0xff;
 		p.b = 0xff;
 		p.a = 0xff;
-		draw_string(str, 10, 10, p);
+		//draw_string(str, 10, 10, p);
+		gl_putchar( ('A' + (t%50)) );
+		gl_printf(" printf %d %x %s \n", 15, str, str);
+
+		//printf("\n1\ttabbed\n2\t\ttab2\n3\n4\n5");
 		
-		for(t = 0; t < 26; t++) {
-			draw_character('A'+t, t*FONT_WIDTH, FONT_HEIGHT*2, p);
-			draw_character('a'+t, t*FONT_WIDTH, FONT_HEIGHT*3, p);
+		//c_printf("c_printf %d %x %s \n\n", 15, str, str);
+		
+		for(x = 0; x < 95; x++) {
+			;//draw_character(FONT_BASE+x, 250+((x%10)*FONT_WIDTH), (x%10)*FONT_HEIGHT, p);
 		}
-		msleep(1500);
+		t++;
+		msleep(1000);
 	}
 }
 
@@ -432,6 +414,7 @@ void draw_scr_4() {
 				draw_pixel(x, y, p);
 			}
 		}
+		draw_string("red", 10,10, FONT_COLOR);
 		msleep(3000);
 	}
 }
@@ -531,10 +514,10 @@ void draw_scr_9() {
 		p.a = 0xc0;
 
 		draw_rect(0,0,10,10, p);
-		draw_rect(502,0,512,10, p);
-		draw_rect(200,200,250,250, p);
-		draw_rect(0,630,10,640, p);
-		draw_rect(502,630,512,640, p);
+		
+		draw_rect(20,20,30,40, p);
+		draw_rect(50,50,80,80, p);
+		draw_rect(200,200,300,400, p);
 
 		msleep(3000);
 	}

@@ -13,6 +13,372 @@
 #include "headers.h"
 
 #include "users.h"
+#include "ufs.h"
+#include "string.h"
+#include "mouse.h"
+#include "gl.h"
+#include "gl_print.h"
+#include "syscalls.h"
+
+void fileshell(void) {
+
+//	draw_rect(0,0,100,100, ((pixel){0xff,0xff,0xff,0xff}));
+
+	Uint16 i;
+	
+	char buffer[65];
+	char s_buf[2];
+
+	// Loop indefinitely
+	while(1) {
+		// Print a prompt
+		gl_puts("DERP_FS Shell> ");
+		Pid p;
+		get_pid( &p );
+		// Read a buffer from the user
+		read_buf(buffer, 64);
+
+		// Figure out which command to execute
+		char *command = strtok(buffer, " ");
+
+		// BIG ASS SWITCH ON THE COMMAND
+		if(strncmp(command, "touch", 20) == 0) {
+			write('t');
+			// TOUCH -------------------------------------------------------
+			// Figure out the name of the file
+			char *filename = strtok(NULL, " ");
+			if(filename == NULL) {
+				gl_puts("*** You must provide a filename\n");
+				continue;
+			}
+			if(filename[1] != ':') {
+				gl_puts("*** Invalid filename. X:yyyyyyyy\n");
+				continue;
+			}
+
+			char filen[10];
+            for(i = 0; i < 10 && filename[i] != 0x0; i++) { 
+                filen[i] = filename[i]; 
+            }
+            for(; i < 10; i++) {
+                filen[i] = 0x0;
+            }
+
+			// Open the file (aka create it)
+			FILE *f = fopen(filen);
+			if(f == NULL) {
+				gl_puts("*** Touch failed!\n");
+				continue;
+			} else if(f->code == FS_SUCCESS) {
+				gl_puts("--- File already exists\n");
+			} else if(f->code != FS_SUCCESS_NEWFILE) {
+				gl_printf("*** fopen failed with code 0x%x\n");
+				continue;
+			}
+
+			// Close the file to free the pointer
+			fclose(f);
+
+		} else if(strncmp(command, "rm", 20) == 0) {
+			write('r');
+			// RM ----------------------------------------------------------
+			// Figure out the name of the file
+			char *filename = strtok(NULL, " ");
+			if(filename == NULL) {
+				gl_puts("*** You must provide a filename!\n");
+				continue;
+			}
+			if(filename[1] != ':') {
+				gl_puts("*** Invalid filename. X:yyyyyyyyy\n");
+				continue;
+			}
+
+			char filen[10];
+			for(i = 0; i < 10 && filename[i] != 0x0; i++) { 
+				filen[i] = filename[i]; 
+			}
+			for(; i < 10; i++) {
+				filen[i] = 0x0;
+			}
+
+			// Open the file (or create it, no big deal)
+			FILE *f = fopen(filen);
+			if(f == NULL) {
+				gl_puts("*** RM Failed!\n");
+				continue;
+			} else if(f->code == FS_SUCCESS_NEWFILE) {
+				gl_puts("*** File does not exist!\n");
+			}
+
+			// Delete the file (if it was created, we delete it as well!)
+			fdelete(f);
+			
+		} else if(strncmp(command, "ls", 20) == 0) {
+			write('l');
+			// LS ----------------------------------------------------------
+			// Figure out which mountpoint we want to read
+			char *mountpoint = strtok(NULL, " ");
+			if(mountpoint == NULL) {
+				gl_puts("*** You must provide a MountPoint to print the files of\n");
+				continue;
+			}
+			if(strlen(mountpoint) != 1 ||((*mountpoint)-0x41)>mount_point_count){
+				gl_puts("*** Invalid mountpoint.\n");
+				continue;
+			}
+			
+			gl_printf("MountPoint '%c' Contents:\n", *mountpoint);
+
+			// Tell the filesystem to generate a name file
+			FILE *nameFile = fnamefile(*mountpoint);
+			char buffer[12];
+			while(fread(nameFile, buffer, 12) == 12) {
+				// NOTE: This will report files > 2^16 bytes as negative
+				gl_printf("%c%c%c%c%c%c%c%c    %-db\n", 
+					buffer[0],buffer[1],buffer[2],buffer[3],buffer[4],
+					buffer[5],buffer[6],buffer[7],
+					buffer[8]|buffer[9]<<8|buffer[10]<<16|buffer[11]<<24);
+			}
+			
+			// Delete the filename
+			fdelete(nameFile);
+
+		} else if(strncmp(command, "cat", 20) == 0) {
+			write('c');
+			// CAT ---------------------------------------------------------
+			// Figure out which file to open
+			char *filename = strtok(NULL, " ");
+			if(filename == NULL) {
+				gl_puts("*** You must provide a file to print\n");
+				continue;
+			}
+			if(filename[1] != ':') {
+				gl_puts("*** Invalid Filename. X:yyyyyyyy\n");
+				continue;
+			}
+
+			char filen[10];
+            for(i = 0; i < 10 && filename[i] != 0x0; i++) { 
+                filen[i] = filename[i]; 
+            }
+            for(; i < 10; i++) {
+                filen[i] = 0x0;
+            }
+
+			// Load the file and print its characters
+			FILE *f = fopen(filen);
+			char buf[1];
+
+			while(fread(f, buf, 1) == 1) {
+				gl_printf("%c", *buf);
+			}
+
+			gl_puts("\n");
+
+		} else if(strncmp(command, "write", 20) == 0) {
+			write('w');
+			// WRITE ------------------------------------------------------
+			// Figure out which file to open
+			char *filename = strtok(NULL, " ");
+			char *offsetc = "-0";
+			if(filename == NULL) {
+				gl_puts("*** You must provide a file to write to!\n");
+				continue;
+			}
+			if(filename[0] == '-') {
+				// We're declaring an offset instead of a filename
+				offsetc = filename;
+				filename = strtok(NULL, " ");
+				if(filename == NULL) {
+					gl_puts("*** You must provide a file to write to!\n");
+					continue;
+				}
+			}
+			if(filename[1] != ':') {
+				gl_printf("*** Invalid filename. X:YYYYYYYY %d\n", strlen(filename));
+				continue;
+			}
+
+			// Process the offset
+			Uint32 offset = atoi(offsetc + 1);
+
+			char filen[10];
+            for(i = 0; i < 10 && filename[i] != 0x0; i++) { 
+                filen[i] = filename[i]; 
+            }
+            for(; i < 10; i++) {
+                filen[i] = 0x0;
+            }
+
+			// Load the file
+			FILE *file = fopen(filen);
+			if(file == NULL) {
+				gl_puts("*** Could not open file!\n");
+				continue;
+			}
+
+			// Seek to the offset
+			if(fseek(file, offset, FS_SEEK_ABS) != FS_SUCCESS) {
+				gl_puts("*** Invalid offset into file\n");
+				continue;
+			}
+
+			// Loop until the end of input
+			
+			char c = 'q';
+			char mod = 0;
+			Uint32 bytes = 0;
+			gl_puts("\n");
+			while(1) {
+				// Get a character
+				read_char( s_buf );
+				c = s_buf[ 1 ];
+				mod = s_buf[ 0 ];
+				
+				// Will it terminate input?
+				if((mod & 1) && c == 'd') { 
+					break;
+				} else if(c == '\n') {
+					// Emit the newline
+					gl_puts("\n");
+				} else {
+					// Echo it back
+					gl_printf("%c", c);
+				}
+
+				// It didn't terminate input so print dump it to the file
+				bytes += fwrite(file, &c, 1);
+			}
+
+			// Output the number of bytes we wrote
+			gl_puts("\n--------------\n");
+			gl_printf("Wrote %d bytes\n", bytes);
+
+			fclose(file);
+
+		} else if(strncmp(command, "drives", 20) == 0) {
+			write('d');
+			// DRIVES ------------------------------------------------------
+			// We're breaking all the rules. Iterate over the drives found
+			for(i = 0; i < ata_device_count; i++) {
+				gl_printf("Drive %d: %s 0x%x sectors (512b)\n",
+					i, 
+					ata_devices[i].model,
+					ata_devices[i].size
+					);
+			}
+
+		} else if(strncmp(command, "part", 20) == 0) {
+			write('p');
+			// PART --------------------------------------------------------
+			// Grab the drive to partition
+			char *drivec = strtok(NULL, " ");
+			if(drivec == NULL) {
+				gl_puts("*** You must include a drive id\n");
+			}
+			Uint8 drive = atoi(drivec);
+			if(drive > ata_device_count) {
+				gl_puts("*** Invalid drive id!\n");
+				continue;
+			}
+
+			// Grab the partition number
+			char *partitionc = strtok(NULL, " ");
+			if(partitionc == NULL) {
+				gl_puts("*** You must include a partition index 1-4\n");
+				continue;
+			}
+			Uint8 index = atoi(partitionc) - 1;
+			if(index > 4) {
+				gl_puts("*** Invalid partition index!\n");
+				continue;
+			}
+
+			// Grab the starting sector of the partition
+			char *startc = strtok(NULL, " ");
+			if(startc == NULL) {
+				gl_puts("*** You must include a starting sector for the partition\n");
+				continue;
+			}
+			Uint32 start = atoi(startc);
+			if(start == 0) {
+				gl_puts("*** You cannot overwrite the master boot record!\n");
+				continue;
+			}
+
+			// Grab the size of the partition in sectors
+			char *sectc = strtok(NULL, " ");
+			if(sectc == NULL) {
+				gl_puts("*** You must include a partition size in sectors\n");
+				continue;
+			}
+			Uint32 sect = atoi(sectc);
+			
+			// Call the partitioner
+			Uint8 result = _fs_create_partition(&ata_devices[drive], 
+				start, sect, index);
+			if(result != FS_SUCCESS) {
+				gl_printf("*** Partition failed with code 0x%x\n");
+			}	
+
+		} else if(strncmp(command, "format", 20) == 0) {
+			write('f');
+			// FORMAT ------------------------------------------------------
+			// Grab the drive to format
+			char *drivec = strtok(NULL, " ");
+			if(drivec == NULL) {
+				gl_puts("*** You must specify a drive for the partition!\n");
+			}
+			Uint8 drive = atoi(drivec);
+			if(drive > ata_device_count) {
+				gl_puts("*** Invalid drive id!\n");
+				continue;
+			}
+
+			// Grab the partition to format
+			char *partitionc = strtok(NULL, " ");
+			if(partitionc == NULL) {
+				gl_puts("*** You must specify a partition index to format 1-4");
+			}
+			Uint8 index = atoi(partitionc) - 1;
+			if(index > 4) {
+				gl_puts("*** Invalid partition index!\n");
+				continue;
+			}
+			
+			// Call the format function
+			if(_fs_format(&mount_points[mount_point_count], 
+					&ata_devices[drive], index) == FS_ERR_NOTDERP) {
+				gl_puts("*** Could not format -- partition does not have a DERP_FS bootrecord\n");
+			}
+
+		} else if(strncmp(command, "mounts", 20) == 0) {
+			write('m');
+			// MOUNTS ------------------------------------------------------
+			// Breaking the rules again. Iterate over the mountpoints found
+			if(mount_point_count == 0) {
+				gl_puts("*** No DERP_FS MountPoints found\n");
+			}
+
+			for(i = 0; i < mount_point_count; i++) {
+				gl_printf("%c: 0x%x sectors (512b)\n",
+					mount_points[i].letter,
+					mount_points[i].bootRecord.size
+					); 
+			}
+
+		} else if(strncmp(command, "exit", 20) == 0) {
+			// EXIT --------------------------------------------------------
+			gl_puts("Shell is exiting!\n");
+			return;
+		} else {
+			// INVALID COMMAND ---------------------------------------------
+			write('I');
+			gl_puts("*** Invalid command!\n");
+		}
+	}
+	write('e');
+}
 
 /*
 ** USER PROCESSES
@@ -61,7 +427,7 @@ void user_m( void ); void user_n( void ); void user_o( void );
 void user_p( void ); void user_q( void ); void user_r( void );
 void user_s( void ); void user_t( void ); void user_u( void );
 void user_v( void ); void user_w( void ); void user_x( void );
-void user_y( void ); void user_z( void ); void user_keyboard();
+void user_y( void ); void user_z( void ); void user_keyboard(void);
 
 /*
 ** Users A, B, and C are identical, except for the character they
@@ -87,7 +453,7 @@ void user_a( void ) {
 		}
 	}
 
-	c_puts( "User A exiting\n" );
+	gl_puts( "User A exiting\n" );
 	exit();
 
 	status = write( 'a' );	/* shouldn't happen! */
@@ -101,7 +467,7 @@ void user_b( void ) {
 	int i, j;
 	Status status;
 
-	c_puts( "User B running\n" );
+	gl_puts( "User B running\n" );
 	status = write( 'B' );
 	if( status != SUCCESS ) {
 		prt_status( "User B, write 1 status %s\n", status );
@@ -115,7 +481,7 @@ void user_b( void ) {
 		}
 	}
 
-	c_puts( "User B exiting\n" );
+	gl_puts( "User B exiting\n" );
 	exit();
 
 	status = write( 'b' );	/* shouldn't happen! */
@@ -129,7 +495,7 @@ void user_c( void ) {
 	int i, j;
 	Status status;
 
-	c_puts( "User C running\n" );
+	gl_puts( "User C running\n" );
 	status = write( 'C' );
 	if( status != SUCCESS ) {
 		prt_status( "User C, write 1 status %s\n", status );
@@ -143,7 +509,7 @@ void user_c( void ) {
 		}
 	}
 
-	c_puts( "User C exiting\n" );
+	gl_puts( "User C exiting\n" );
 	exit();
 
 	status = write( 'c' );	/* shouldn't happen! */
@@ -162,7 +528,7 @@ void user_d( void ) {
 	Status status;
 	Pid pid;
 
-	c_puts( "User D running\n" );
+	gl_puts( "User D running\n" );
 	write( 'D' );
 	status = spawn( &pid, user_z );
 	if( status != SUCCESS ) {
@@ -170,7 +536,7 @@ void user_d( void ) {
 	}
 	write( 'D' );
 
-	c_puts( "User D exiting\n" );
+	gl_puts( "User D exiting\n" );
 	exit();
 
 }
@@ -191,14 +557,14 @@ void user_e( void ) {
 	if( status != SUCCESS ) {
 		prt_status( "User E get_pid status %s\n", status );
 	}
-	c_printf( "User E (%d) running\n", pid );
+	gl_printf( "User E (%d) running\n", pid );
 	write( 'E' );
 	for( i = 0; i < 5 ; ++i ) {
 		sleep( 10 );
 		write( 'E' );
 	}
 
-	c_puts( "User E exiting\n" );
+	gl_puts( "User E exiting\n" );
 	exit();
 
 }
@@ -217,14 +583,14 @@ void user_f( void ) {
 	if( status != SUCCESS ) {
 		prt_status( "User F get_pid status %s\n", status );
 	}
-	c_printf( "User F (%d) running\n", pid );
+	gl_printf( "User F (%d) running\n", pid );
 	write( 'F' );
 	for( i = 0; i < 5 ; ++i ) {
 		sleep( 5 );
 		write( 'F' );
 	}
 
-	c_puts( "User F exiting\n" );
+	gl_puts( "User F exiting\n" );
 	exit();
 
 }
@@ -243,14 +609,14 @@ void user_g( void ) {
 	if( status != SUCCESS ) {
 		prt_status( "User G get_pid status %s\n", status );
 	}
-	c_printf( "User G (%d) running\n", pid );
+	gl_printf( "User G (%d) running\n", pid );
 	write( 'G' );
 	for( i = 0; i < 5; ++i ) {
 		sleep( 15 );
 		write( 'G' );
 	}
 
-	c_puts( "User G exiting\n" );
+	gl_puts( "User G exiting\n" );
 	exit();
 
 }
@@ -264,7 +630,7 @@ void user_g( void ) {
 void user_h( void ) {
 	int i, j;
 
-	c_puts( "User H running\n" );
+	gl_puts( "User H running\n" );
 	write( 'H' );
 	for( i = 0; i < 5; ++i ) {
 		for( j = 0; j < DELAY_STD; ++j )
@@ -272,7 +638,7 @@ void user_h( void ) {
 		write( 'H' );
 	}
 
-	c_puts( "User H returning without exiting!\n" );
+	gl_puts( "User H returning without exiting!\n" );
 
 }
 
@@ -286,7 +652,7 @@ void user_j( void ) {
 	Pid pid;
 	Status status;
 
-	c_puts( "User J running\n" );
+	gl_puts( "User J running\n" );
 	write( 'J' );
 
 	for( i = 0; i < N_PCBS * 2 ; ++i ) {
@@ -298,7 +664,7 @@ void user_j( void ) {
 		}
 	}
 
-	c_puts( "User J exiting\n" );
+	gl_puts( "User J exiting\n" );
 	exit();
 
 }
@@ -314,7 +680,7 @@ void user_k( void ) {
 	Pid pid;
 	Status status;
 
-	c_puts( "User K running\n" );
+	gl_puts( "User K running\n" );
 	write( 'K' );
 
 	for( i = 0; i < 3 ; ++i ) {
@@ -327,7 +693,7 @@ void user_k( void ) {
 		}
 	}
 
-	c_puts( "User K exiting\n" );
+	gl_puts( "User K exiting\n" );
 	exit();
 
 }
@@ -344,12 +710,12 @@ void user_l( void ) {
 	Time time;
 	Status status;
 
-	c_puts( "User L running, " );
+	gl_puts( "User L running, " );
 	status = get_time( &time );
 	if( status != SUCCESS ) {
 		prt_status( "User L, get time status %s\n", status );
 	} else {
-		c_printf( " initial time %u\n", time );
+		gl_printf( " initial time %u\n", time );
 	}
 	write( 'L' );
 
@@ -371,7 +737,7 @@ void user_l( void ) {
 	if( status != SUCCESS ) {
 		prt_status( "User L, exiting get time status %s\n", status );
 	} else {
-		c_printf( "User L exiting at time %u\n", time );
+		gl_printf( "User L exiting at time %u\n", time );
 	}
 	exit();
 
@@ -388,18 +754,18 @@ void user_m( void ) {
 	Pid pid;
 	Status status;
 
-	c_puts( "User M running\n" );
+	gl_puts( "User M running\n" );
 	for( i = 0; i < 3; ++i ) {
 		status = spawnp( &pid, PRIO_LOW, user_w );
 		if( status != SUCCESS ) {
 			prt_status( "User M, user w exec status %s\n", status );
 		} else {
-			c_printf( "User M spawned W, PID %d\n", pid );
+			gl_printf( "User M spawned W, PID %d\n", pid );
 			write( 'M' );
 		}
 	}
 
-	c_puts( "User M exiting\n" );
+	gl_puts( "User M exiting\n" );
 	exit();
 
 }
@@ -415,25 +781,25 @@ void user_n( void ) {
 	Pid pid;
 	Status status;
 
-	c_puts( "User N running\n" );
+	gl_puts( "User N running\n" );
 	for( i = 0; i < 3; ++i ) {
 		status = spawnp( &pid, PRIO_LOW, user_w );
 		if( status != SUCCESS ) {
 			prt_status( "User N, user w exec status %s\n", status );
 		} else {
-			c_printf( "User N spawned W, PID %d\n", pid );
+			gl_printf( "User N spawned W, PID %d\n", pid );
 			write( 'N' );
 		}
 		status = spawnp( &pid, PRIO_HIGH, user_z );
 		if( status != SUCCESS ) {
 			prt_status( "User N, user z exec status %s\n", status );
 		} else {
-			c_printf( "User N spawned Z, PID %d\n", pid );
+			gl_printf( "User N spawned Z, PID %d\n", pid );
 			write( 'N' );
 		}
 	}
 
-	c_puts( "User N exiting\n" );
+	gl_puts( "User N exiting\n" );
 	exit();
 
 }
@@ -449,12 +815,12 @@ void user_p( void ) {
 	int i;
 	Status status;
 
-	c_printf( "User P running, " );
+	gl_printf( "User P running, " );
 	status = get_time( &time );
 	if( status != SUCCESS ) {
 		prt_status( "get_time status %s\n", status );
 	} else {
-		c_printf( " start at %08x\n", time );
+		gl_printf( " start at %08x\n", time );
 	}
 
 	write( 'P' );
@@ -465,12 +831,12 @@ void user_p( void ) {
 		if( status != SUCCESS ) {
 			prt_status( "get_time status %s\n", status );
 		} else {
-			c_printf( "User P reporting time %08x\n", time );
+			gl_printf( "User P reporting time %08x\n", time );
 		}
 		write( 'P' );
 	}
 
-	c_printf( "User P exiting\n" );
+	gl_printf( "User P exiting\n" );
 	exit();
 
 }
@@ -482,10 +848,10 @@ void user_p( void ) {
 
 void user_q( void ) {
 
-	c_puts( "User Q running\n" );
+	gl_puts( "User Q running\n" );
 	write( 'Q' );
 	bogus();
-	c_puts( "User Q returned from bogus syscall!?!?!\n" );
+	gl_puts( "User Q returned from bogus syscall!?!?!\n" );
 	exit();
 
 }
@@ -500,7 +866,7 @@ void user_r( void ) {
 	int ch = '&';
 	Status status;
 
-	c_puts( "User R running\n" );
+	gl_puts( "User R running\n" );
 	sleep( 10 );
 	for( i = 0; i < 3; ++i ) {
 		do {
@@ -515,7 +881,7 @@ void user_r( void ) {
 		write( ch );
 	}
 
-	c_puts( "User R exiting\n" );
+	gl_puts( "User R exiting\n" );
 	exit();
 
 }
@@ -527,14 +893,14 @@ void user_r( void ) {
 
 void user_s( void ) {
 
-	c_puts( "User S running\n" );
+	gl_puts( "User S running\n" );
 	write( 'S' );
 	for(;;) {
 		sleep( 30 );
 		write( 'S' );
 	}
 
-	c_puts( "User S exiting!?!?!n" );
+	gl_puts( "User S exiting!?!?!n" );
 	exit();
 
 }
@@ -558,7 +924,7 @@ void user_t( void ) {
 	if( status != SUCCESS ) {
 		prt_status( "User T, get prio status %s\n", status );
 	} else {
-		c_printf( "User T (%d) running, initial prio %d\n",
+		gl_printf( "User T (%d) running, initial prio %d\n",
 		  	  pid, priority );
 	}
 	
@@ -578,7 +944,7 @@ void user_t( void ) {
 	if( status != SUCCESS ) {
 		prt_status( "User T, get prio2 #1 status %s\n", status );
 	} else {
-		c_printf( "User T, prio was %d now %d\n", priority, prio2 );
+		gl_printf( "User T, prio was %d now %d\n", priority, prio2 );
 	}
 	priority = prio2;
 	
@@ -598,7 +964,7 @@ void user_t( void ) {
 	if( status != SUCCESS ) {
 		prt_status( "User T, get prio2 #2 status %s\n", status );
 	} else {
-		c_printf( "User T, prio was %d now %d\n", priority, prio2 );
+		gl_printf( "User T, prio was %d now %d\n", priority, prio2 );
 	}
 	priority = prio2;
 
@@ -618,7 +984,7 @@ void user_t( void ) {
 	if( status != SUCCESS ) {
 		prt_status( "User T, get prio2 #3 status %s\n", status );
 	} else {
-		c_printf( "User T, prio was %d now %d\n", priority, prio2 );
+		gl_printf( "User T, prio was %d now %d\n", priority, prio2 );
 	}
 	priority = prio2;
 	
@@ -629,7 +995,7 @@ void user_t( void ) {
 		write( 'T' );
 	}
 
-	c_puts( "User T exiting\n" );
+	gl_puts( "User T exiting\n" );
 	exit();
 
 }
@@ -644,18 +1010,18 @@ void user_w( void ) {
 	Pid pid;
 	Status status;
 
-	c_printf( "User W running, " );
+	gl_printf( "User W running, " );
 	status = get_pid( &pid );
 	if( status != SUCCESS ) {
 		prt_status( "User W get_pid status %s\n", status );
 	}
-	c_printf( " PID %d\n", pid );
+	gl_printf( " PID %d\n", pid );
 	for( i = 0; i < 20 ; ++i ) {
 		write( 'W' );
 		sleep( 3 );
 	}
 
-	c_printf( "User W exiting, PID %d\n", pid );
+	gl_printf( "User W exiting, PID %d\n", pid );
 	exit();
 
 }
@@ -671,12 +1037,12 @@ void user_x( void ) {
 	Pid pid;
 	Status status;
 
-	c_puts( "User X running, " );
+	gl_puts( "User X running, " );
 	status = get_pid( &pid );
 	if( status != SUCCESS ) {
 		prt_status( "User X get_pid status %s\n", status );
 	}
-	c_printf( "PID %d, ", pid );
+	gl_printf( "PID %d, ", pid );
 
 	for( i = 0; i < 20 ; ++i ) {
 		write( 'X' );
@@ -684,7 +1050,7 @@ void user_x( void ) {
 			continue;
 	}
 
-	c_printf( "User X exiting, PID %d\n", pid );
+	gl_printf( "User X exiting, PID %d\n", pid );
 	exit();
 
 }
@@ -697,7 +1063,7 @@ void user_x( void ) {
 void user_y( void ) {
 	int i, j;
 
-	c_puts( "User Y running\n" );
+	gl_puts( "User Y running\n" );
 	for( i = 0; i < 10 ; ++i ) {
 		write( 'Y' );
 		for( j = 0; j < DELAY_ALT; ++j )
@@ -705,7 +1071,7 @@ void user_y( void ) {
 		sleep( 1 );
 	}
 
-	c_puts( "User Y exiting\n" );
+	gl_puts( "User Y exiting\n" );
 	exit();
 
 }
@@ -718,14 +1084,14 @@ void user_y( void ) {
 void user_z( void ) {
 	int i, j;
 
-	c_puts( "User Z running\n" );
+	gl_puts( "User Z running\n" );
 	for( i = 0; i < 10 ; ++i ) {
 		write( 'Z' );
 		for( j = 0; j < DELAY_STD; ++j )
 			continue;
 	}
 
-	c_puts( "User Z exiting\n" );
+	gl_puts( "User Z exiting\n" );
 	exit();
 
 }
@@ -735,9 +1101,9 @@ void user_z( void ) {
 */
 
 void user_mouse( void ) {
-	c_puts( "User MOUSE running\n" );
+	gl_puts( "User MOUSE running\n" );
 	_ps2_mouse_init();	
-	c_puts( "User MOUSE exiting\n" );
+	gl_puts( "User MOUSE exiting\n" );
 	exit();
 }
 
@@ -746,13 +1112,13 @@ void user_mouse( void ) {
 */
 
 void user_keyboard( void ) {
-	c_puts( "User KEYBOARD running\n" );
+	gl_puts( "User KEYBOARD running\n" );
 	_ps2_keyboard_init();	
-	c_puts( "User KEYBOARD exiting\n" );
+	gl_puts( "User KEYBOARD exiting\n" );
 	char buf[] = { 'H', 'e', 'l', 'l', 'o', ' ', 'W', 'o', 'r', 'l', 'd', '\0' };
-	c_printf( "CUR BUF CONTENTS: %s\n", buf );
+	gl_printf( "CUR BUF CONTENTS: %s\n", buf );
 	read_buf( buf, 10 );
-	c_printf( "\nNew BUF CONTENTS: %s\n", buf );
+	gl_printf( "\nNew BUF CONTENTS: %s\n", buf );
 	exit();
 }
 
@@ -770,8 +1136,11 @@ void init( void ) {
 	Pid pid;
 	Time time;
 	Status status;
+	#ifndef VIDEO_TEXT
+	//c_set_device( 1 );
+	#endif
+	gl_puts( "Init started\n" );
 
-	c_puts( "Init started\n" );
 
 	write( '$' );
 
@@ -803,6 +1172,9 @@ void init( void ) {
 		prt_status( "init: can't spawn() user GRAPGICS, status %s\n", status );
 	}
 #endif
+	spawn(&pid, fileshell);
+/*
+>>>>>>> sata_user
 #ifdef SPAWN_A
 	status = fork( &pid );
 	if( status != SUCCESS ) {
@@ -969,7 +1341,7 @@ void init( void ) {
 #endif
 
 	write( '!' );
-
+*/
 	/*
 	** And now we start twiddling our thumbs
 	*/
@@ -978,7 +1350,7 @@ void init( void ) {
 	if( status != SUCCESS ) {
 		prt_status( "idle: get_time status %s\n", status );
 	}
-	c_printf( "init => idle at time %08x\n", time );
+	gl_printf( "init => idle at time %08x\n", time );
 
 	status = set_priority( PRIO_IDLE );
 	if( status != SUCCESS ) {
@@ -997,7 +1369,7 @@ void init( void ) {
 	** SHOULD NEVER REACH HERE
 	*/
 	write( '#' );
-	c_printf( "*** IDLE IS EXITING???\n" );
+	gl_printf( "*** IDLE IS EXITING???\n" );
 	exit();
 
 }
