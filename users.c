@@ -1160,18 +1160,19 @@ void init( void ) {
 		prt_status( "init: can't spawn() user GRAPHICS, status %s\n", status );
 	}
 #endif
-
 #ifdef SPAWN_SHELLS
 	status = spawn(&pid, fileshell);
 	if( status != SUCCESS ) {
-		prt_status( "init: can't spawn() user GRAPHICS, status %s\n", status );
+		prt_status( "init: can't spawn() user FILESHELL, status %s\n", status );
 	}
-	
+	/*
 	status = spawn(&pid, fileshell);
 	if( status != SUCCESS ) {
 		prt_status( "init: can't spawn() user GRAPHICS, status %s\n", status );
-	}
+	}*/
 #endif
+
+
 	
 
 #ifdef SPAWN_A
