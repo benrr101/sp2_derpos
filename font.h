@@ -5,7 +5,10 @@
 
 #include "font_define.h"
 
-unsigned char FONT[94][FONT_HEIGHT] = {
+unsigned char FONT[95][FONT_HEIGHT] = {
+
+// Space
+{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 
 //00010000
 //00010000
@@ -13,7 +16,7 @@ unsigned char FONT[94][FONT_HEIGHT] = {
 //00010000
 //00010000
 //00010000
-//00010000
+//00000000
 //00000000
 //00010000
 //00000000

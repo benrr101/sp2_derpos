@@ -234,7 +234,7 @@ void draw_character(char c, Uint32 x, Uint32 y, pixel p) {
     	
     curr_si = ( get_screen_info( pid ) );
 
-    curr = FONT[c-'!'];
+    curr = FONT[c-FONT_BASE];
     for(dy = 0; dy < FONT_HEIGHT; dy++) {
         shift = 0x01;
         for(dx = 7; dx >= 0; dx--) {
@@ -260,9 +260,7 @@ void draw_string( char* str, Uint32 x, Uint32 y, pixel p) {
     //length or changing between the characters
     for(i = 0; i < len; i++) {
     	c = str[i];
-        if(c == ' ')
-        	continue;
-        else if(c == '\n') {
+    	if(c == '\n') {
         	//if(i+1 < len && str[i+1] == '\r')
         	//	i++;
         	tab = 0;
