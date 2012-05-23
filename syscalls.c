@@ -242,7 +242,7 @@ static void _sys_read_buf( Pcb *pcb ){
 	buf = (char *) (ARG(pcb)[1]);
 	size = (int) (ARG(pcb)[2]);
 
-	if( buf_read( buf, size, _current->pid ) ){
+	if( buf_read( buf, size, _current ) ){
 
 		// move process to buffered-blocking queue
 		key.u = _current->pid;
@@ -270,7 +270,7 @@ static void _sys_read_char( Pcb *pcb ){
 
 	// let the keyboard driver know we expect keystrokes for this process
 	buf = (char *) (ARG(pcb)[1]);
-	if( char_read( buf, _current->pid ) ){
+	if( char_read( buf, _current ) ){
 
 		// move process to buffered-blocking queue
 		key.u = _current->pid;
@@ -656,6 +656,9 @@ void _isr_syscall( int vector, int code ) {
 	if( _current->context == NULL ) {
 		_kpanic( "_isr_syscall", "null _current context", FAILURE );
 	}
+
+	
+//	c_printf("PatS: %x\n", _current->pdt );
 
 	// retrieve the syscall code from the process
 

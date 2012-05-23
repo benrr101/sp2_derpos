@@ -19,8 +19,6 @@
 #include "mouse.h"
 #include "gl.h"
 
-static char buffer[65];
-static char s_buf[2];
 void fileshell(void) {
 
 	draw_rect(0,0,100,100, ((pixel){0xff,0xff,0xff,0xff}));
@@ -28,6 +26,9 @@ void fileshell(void) {
 
 	Uint8 count = 0;
 	Uint16 i;
+	
+	char buffer[65];
+	char s_buf[2];
 
 	// Loop indefinitely
 	while(1) {
@@ -35,7 +36,6 @@ void fileshell(void) {
 		c_puts("DERP_FS Shell> ");
 		Pid p;
 		get_pid( &p );
-		c_printf("\n%d\n", p);
 		// Read a buffer from the user
 		read_buf(buffer, 64);
 
@@ -46,6 +46,7 @@ void fileshell(void) {
 
 		// BIG ASS SWITCH ON THE COMMAND
 		if(strncmp(command, "touch", 20) == 0) {
+			write('t');
 			// TOUCH -------------------------------------------------------
 			// Figure out the name of the file
 			char *filename = strtok(NULL, " ");
@@ -74,6 +75,7 @@ void fileshell(void) {
 			fclose(f);
 
 		} else if(strncmp(command, "rm", 20) == 0) {
+			write('r');
 			// RM ----------------------------------------------------------
 			// Figure out the name of the file
 			char *filename = strtok(NULL, " ");
@@ -99,6 +101,7 @@ void fileshell(void) {
 			fdelete(f);
 			
 		} else if(strncmp(command, "ls", 20) == 0) {
+			write('l');
 			// LS ----------------------------------------------------------
 			// Figure out which mountpoint we want to read
 			char *mountpoint = strtok(NULL, " ");
@@ -128,6 +131,7 @@ void fileshell(void) {
 			fdelete(nameFile);
 
 		} else if(strncmp(command, "cat", 20) == 0) {
+			write('c');
 			// CAT ---------------------------------------------------------
 			// Figure out which file to open
 			char *filename = strtok(NULL, " ");
@@ -151,6 +155,7 @@ void fileshell(void) {
 			c_puts("\n");
 
 		} else if(strncmp(command, "write", 20) == 0) {
+			write('w');
 			// WRITE ------------------------------------------------------
 			// Figure out which file to open
 			char *filename = strtok(NULL, " ");
@@ -219,6 +224,7 @@ void fileshell(void) {
 			fclose(file);
 
 		} else if(strncmp(command, "drives", 20) == 0) {
+			write('d');
 			// DRIVES ------------------------------------------------------
 			// We're breaking all the rules. Iterate over the drives found
 			for(i = 0; i < ata_device_count; i++) {
@@ -230,6 +236,7 @@ void fileshell(void) {
 			}
 
 		} else if(strncmp(command, "part", 20) == 0) {
+			write('p');
 			// PART --------------------------------------------------------
 			// Grab the drive to partition
 			char *drivec = strtok(NULL, " ");
@@ -282,6 +289,7 @@ void fileshell(void) {
 			}	
 
 		} else if(strncmp(command, "format", 20) == 0) {
+			write('f');
 			// FORMAT ------------------------------------------------------
 			// Grab the drive to format
 			char *drivec = strtok(NULL, " ");
@@ -306,6 +314,7 @@ void fileshell(void) {
 			}
 
 		} else if(strncmp(command, "mounts", 20) == 0) {
+			write('m');
 			// MOUNTS ------------------------------------------------------
 			// Breaking the rules again. Iterate over the mountpoints found
 			if(mount_point_count == 0) {
@@ -325,9 +334,11 @@ void fileshell(void) {
 			return;
 		} else {
 			// INVALID COMMAND ---------------------------------------------
+			write('I');
 			c_puts("*** Invalid command!\n");
 		}
 	}
+	write('e');
 }
 
 /*

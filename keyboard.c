@@ -18,13 +18,15 @@
 #include "ulib.h"
 #include "win_man.h"
 #include "keyboard.h"
+#include "vmemL2.h"
 
 // Struct to handle IO-Request information
 typedef struct ps2_io_req{
-	Pid pid;
+	Uint32 pdt;
 	char *buf;
 	int size;
 	int index;
+	Pid pid;
 } ps2_io_req;
 
 // Array of IO Requests currently outstanding
@@ -77,7 +79,7 @@ unsigned char _ps2_scan_code[ 2 ][ 128 ] = {
 };
 
 // Key Modifiers
-static char shift_pressed = 0;
+static Uint8 shift_pressed = 0;
 static char ctrl_pressed = 0;
 static char alt_pressed = 0;
 //static char num_lock = 1;
@@ -417,6 +419,8 @@ void _ps2_write_to_active( char c ){
 	char *buf = requests[ index ]->buf;
 	Uint8 flags = 0;
 	//c_printf(" Writing Buf Addr: 0x%x\n", buf);
+	_vmeml2_change_page(requests[ index ]->pdt);
+	//c_printf(" Writing Buf Addr: 0x%x 0x%x\n", buf, buf+sizeof(char));
 	if( requests[ index ]->size == 0 ){
 		buf[1] = c;
 		if( shift_pressed )
@@ -460,6 +464,7 @@ void _ps2_write_to_active( char c ){
 			_ps2_delete_request( index );
 		}
 	}
+	_vmeml2_change_page( (Uint32)_current->pdt);
 }
 
 /**
@@ -516,7 +521,7 @@ Pcb *_ps2_remove_from_queue( Uint8 index ){
  * @param	buf		The buffer to fill with character input from the keyboard.
  * @param	size	The number of characters to read.
  */
-int buf_read( char* buf, int size, Pid pid ){
+int buf_read( char* buf, int size, Pcb* cur ){
 	
 	// Create an IO-Request block
 	int index = _ps2_get_io_req();
@@ -526,7 +531,8 @@ int buf_read( char* buf, int size, Pid pid ){
 	}
 
 	// Initialize IO-request
-	requests[index]->pid = pid;
+	requests[index]->pid = cur->pid;
+	requests[index]->pdt = (Uint32)cur->pdt;
 	requests[index]->buf = buf;
 	requests[index]->size = size;
 	requests[index]->index = 0;
@@ -541,8 +547,8 @@ int buf_read( char* buf, int size, Pid pid ){
  * @param	pid		The process that made the request
  * @returns			1 if a proper IO-request was created, otherwise 0
  */
-int char_read( char *buf, Pid pid ){
-	return buf_read( buf, 0, pid );
+int char_read( char *buf, Pcb* pc ){
+	return buf_read( buf, 0, pc );
 }
 
 //////////////////////////////////////////////////////////////
