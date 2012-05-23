@@ -25,8 +25,12 @@ void _fs_init(void) {
     c_puts("... Searching for Filesystems\n");
    
 #ifdef DERPFORMAT
-	_fs_create_partition(&ata_devices[1], 1, 204800, 0);
+	c_printf("... Creating partition 1\n");
+	_fs_create_partition(&ata_devices[1], 1, 20480, 0);
 	_fs_format(&mount_points[0], &ata_devices[1], 0);
+	c_printf("... Creating partition 2\n");
+	_fs_create_partition(&ata_devices[1], 20497, 20480, 1);
+	_fs_format(&mount_points[1], &ata_devices[1], 1);
 #endif
  
     if(ata_device_count == 0) {
