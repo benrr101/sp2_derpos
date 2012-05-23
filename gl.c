@@ -217,22 +217,27 @@ void set_pixel_int(Uint32 x, Uint32 y, Uint32 p, screen_info* curr_si) {
 
 void draw_character(char c, Uint32 x, Uint32 y, pixel p) {
     int i = 0;
-    screen_info* 	curr_si;
-    Pid pid = 2;
-    unsigned char shift = 0x01;
-    unsigned char* curr = 0;
     Status s;
-    int dx = 0;
-    int dy = 0;
+    Pid pid;
+    screen_info* curr_si;
 
 	if(c == '\n' || c == '\r' || c == '\t' || c == '\0')
 		return;
 
     s = get_pid( &pid );
-    if(s != SUCCESS)
-    	pid = 2;
     	
     curr_si = ( get_screen_info( pid ) );
+	do_draw_character(c, x, y, p, curr_si);
+}
+
+void do_draw_character(char c, Uint32 x, Uint32 y, pixel p, screen_info* curr_si) {
+    unsigned char shift = 0x01;
+    unsigned char* curr = 0;
+    int dx = 0;
+    int dy = 0;
+
+	if(c == '\n' || c == '\r' || c == '\t' || c == '\0')
+		return;
 
     curr = FONT[c-FONT_BASE];
     for(dy = 0; dy < FONT_HEIGHT; dy++) {
@@ -309,11 +314,10 @@ void draw_scr_0() {
 		//printf("\n1\ttabbed\n2\t\ttab2\n3\n4\n5");
 		
 		//c_printf("c_printf %d %x %s \n\n", 15, str, str);
-		/*
-		for(t = 0; t < 26; t++) {
-			draw_character('A'+t, t*FONT_WIDTH, FONT_HEIGHT*2, p);
-			draw_character('a'+t, t*FONT_WIDTH, FONT_HEIGHT*3, p);
-		}*/
+		
+		for(x = 0; x < 95; x++) {
+			;//draw_character(FONT_BASE+x, 250+((x%10)*FONT_WIDTH), (x%10)*FONT_HEIGHT, p);
+		}
 		t++;
 		msleep(1000);
 	}
