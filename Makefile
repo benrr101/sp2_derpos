@@ -197,7 +197,8 @@ isr_stubs.o: bootstrap.h
 ulibs.o: syscalls.h headers.h queues.h /home/fac/wrc/include/x86arch.h
 c_io.o: c_io.h startup.h headers.h support.h /home/fac/wrc/include/x86arch.h
 support.o: startup.h headers.h support.h c_io.h
-support.o: /home/fac/wrc/include/x86arch.h bootstrap.h
+support.o: /home/fac/wrc/include/x86arch.h bootstrap.h sio.h queues.h
+support.o: string.h
 clock.o: headers.h /home/fac/wrc/include/x86arch.h startup.h clock.h pcbs.h
 clock.o: stacks.h queues.h scheduler.h sio.h syscalls.h
 klibc.o: headers.h
@@ -210,17 +211,18 @@ stacks.o: headers.h queues.h stacks.h
 syscalls.o: headers.h pcbs.h clock.h stacks.h scheduler.h queues.h sio.h
 syscalls.o: syscalls.h /home/fac/wrc/include/x86arch.h system.h vmemL2.h
 syscalls.o: vmem.h startup.h keyboard.h
-system.o: headers.h system.h pcbs.h clock.h stacks.h bootstrap.h syscalls.h
-system.o: queues.h /home/fac/wrc/include/x86arch.h sio.h scheduler.h vga_dr.h
-system.o: gl.h win_man.h vmem.h vmemL2.h vmem_isr.h vmem_ref.h pci.h fs.h
-system.o: ata.h users.h keyboard.h ulib.h types.h
+system.o: headers.h startup.h system.h pcbs.h clock.h stacks.h bootstrap.h
+system.o: syscalls.h queues.h /home/fac/wrc/include/x86arch.h sio.h
+system.o: scheduler.h vga_dr.h gl.h win_man.h vmem.h vmemL2.h vmem_isr.h
+system.o: vmem_ref.h pci.h fs.h ata.h users.h keyboard.h ulib.h types.h
 ulibc.o: headers.h
-users.o: headers.h users.h keyboard.h queues.h gl.h pci.h
+users.o: headers.h users.h keyboard.h queues.h pcbs.h clock.h stacks.h gl.h
+users.o: pci.h ufs.h fs.h ata.h string.h sio.h
 mouse.o: headers.h startup.h ps2.h mouse.h win_man.h
 keyboard.o: headers.h ps2.h system.h pcbs.h clock.h stacks.h startup.h
-keyboard.o: queues.h scheduler.h ulib.h types.h win_man.h keyboard.h
+keyboard.o: queues.h scheduler.h ulib.h types.h win_man.h keyboard.h vmemL2.h
 vga_dr.o: headers.h vga_dr.h vga_define.h
-win_man.o: headers.h win_man.h vga_dr.h gl.h c_io.h vmemL2.h
+win_man.o: headers.h win_man.h vga_dr.h gl.h c_io.h vmemL2.h klib.h
 gl.o: gl.h headers.h win_man.h vga_dr.h font.h
 vmem.o: startup.h headers.h vmem.h
 vmemL2.o: vmem.h headers.h vmemL2.h
@@ -230,3 +232,4 @@ fs.o: headers.h pci.h startup.h ata.h fs.h
 ata.o: headers.h pci.h startup.h ata.h
 pci.o: headers.h startup.h pci.h ata.h fs.h ufs.h
 ufs.o: ufs.h fs.h headers.h ata.h
+string.o: string.h headers.h

@@ -61,7 +61,7 @@ void draw_active_screens() {
 					int pos2 = (y * curr_si->w) + x;
 
 					#ifndef GL_DEBUG
-					//video_mem_ptr[pos1] = buffer_ptr[pos2];
+					video_mem_ptr[pos1] = buffer_ptr[pos2];
 					#endif
 				}
 			}

@@ -16,11 +16,17 @@
 #include "ufs.h"
 #include "string.h"
 #include "sio.h"
-#include "mouse.h"
+//#include "mouse.h"
 #include "gl.h"
 
 void fileshell(void) {
 
+	_sio_writes( "MY PID: ", 8);
+	Pid pid;
+	get_pid( &pid );
+	write_x( pid );
+	_sio_writes( "\n", 1 );
+	
 	draw_rect(0,0,100,100, ((pixel){0xff,0xff,0xff,0xff}));
 
 
@@ -1063,7 +1069,7 @@ void user_z( void ) {
 
 void user_mouse( void ) {
 	c_puts( "User MOUSE running\n" );
-	_ps2_mouse_init();	
+	//_ps2_mouse_init();	
 	c_puts( "User MOUSE exiting\n" );
 	exit();
 }

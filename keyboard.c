@@ -394,8 +394,12 @@ Uint8 _ps2_get_io_req( void ){
 void _ps2_write_to_active( char c ){
 
 	// Grab focused process
-	//Pid active_p = get_active_pid();
-	Pid active_p = 2;
+	Pid active_p = get_active_pid();
+	_sio_writes( "YACTIVE PID: ", 12 );
+	write_x( active_p );
+	_sio_writes( "\n", 1 );
+	return;
+	//Pid active_p = 2;
 
 	// Throw away the character if there is no focused process
 	if( active_p == 0 ){
