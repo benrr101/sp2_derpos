@@ -15,9 +15,9 @@
 #include "users.h"
 #include "ufs.h"
 #include "string.h"
-#include "sio.h"
 #include "mouse.h"
 #include "gl.h"
+#include "syscalls.h"
 
 static char buffer[65];
 static char s_buf[2];
@@ -25,8 +25,6 @@ void fileshell(void) {
 
 	draw_rect(0,0,100,100, ((pixel){0xff,0xff,0xff,0xff}));
 
-
-	Uint8 count = 0;
 	Uint16 i;
 
 	// Loop indefinitely
@@ -35,11 +33,8 @@ void fileshell(void) {
 		c_puts("DERP_FS Shell> ");
 		Pid p;
 		get_pid( &p );
-		c_printf("\n%d\n", p);
 		// Read a buffer from the user
 		read_buf(buffer, 64);
-
-		c_printf("Command='%s'\n", buffer);
 
 		// Figure out which command to execute
 		char *command = strtok(buffer, " ");
@@ -53,13 +48,21 @@ void fileshell(void) {
 				c_puts("*** You must provide a filename\n");
 				continue;
 			}
-			if(strlen(filename) != 10 || filename[1] != ':') {
+			if(filename[1] != ':') {
 				c_puts("*** Invalid filename. X:yyyyyyyy\n");
 				continue;
 			}
 
+			char filen[10];
+            for(i = 0; i < 10 && filename[i] != 0x0; i++) { 
+                filen[i] = filename[i]; 
+            }
+            for(; i < 10; i++) {
+                filen[i] = 0x0;
+            }
+
 			// Open the file (aka create it)
-			FILE *f = fopen(filename);
+			FILE *f = fopen(filen);
 			if(f == NULL) {
 				c_puts("*** Touch failed!\n");
 				continue;
@@ -81,13 +84,21 @@ void fileshell(void) {
 				c_puts("*** You must provide a filename!\n");
 				continue;
 			}
-			if(strlen(filename) != 10 || filename[1] != ':') {
+			if(filename[1] != ':') {
 				c_puts("*** Invalid filename. X:yyyyyyyyy\n");
 				continue;
 			}
 
+			char filen[10];
+			for(i = 0; i < 10 && filename[i] != 0x0; i++) { 
+				filen[i] = filename[i]; 
+			}
+			for(; i < 10; i++) {
+				filen[i] = 0x0;
+			}
+
 			// Open the file (or create it, no big deal)
-			FILE *f = fopen(filename);
+			FILE *f = fopen(filen);
 			if(f == NULL) {
 				c_puts("*** RM Failed!\n");
 				continue;
@@ -135,13 +146,21 @@ void fileshell(void) {
 				c_puts("*** You must provide a file to print\n");
 				continue;
 			}
-			if(strlen(filename) != 10 || filename[1] != ':') {
+			if(filename[1] != ':') {
 				c_puts("*** Invalid Filename. X:yyyyyyyy\n");
 				continue;
 			}
 
+			char filen[10];
+            for(i = 0; i < 10 && filename[i] != 0x0; i++) { 
+                filen[i] = filename[i]; 
+            }
+            for(; i < 10; i++) {
+                filen[i] = 0x0;
+            }
+
 			// Load the file and print its characters
-			FILE *f = fopen(filename);
+			FILE *f = fopen(filen);
 			char buf[1];
 
 			while(fread(f, buf, 1) == 1) {
@@ -168,7 +187,7 @@ void fileshell(void) {
 					continue;
 				}
 			}
-			if(strlen(filename) != 10 || filename[1] != ':') {
+			if(filename[1] != ':') {
 				c_printf("*** Invalid filename. X:YYYYYYYY %d\n", strlen(filename));
 				continue;
 			}
@@ -176,8 +195,16 @@ void fileshell(void) {
 			// Process the offset
 			Uint32 offset = atoi(offsetc + 1);
 
+			char filen[10];
+            for(i = 0; i < 10 && filename[i] != 0x0; i++) { 
+                filen[i] = filename[i]; 
+            }
+            for(; i < 10; i++) {
+                filen[i] = 0x0;
+            }
+
 			// Load the file
-			FILE *file = fopen(filename);
+			FILE *file = fopen(filen);
 			if(file == NULL) {
 				c_puts("*** Could not open file!\n");
 				continue;
@@ -204,16 +231,20 @@ void fileshell(void) {
 				// Will it terminate input?
 				if((mod & 1) && c == 'd') { 
 					break;
+				} else if(c == '\n') {
+					// Emit the newline
+					c_puts("\n");
+				} else {
+					// Echo it back
+					c_printf("%c", c);
 				}
-
-				// Echo it to the terminal
-				c_printf("%c", c);
 
 				// It didn't terminate input so print dump it to the file
 				bytes += fwrite(file, &c, 1);
 			}
 
 			// Output the number of bytes we wrote
+			c_puts("\n--------------\n");
 			c_printf("Wrote %d bytes\n", bytes);
 
 			fclose(file);
@@ -285,6 +316,9 @@ void fileshell(void) {
 			// FORMAT ------------------------------------------------------
 			// Grab the drive to format
 			char *drivec = strtok(NULL, " ");
+			if(drivec == NULL) {
+				c_puts("*** You must specify a drive for the partition!\n");
+			}
 			Uint8 drive = atoi(drivec);
 			if(drive > ata_device_count) {
 				c_puts("*** Invalid drive id!\n");
@@ -293,7 +327,10 @@ void fileshell(void) {
 
 			// Grab the partition to format
 			char *partitionc = strtok(NULL, " ");
-			Uint8 index = atoi(partitionc);
+			if(partitionc == NULL) {
+				c_puts("*** You must specify a partition index to format 1-4");
+			}
+			Uint8 index = atoi(partitionc) - 1;
 			if(index > 4) {
 				c_puts("*** Invalid partition index!\n");
 				continue;
