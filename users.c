@@ -17,6 +17,7 @@
 #include "string.h"
 #include "mouse.h"
 #include "gl.h"
+#include "gl_print.h"
 #include "syscalls.h"
 
 void fileshell(void) {
@@ -1135,7 +1136,9 @@ void init( void ) {
 	Pid pid;
 	Time time;
 	Status status;
-
+	#ifndef VIDEO_TEXT
+	//c_set_device( 1 );
+	#endif
 	c_puts( "Init started\n" );
 
 
