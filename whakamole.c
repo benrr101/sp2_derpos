@@ -36,7 +36,7 @@ void whakamole_start( void ){
 }
 
 void mouse_h( Uint8 x, Uint8 y, char left, char right, char middle ){
-	_sio_writes( "GOT A MOUSE CLICK OMFG IT WORKED IT WOOOOOOOOORKED!!!!\n", 30 );
+	//_sio_writes( "GOT A MOUSE CLICK OMFG IT WORKED IT WOOOOOOOOORKED!!!!\n", 30 );
 }
 
 

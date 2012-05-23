@@ -242,6 +242,7 @@ void _init( void ) {
 	_pci_init();
 	_fs_init();
 	_ps2_keyboard_init();
+	_ps2_mouse_init();
 	_clock_init();
 
 	c_puts( "\n" );
