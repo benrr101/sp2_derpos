@@ -1,0 +1,35 @@
+EXEC() - DERP OS man page
+
+Name -------------------
+EXEC() - runs a new compiled program
+
+Synopsis ---------------
+
+#include "headers.h"
+
+STATUS exec( void* entry  );
+
+Description ------------
+
+This exec() function allow the new executable with a compile executable's 
+addresss. This is the low level why to creating different process 
+<EXAMPLE>
+The fclose() function closes and unallocates the filepointer specified by file.
+Before unallocating the filepointer, the buffer is flushed to the disk, as if
+fflush(file) had been called. Then the file pointer is unallocated by setting
+file->code to FS_AVAILABLE.
+<EXAMPLE>
+
+Return Value -----------
+
+<EXAMPLE>
+Upon successful closure of the filepointer, FS_SUCCESS will be returned.
+<EXAMPLE>
+
+Errors -----------------
+
+<EXAMPLE>
+If there was an error writing to the disk, FS_ERR_DISKFAULT will be returned.
+If the file parameter is NULL or file->code is FS_AVAILABLE, FS_ERR_BADFILE
+will be returned.
+<EXAMPLE>
