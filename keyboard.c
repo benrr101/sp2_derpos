@@ -425,7 +425,11 @@ int buf_read( char* buf, int size, Pcb* cur ){
 	// Create an IO-Request block
 	int index = _ps2_get_io_req();
 	if( index == -1 ){
-		c_printf( "keyboard: IO-request pool full.\n" );
+		Key key;
+		key.u = cur->pid;
+		void *data;
+		_q_remove_by_key( _buf_block, &data, key );
+		_sched( cur );
 		return 0;
 	}
 

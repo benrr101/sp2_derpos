@@ -47,3 +47,6 @@ Known Issues -----------
 Providing a size of 0 characters will instead be treated as a call to 
 read_char( char *buf). 
 
+If the maximum number of IO-requests is already being made when called, this
+function will return immediately, the buffer will be unmodified, and the user
+process rescheduled.
