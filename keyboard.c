@@ -19,6 +19,7 @@
 #include "win_man.h"
 #include "keyboard.h"
 #include "vmemL2.h"
+#include "gl_print.h"
 
 // Struct to handle IO-Request information
 typedef struct ps2_io_req{
@@ -394,8 +395,7 @@ Uint8 _ps2_get_io_req( void ){
 void _ps2_write_to_active( char c ){
 
 	// Grab focused process
-	//Pid active_p = get_active_pid();
-	Pid active_p = 2;
+	Pid active_p = get_active_pid();
 
 	// Throw away the character if there is no focused process
 	if( active_p == 0 ){
@@ -436,7 +436,8 @@ void _ps2_write_to_active( char c ){
 	}
 	else{
 		// We need to print the character for the user
-		c_printf( "%c", c );
+        screen_info* si = get_screen_info( active_p );
+        gl_putchar_s( c, si );
 
 		// store the character
 		int i = requests[ index ]->index;
