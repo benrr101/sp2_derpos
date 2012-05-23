@@ -270,7 +270,7 @@ static void _sys_read_char( Pcb *pcb ){
 
 	// let the keyboard driver know we expect keystrokes for this process
 	buf = (char *) (ARG(pcb)[1]);
-	if( char_read( buf, _current->pid ) ){
+	if( char_read( buf, _current ) ){
 
 		// move process to buffered-blocking queue
 		key.u = _current->pid;
