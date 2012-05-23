@@ -17,6 +17,7 @@ void _gl_init( void );
 //main draw loop, copies from all active
 //buffers into the main lin buffer
 void draw_active_screens( void );
+void draw_active_screens_once( void );
 
 void draw_scr_0( void );
 void draw_scr_1( void );

@@ -371,6 +371,8 @@ void fileshell(void) {
 			// EXIT --------------------------------------------------------
 			gl_puts("Shell is exiting!\n");
 			return;
+		} else if(strncmp(command, "p", 20) == 0) {
+			__panic("This is fun");
 		} else {
 			// INVALID COMMAND ---------------------------------------------
 			write('I');
