@@ -199,7 +199,7 @@ c_io.o: gl_print.h headers.h printf.h c_io.h startup.h support.h
 c_io.o: /home/fac/wrc/include/x86arch.h
 support.o: startup.h headers.h support.h c_io.h
 support.o: /home/fac/wrc/include/x86arch.h bootstrap.h sio.h queues.h
-support.o: string.h
+support.o: string.h gl.h gl_print.h
 clock.o: headers.h /home/fac/wrc/include/x86arch.h startup.h clock.h pcbs.h
 clock.o: stacks.h queues.h scheduler.h sio.h syscalls.h
 klibc.o: headers.h
