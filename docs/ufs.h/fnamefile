@@ -1,7 +1,7 @@
 fnamefile() - DERP OS man page
 
 Name -------------------
-fnamefile - creates a file of mountpoint files and file sizes
+fnamefile() - creates a file of mountpoint files and file sizes
 
 Synopsis ---------------
 
