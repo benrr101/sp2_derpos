@@ -1,7 +1,7 @@
 fflush() - DERP OS man page
 
 Name -------------------
-fflush - flush a file pointer
+fflush() - flush a file pointer
 
 Synopsis ---------------
 
