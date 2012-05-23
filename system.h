@@ -23,8 +23,9 @@
 
 #include "pcbs.h"
 
-extern Uint32 stack_copy_reserve[ STACK_SIZE / 1024];
 extern Uint32 stack_copy_reserve_size;
+
+Uint32* _get_stack_copy_reserve ( void);
 
 /*
 ** Prototypes

@@ -223,7 +223,7 @@ users.o: /home/fac/wrc/include/x86arch.h
 mouse.o: headers.h startup.h ps2.h mouse.h win_man.h
 keyboard.o: headers.h ps2.h system.h pcbs.h clock.h stacks.h startup.h
 keyboard.o: queues.h scheduler.h ulib.h types.h win_man.h keyboard.h vmemL2.h
-keyboard.o: gl_print.h
+keyboard.o: vmem_isr.h gl_print.h
 vga_dr.o: headers.h vga_dr.h vga_define.h
 win_man.o: headers.h win_man.h vga_dr.h font_define.h gl.h c_io.h vmemL2.h
 win_man.o: klib.h
