@@ -118,6 +118,8 @@ Status spawnp( Pid *pid, Prio prio, void (*entry)(void) ) {
 			exit();
 		}
 		
+		printf("My Pid %d", pid_to_pass);
+		
 		status = exec( entry );
 		// if we got here, the exec() failed
 		status2 = get_pid( &new );

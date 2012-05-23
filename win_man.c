@@ -1,6 +1,7 @@
 #include "headers.h"
 #include "win_man.h"
 #include "vga_dr.h"
+#include "font_define.h"
 #include "gl.h"
 #include "c_io.h"
 #include "vmemL2.h"
@@ -24,6 +25,7 @@ void _win_man_init( void ) {
 	int j = 0;
 	void* bPtrOffset = 0;
 	int dW, dH = 0;
+	int x, y;
 	Uint32 s_arr_size, buff_size;
 	
 	_vga_init();
@@ -61,12 +63,22 @@ void _win_man_init( void ) {
 		screen_info_arr[i].pid = 0;
 		screen_info_arr[i].active = 0;
 		screen_info_arr[i].blocking = 0;
-		
+		screen_info_arr[i].dirty = 1; //default dirty
+		//gl_print stuff
+		screen_info_arr[i].x_max = dW / FONT_WIDTH;
+		screen_info_arr[i].y_max = (dH / FONT_HEIGHT)-1;
+		screen_info_arr[i].curr_x = 0;
+		screen_info_arr[i].curr_y = 0;
+		screen_info_arr[i].buf_x = 0;
+		for(y = 0; y < 200; y++){
+			for(x = 0; x < 200; x++)
+				screen_info_arr[i].lines[y][x] = '\0';
+		}
 		#ifdef WM_DEBUG
 		c_printf("%d  - %x || ", i,  screen_info_arr[i].bPtr);
 		#endif
 	}
-//	c_printf("%x %x %x %x size_struct:%x \n",  screen_info_arr[0].bPtr, buff_size, s_arr_size, WIN_MAN_MEM, sizeof( struct screen_info ));
+	//c_printf("%x %x %x %x size_struct:%x \n",  screen_info_arr[0].bPtr, buff_size, s_arr_size, WIN_MAN_MEM, sizeof( struct screen_info ));
 	//clear buffer mem
 	_kmemclr(screen_info_arr[0].bPtr, buff_size );
 	
@@ -89,7 +101,7 @@ void _win_man_init( void ) {
 	//test
 	for(i = 0; i < screen_info_arr[0].w; i++) {
 		for(j = 0; j < screen_info_arr[0].h; j++) {
-			screen_info_arr[0].bPtr[ ( j * screen_info_arr[0].w ) + i] = 0xee00ee00;
+			screen_info_arr[0].bPtr[ ( j * screen_info_arr[0].w ) + i] = 0x18181818;
 		}
 	}
 	for(i = 0; i < screen_info_arr[2].w; i++) {
@@ -97,6 +109,7 @@ void _win_man_init( void ) {
 			screen_info_arr[2].bPtr[ ( j * screen_info_arr[2].w ) + i] = 0xffffffff;
 		}
 	}
+	wm_memory->active_quad = 0;
 }
 
 /**
