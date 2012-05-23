@@ -101,7 +101,7 @@ void _win_man_init( void ) {
 	//test
 	for(i = 0; i < screen_info_arr[0].w; i++) {
 		for(j = 0; j < screen_info_arr[0].h; j++) {
-			screen_info_arr[0].bPtr[ ( j * screen_info_arr[0].w ) + i] = 0xee00ee00;
+			screen_info_arr[0].bPtr[ ( j * screen_info_arr[0].w ) + i] = 0x18181818;
 		}
 	}
 	for(i = 0; i < screen_info_arr[2].w; i++) {
@@ -109,6 +109,7 @@ void _win_man_init( void ) {
 			screen_info_arr[2].bPtr[ ( j * screen_info_arr[2].w ) + i] = 0xffffffff;
 		}
 	}
+	wm_memory->active_quad = 0;
 }
 
 /**

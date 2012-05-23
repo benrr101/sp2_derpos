@@ -41,12 +41,6 @@ void set_pixel( Uint32 x, Uint32 y, pixel p, screen_info* curr_si );
 //draw char, make the x component count down so that we can flip the characters.
 void draw_character( char c, Uint32 x, Uint32 y, pixel p );
 
-//string is easy, make a loop that is the strlen and then draw one bit line at a
-//time using the outer loop for the character height and the inner loop as the
-//character selector (a,b,c,d....etc)
-
 //draw chars for loop
 void draw_string( char* str, Uint32 x, Uint32 y, pixel p );
-//scanning
-void draw_string_s( char* str, Uint32 x, Uint32 y, pixel p );
 #endif //_GL_H_
