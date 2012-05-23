@@ -11,21 +11,17 @@
 #include "startup.h"
 #include "vmem.h"
 
-#define TRUE    1
-#define FALSE   0
-
+//defines where the bitmap starts
 Uint32* _vmem_bitmap_start = (Uint32*)(PAGE_TABLE_SIZE);
+//defines the first page directory (maps everthing need by the kernel)
 Uint32* _vmem_page_dir = (Uint32*)0xFFFFFFFF;
 
-
-/*
-** _vmem_init()
-**
-*/
 void _vmem_init( void )
 {
+	//builds the first 4MB of memory
 	Uint32 address = _vmem_first_4MB();
 	_vmem_init_bitmap( address );
+	//build the memeory mapped into every process
 	_vmem_make_reserve();
 
 	c_puts(" vmem" );
@@ -54,15 +50,17 @@ void _vmem_init( void )
 Uint32 _vmem_first_4MB( void )
 {
 	if( __get_end() >= PAGE_TABLE_SIZE - sizeof(Uint32) ){
-		__panic( "Houston we have a problem, the kernel is too fat");
+		__panic( "Houston we have a problem, the kernel is too fat.");
 	}
 
+	//get the end of memory and get the next aligned address
 	_vmem_page_dir = (Uint32*)((__get_end() & PAGE_ADDRESS_LOC) + PAGE_SIZE);
 	
 #ifdef _VMEM_DEBUG
 	c_printf( "%x\n", (__get_end() & PAGE_ADDRESS_LOC) + PAGE_SIZE ) ;
 #endif
 
+	//initialize the directory so no pages are prsent
 	int i;
 	for(i = 0; i < 1024; i++ )
 	{
@@ -72,6 +70,7 @@ Uint32 _vmem_first_4MB( void )
 	//maps the first 4 MBs 0x400000
 	_vmem_page_dir[0] = (Uint32) 0x00 | PAGE_DIR_PRESENT | PAGE_DIR_WRITE | PAGE_DIR_SIZE;
 	
+	//send the pdt to be placed in the correct stop and pagging turned on
 	_vmem_turnon((Uint32)_vmem_page_dir);
 
 #ifdef _VMEM_DEBUG
@@ -87,6 +86,7 @@ Uint32 _vmem_first_4MB( void )
 
 void _vmem_init_bitmap( Uint32 addr )
 {
+	//make sure we start the bitmap where we think we should
 	if ( addr != PAGE_TABLE_SIZE )
 	{
 		__panic( "vmem: bitmap start is not where expected" );
@@ -95,12 +95,14 @@ void _vmem_init_bitmap( Uint32 addr )
 	//maps the next 4 MBs
 	_vmem_page_dir[1] = (Uint32) PAGE_TABLE_SIZE | PAGE_DIR_PRESENT | PAGE_DIR_WRITE | PAGE_DIR_SIZE;
 
+	//initilize all bits to be set 1 in the bitmap (aka the address is free)
 	int i;
 	for( i = 0; i < (PAGE_TABLE_SIZE/32); i++ )
 	{
 		_vmem_bitmap_start[i] = 0xFFFFFFFF;
 	}
 
+	//set the first 8MB are in use
 	_vmem_set_4MB_address( 0x00 );
 	_vmem_set_4MB_address( PAGE_TABLE_SIZE );
 #ifdef _VMEM_DEBUG
@@ -121,6 +123,7 @@ void _vmem_init_bitmap( Uint32 addr )
 
 void _vmem_make_reserve(void)
 {
+	//map the addresses into the orginal pdt
 	int i;
 	int end = PAGE_RESERVE_ENTRIES + 2;
 	for( i = 2; i < end; i++ )
@@ -185,11 +188,6 @@ void _vmem_clear_address( Uint32 address )
 
 void _vmem_clear_4MB_address( Uint32 address )
 {
-	/*int i;
-	for( i = address; i < PAGE_TABLE_SIZE + address;  i = i + PAGE_SIZE )
-	{
-		_vmem_clear_address(i);
-	}*/
 	int i;
 	for( i = 0; i < 1024;  i++ )
 	{	
@@ -204,11 +202,13 @@ Uint32 _vmem_get_next_address(void)
 	int memory_size = BITMAP_MAX; 
 	for( i = BITMAP_NORMAL; i < memory_size; i++ )
 	{
+		//if it is any other thing but zero one bit must be on and therfore free
 		if( 0 != _vmem_bitmap_start[i] )
 		{
 #ifdef _VMEM_DEBUG
 			c_printf( "%x %d\n", _vmem_bitmap_start[i],_vmem_bsf(_vmem_bitmap_start[i]));
 #endif
+			//find the sub index for the given word
 			return _vmem_get_address(i,_vmem_bsf(_vmem_bitmap_start[i]));
 		}
 	}
@@ -222,14 +222,12 @@ Uint32 _vmem_get_next_reserve_address(void)
 	Uint32 i;
 	Uint32 memory_size = BITMAP_NORMAL;
 	Uint32 start = 0;
-	//c_printf("D %d %d\n", start, memory_size);
-	//c_printf("? %d %d\n", PAGE_RESERVE_ENTRIES, ( PAGE_RESERVE_ENTRIES * 32));
 	for( i = start; i < memory_size; i++ )
 	{
-		//c_printf( "%d %x\n", i, _vmem_bitmap_start[i]);
+		//if it is any other thing but zero one bit must be on and therfore free
 		if( 0 != _vmem_bitmap_start[i] )
 		{
-			//c_printf( "%x %d\n", _vmem_bitmap_start[i],_vmem_bsf(_vmem_bitmap_start[i]));
+			//find the sub index for the given word
 			return _vmem_get_address(i,_vmem_bsf(_vmem_bitmap_start[i]));
 		}
 	}
@@ -242,11 +240,13 @@ Uint32 _vmem_get_next_4MB_address(void)
 {
 	int i;
 	int memory_size = BITMAP_MAX/32;	
+	//make sure the we check every 32 index because that is how many word reprsenting 4KB pages it take to make 4MB
 	for( i =(BITMAP_NORMAL/32); i < memory_size; i++ )
 	{
 		int l;
 		int end = i * 32 + 32;
 		Uint8 flag = TRUE;
+		//loop over all 32 words
 		for ( l=i*32; l < end; l++ )
 		{
 			if( 0xFFFFFFFF != _vmem_bitmap_start[l] )
@@ -255,6 +255,7 @@ Uint32 _vmem_get_next_4MB_address(void)
 				break;
 			}
 		}
+		//if the flag is still true we found an empty 4MB chunk
 		if( flag )
 		{
 			return _vmem_get_4MB_address(i);
@@ -262,6 +263,7 @@ Uint32 _vmem_get_next_4MB_address(void)
 		}
 	}
 
+	__panic( "vmem: OUT OF PHYISCAL MEMORY :(" );
 	return 0x00;
 }
 

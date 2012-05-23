@@ -19,6 +19,7 @@
 #include "win_man.h"
 #include "keyboard.h"
 #include "vmemL2.h"
+#include "vmem_isr.h"
 #include "gl_print.h"
 
 // Struct to handle IO-Request information
@@ -419,6 +420,7 @@ void _ps2_write_to_active( char c ){
 	char *buf = requests[ index ]->buf;
 	Uint8 flags = 0;
 	//c_printf(" Writing Buf Addr: 0x%x\n", buf);
+	Uint32 currentCr3 = _isr_vmem_getcr3();
 	_vmeml2_change_page(requests[ index ]->pdt);
 	//c_printf(" Writing Buf Addr: 0x%x 0x%x\n", buf, buf+sizeof(char));
 	if( requests[ index ]->size == 0 ){
@@ -465,7 +467,7 @@ void _ps2_write_to_active( char c ){
 			_ps2_delete_request( index );
 		}
 	}
-	_vmeml2_change_page( (Uint32)_current->pdt);
+	_vmeml2_change_page( currentCr3);
 }
 
 /**
