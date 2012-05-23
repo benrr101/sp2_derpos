@@ -524,7 +524,7 @@ Pcb *_ps2_remove_from_queue( Uint8 index ){
  * @param	buf		The buffer to fill with character input from the keyboard.
  * @param	size	The number of characters to read.
  */
-int _ps2_read_buf( char* buf, int size, Pcb* cur ){
+int buf_read( char* buf, int size, Pcb* cur ){
 	
 	// Create an IO-Request block
 	int index = _ps2_get_io_req();
@@ -550,8 +550,8 @@ int _ps2_read_buf( char* buf, int size, Pcb* cur ){
  * @param	pid		The process that made the request
  * @returns			1 if a proper IO-request was created, otherwise 0
  */
-int _ps2_read_char( char *buf, Pcb* pc ){
-	return _ps2_read_buf( buf, 0, pc );
+int char_read( char *buf, Pcb* pc ){
+	return buf_read( buf, 0, pc );
 }
 
 //////////////////////////////////////////////////////////////
