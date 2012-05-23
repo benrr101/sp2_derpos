@@ -238,6 +238,7 @@ void _init( void ) {
 	_win_man_init();	
 		//vga_init
 		//gl_init
+
 	_syscall_init();
 	_sched_init();
 	_pci_init();
