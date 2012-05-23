@@ -13,6 +13,7 @@
 #include "headers.h"
 
 #include "users.h"
+#include "gl_print.h"
 
 /*
 ** USER PROCESSES

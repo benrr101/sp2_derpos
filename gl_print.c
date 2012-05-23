@@ -130,10 +130,14 @@ void gl_puts( char *str ){
 	}
 }
 
-/*
+
 ///////////
 // PRINTF
 ///////////
+/*void gl_printf( char *fmt, ... ){
+	_gl_do_printf( -1, -1, &fmt );
+}
+
 static void _gl_do_printf( int x, int y, char **f ){
 	char	*fmt = *f;
 	int	*ap;
