@@ -1,0 +1,9 @@
+Video Experience
+
+The intial step for setting up any sort of video was looking at vga and bios mode setting. I the looked at VESA mode setting and decided that VBE, the vesa spec, had everything that I would need. 
+
+Steps:
+1) I set the video mode to a mode with the specs I wanted.
+2) I obtain the vesa mode info and the vga mode info and store them in the lower one meg of memory.
+3) Then we switch to protected mode and access the static address in the lower one meg of memory.
+4)
